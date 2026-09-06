@@ -96,7 +96,7 @@ flowchart TD
 ## Getting Started
 1. Clone the repository.
 2. Set up the PostgreSQL database and (optionally) a vector DB.
-3. Populate the curated corpus (laws, rules, treaties, TKDL extracts) – see `data/README.md`.
+3. Populate the curated corpus (laws, rules, treaties, TKDL extracts) – see [DATASET_SOURCES.md](file:///d:/general/GenAI/IP-SHAKTI/DATASET_SOURCES.md) for the complete directory of national and international public registries, statutes, and APIs.
 4. Run the backend: `./gradlew bootRun`.
 5. Run the frontend: `npm run dev` (inside `frontend/`).
 6. Open the UI at `http://localhost:5173` and start asking IP‑related questions.
