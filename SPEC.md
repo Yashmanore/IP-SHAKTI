@@ -43,11 +43,23 @@
 ```
 
 ## 2. Recommended Tech Stack
-- **Frontend**: React + Vite, Tailwind CSS, React‑Router, Axios, i18next
-- **Backend**: Spring Boot (Java 21), Spring AI, WebFlux, Security
-- **RAG/AI**: Gemini or OpenAI API, LangChain4j / Spring AI, Pinecone/Qdrant/pgvector
-- **Database**: PostgreSQL (core data) & optional Neo4j (knowledge graph later)
-- **Deployment**: Docker Compose, Render/AWS/Railway (backend), Vercel (frontend)
+
+### 2.1 Primary Default Configuration (100% Free & Open-Source / FOSS)
+*Designed for Smart India Hackathon (SIH), national data sovereignty, and zero recurring infrastructure cost:*
+- **Frontend**: React (Vite), Tailwind CSS, React Router, Axios, i18next *(MIT License — 100% Free & Open Source)*.
+- **Backend**: Spring Boot 3.x (Java 21 OpenJDK), Spring AI, Spring WebFlux, Spring Security *(Apache 2.0 / OpenJDK — 100% Free & Open Source)*.
+- **Database & Vector Store (Unified)**: **PostgreSQL with `pgvector` extension** *(PostgreSQL License — 100% Free & Open Source)*.
+  - Serves as the single unified engine for structured relational entities (users, chats, audit logs) and dense vector embeddings.
+  - Eliminates external cloud dependencies and commercial SaaS costs.
+- **Embeddings & LLM**:
+  - *Primary Free Cloud*: Google AI Studio Gemini 1.5 Flash *(Generous 15 RPM Free Tier)*.
+  - *100% Offline / Sovereign Alternative*: Local **Ollama** (Llama 3.1 8B / Gemma 2 9B) with open-source embeddings (`bge-small-en-v1.5` / `all-MiniLM-L6-v2`) via Spring AI / LangChain4j.
+- **Deployment**: **Docker & Docker Compose** *(Self-hosted, offline hackathon-ready, zero hosting expense)*.
+
+### 2.2 Optional / Secondary Cloud Alternatives
+- **Vector DB**: Qdrant (Self-hosted/Cloud), Pinecone (Proprietary SaaS starter tier).
+- **LLMs**: OpenAI API (Paid commercial).
+- **Cloud Hosting**: Render, Railway, AWS, Vercel (Hobby tiers).
 
 ## 3. Core MVP Features
 ### 3.1 Jurisdiction Switch

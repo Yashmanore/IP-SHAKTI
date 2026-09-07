@@ -81,25 +81,40 @@ flowchart TD
     H --> I[Next Steps / Escalation]
 ```
 
+## Technical Highlights (100% Free & Open-Source Default)
+- **Frontend**: React + Vite, Tailwind CSS, i18next for multilingual UI *(MIT License)*.
+- **Backend**: Spring Boot (Java 21 OpenJDK), Spring AI, WebFlux, Spring Security *(Apache 2.0)*.
+- **Unified Database & Vector Store**: **PostgreSQL + `pgvector`** *(Primary Default — 100% Open Source, $0 cost, zero cloud vendor lock-in)*. Handles relational metadata, conversations, and dense legal embeddings in a single engine.
+- **AI & RAG Engine**:
+  - *Primary Free Cloud*: Google AI Studio Gemini API *(15 RPM Free Tier)*.
+  - *Offline / Self-Hosted FOSS*: Local **Ollama** (Llama 3.1 / Gemma 2) + Open-Source Embeddings (`bge-small-en-v1.5`) via Spring AI / LangChain4j.
+  - *Hybrid Search*: Vector similarity search combined with PostgreSQL BM25 full-text keyword search and cross-encoder reranking.
+- **Deployment**: **Docker & Docker Compose** for reproducible, 1-command deployment (runs completely offline for hackathon demos).
+- **Security & Sovereignty**: National data privacy (DPDP Act alignment), audit logging, and strict 'Information, not legal advice' disclaimers.
+
 ---
 
-## Technical Highlights
-- **Frontend**: React + Vite, Tailwind CSS, i18next for multilingual UI.
-- **Backend**: Spring Boot (Java 21), Spring AI, WebFlux, Spring Security.
-- **RAG Stack**: Gemini/OpenAI LLM, LangChain4j or Spring AI, Pinecone/Qdrant/pgvector vector store, hybrid (semantic + keyword) search, reranker.
-- **Database**: PostgreSQL for core data; optional Neo4j for knowledge‑graph extensions.
-- **Deployment**: Docker Compose; cloud hosting via Render/AWS/Railway (backend) and Vercel (frontend).
-- **Security & Auditing**: GDPR‑like audit logs, privacy consent for paid‑source connectors, disclaimer banner.
-
----
-
-## Getting Started
-1. Clone the repository.
-2. Set up the PostgreSQL database and (optionally) a vector DB.
-3. Populate the curated corpus (laws, rules, treaties, TKDL extracts) – see [DATASET_SOURCES.md](file:///d:/general/GenAI/IP-SHAKTI/DATASET_SOURCES.md) for the complete directory of national and international public registries, statutes, and APIs.
-4. Run the backend: `./gradlew bootRun`.
-5. Run the frontend: `npm run dev` (inside `frontend/`).
-6. Open the UI at `http://localhost:5173` and start asking IP‑related questions.
+## Getting Started (100% Free & Local Setup)
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/Yashmanore/IP-SHAKTI.git
+   cd IP-SHAKTI
+   ```
+2. **Start PostgreSQL with `pgvector` via Docker Compose**:
+   ```bash
+   docker compose up -d postgres
+   ```
+3. **Inspect the Authoritative Corpus**:
+   - All 27 verified Gazette & Treaty PDFs are pre-loaded in `data/raw/` — see [DATASET_SOURCES.md](file:///d:/general/GenAI/IP-SHAKTI/DATASET_SOURCES.md).
+4. **Run the Spring Boot Backend**:
+   ```bash
+   ./gradlew bootRun
+   ```
+5. **Run the React Frontend**:
+   ```bash
+   cd frontend && npm install && npm run dev
+   ```
+6. Open your browser at `http://localhost:5173` to test the jurisdiction toggle, classification questionnaire, and citation RAG!
 
 ---
 
