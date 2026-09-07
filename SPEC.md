@@ -66,9 +66,88 @@
 - Store `jurisdiction` in each document chunk metadata.
 - Filter vector‑DB queries by `jurisdiction` (`INDIA` vs `INTERNATIONAL`).
 
-### 3.2 Product Classification Engine
-- Rule‑based decision tree (classical medicine, proprietary, new drug, food, cosmetic).
-- Questionnaire drives classification before RAG is invoked.
+### 3.2 Product Classification Engine (Rule 158-B Decision Tree)
+A deterministic rule-based decision tree that classifies Ayurvedic products prior to RAG retrieval according to the Drugs and Cosmetics Act 1940 (Rule 158-B), FSSAI Ayurveda Aahar Regulations 2022, Indian Patents Act 1970 (§3(p), §3(e), §2(1)(j)), and Biological Diversity Act 2002.
+
+```mermaid
+flowchart TD
+    Start([Innovator Enters Product Details]) --> Q1{"Is exact formulation found in<br/>First Schedule Authoritative Books?<br/><i>e.g., Charaka, Sharangadhara</i>"}
+
+    Q1 -->|YES| Q2{"Was the formula, ratio, or<br/>excipients modified?"}
+    Q2 -->|NO| CLASSICAL["<b>CLASSICAL AYURVEDIC FORMULATION</b><br/>D&C Act Form 24-D/25-D<br/>Sec 3(p) Patent Bar: TK<br/>No Clinical Trials Needed"]
+    Q2 -->|YES| PROPRIETARY["<b>PROPRIETARY AYURVEDIC MEDICINE</b><br/>D&C Rules 1945 Rule 158-B"]
+
+    Q1 -->|NO| Q3{"What is the primary intended use?"}
+
+    Q3 -->|"Therapeutic Treatment /<br/>Disease Mitigation"| PROPRIETARY
+    Q3 -->|"Cleansing, Beautifying,<br/>Skin/Hair Application"| COSMETIC["<b>AYURVEDIC COSMETIC</b><br/>D&C Act Sec 3(aaa)<br/>No therapeutic disease claims<br/>Process/base patentable"]
+    Q3 -->|"Food/Dietary Supplement,<br/>Nutritional Support"| AAHAR["<b>AYURVEDA AAHAR</b><br/>FSSAI Regs 2022<br/>Mandatory Ayurveda Aahar Logo<br/>Central FSSAI License"]
+
+    PROPRIETARY --> Q4{"Is it an unaltered ingredient combo<br/>or novel extract/new indication?"}
+    Q4 -->|"Classical Ingredients,<br/>Existing Indication"| PROP_A["<b>Rule 158-B(1)(A)</b><br/>Published Safety Data Required"]
+    Q4 -->|"New Indication / Altered Route"| PROP_B["<b>Rule 158-B(1)(B)</b><br/>Pilot Clinical Trials Required"]
+    Q4 -->|"Novel Phytochemical Extract"| PROP_C["<b>Phytopharmaceutical</b><br/>Full Safety & Clinical Trials"]
+```
+
+#### Deterministic Classification Logic:
+1. **Classical Ayurvedic Formulation (Shastriya Aushadhi)**:
+   - Found verbatim in First Schedule textbooks (e.g., *Charaka Samhita*, *Sushruta Samhita*, *Sharangadhara Samhita*).
+   - Form 25-D / 24-D state AYUSH manufacturing license.
+   - **Clinical Trials**: Completely exempt (presumption of traditional safety & efficacy).
+   - **Patent Bar**: Strictly non-patentable under **Section 3(p)** (traditional knowledge) and **Section 3(e)** (mere admixture) of Patents Act 1970.
+   - **IP Protection**: Trademark protection on house brand name only (generic classical name cannot be trademarked).
+2. **Proprietary Ayurvedic Medicine (Rule 158-B)**:
+   - Contains Ayurvedic ingredients, but proprietary ratio, new excipients, or new clinical indication.
+   - **Category A (Rule 158-B(1)(A))**: Published textual references and acute toxicity data required.
+   - **Category B (Rule 158-B(1)(B))**: New indication or altered route of administration; pilot clinical trials (≥30 patients) required.
+   - **Patentability**: Product composition barred under §3(p)/§3(e) unless statistical synergism is demonstrated; novel extraction processes and delivery mechanisms (NDDS) are patentable under §2(1)(j).
+3. **Phytopharmaceutical Drug (Rule 122-E)**:
+   - Purified bioactive fractions / standardized botanical extract.
+   - CDSCO / DCGI regulatory pathway with mandatory Phase I–III clinical trials.
+   - Patentable under §2(1)(j) & §3(d).
+4. **Ayurveda Aahar (FSSAI Regulations 2022)**:
+   - Nutritional food/dietary supplement prepared according to Ayurvedic principles without therapeutic claims or parenteral form.
+   - Central FSSAI License with mandatory "Ayurveda Aahar" logo.
+   - Prohibited from claiming disease cure; exempt from clinical trials.
+5. **Ayurvedic Cosmetic (D&C Act Section 3(aaa))**:
+   - Cleansing, beautifying, or altering skin/hair appearance without therapeutic claims.
+   - Form 32-A AYUSH cosmetic license; BIS safety compliance.
+
+#### Example API Request & Response:
+
+**Request: Classical Formulation Check**
+```json
+POST /api/v1/classifier/evaluate
+{
+  "productName": "Maha Sudarshan Churna",
+  "matchesScheduleIBook": true,
+  "scheduleIBookName": "Sharangadhara Samhita",
+  "formulaOrRatioModified": false,
+  "intendedUse": "THERAPEUTIC_TREATMENT",
+  "applicantType": "INDIAN_COMPANY",
+  "commercialUtilization": true
+}
+```
+
+**Output Verdict:**
+```json
+{
+  "category": "CLASSICAL_AYURVEDIC_FORMULATION",
+  "categoryDisplayName": "Classical Ayurvedic Formulation (Shastriya Aushadhi)",
+  "governingAct": "Drugs and Cosmetics Act 1940, First Schedule Books; Rule 158-B",
+  "licensingAuthority": "AYUSH State Licensing Authority (Form 25-D / Form 24-D)",
+  "clinicalTrialRequirement": "COMPLETELY EXEMPT from clinical trials. Enjoys legal presumption of safety and efficacy based on centuries of documented traditional usage in authoritative texts.",
+  "formulationPatentableInIndia": false,
+  "patentabilityVerdict": "STRICTLY NON-PATENTABLE. Section 3(p) of the Indian Patents Act 1970 explicitly prohibits patenting any traditional formulation already documented in classical scriptures (and indexed in TKDL).",
+  "relevantPatentSections": [
+    "Section 3(p) - Traditional Knowledge Bar (Absolute)",
+    "Section 3(e) - Mere Admixture"
+  ],
+  "recommendedIprStrategy": "Brand Name Trademark Protection (Trade Marks Act 1999). Note: The generic classical name ('Maha Sudarshan Churna') CANNOT be trademarked, but your brand prefix can (e.g., 'Arogya Maha Sudarshan Churna').",
+  "nbaComplianceStatus": "Prior Intimation to State Biodiversity Board (SBB) required under Section 7 for commercial utilization.",
+  "requiredNbaForm": "SBB Form (Prior Intimation to State Biodiversity Board under Section 7)"
+}
+```
 
 ### 3.3 IP Protection Router
 - After classification, route to appropriate IP type (Patent, Trademark, GI, Design).

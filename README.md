@@ -45,16 +45,74 @@ Identifies the most suitable IP route for the user’s Ayurvedic product.
 | Packaging or design | **Design protection** | Safeguards visual appearance. |
 | Traditional knowledge | **TKDL / Prior‑art** | Defends against misappropriation under §3(p) of the Patents Act. |
 
-### 2️⃣ Regulatory Check 📋
-Maps the product classification to the relevant Indian and International regulatory regimes.
-| Classification | Key Indian Authority | Core Requirements |
-|----------------|----------------------|-------------------|
-| Classical Ayurvedic medicine | **AYUSH** | Manufacturing licence, standard formulation, no clinical trial. |
-| Proprietary / Patent‑eligible medicine | **CDSCO** | Safety & efficacy data, clinical study report. |
-| New drug | **CDSCO** | Full clinical evidence, GMP compliance. |
-| Phytopharmaceutical | **CDSCO + FSSAI** | Drug‑like evidence plus food‑safety standards. |
-| Ayurveda‑Aahar / Nutraceutical | **FSSAI** | Food safety, labelling, nutrition claims. |
-| Cosmetic | **Cosmetic Rules** | Safety dossier, labelling, ingredient restrictions. |
+### 2️⃣ Regulatory Check & Rule 158-B Product Classifier 📋
+Maps the product classification to the relevant Indian and International regulatory regimes via a deterministic statutory decision tree:
+
+```mermaid
+flowchart TD
+    Start([Innovator Enters Product Details]) --> Q1{"Is exact formulation found in<br/>First Schedule Authoritative Books?<br/><i>e.g., Charaka, Sharangadhara</i>"}
+
+    Q1 -->|YES| Q2{"Was the formula, ratio, or<br/>excipients modified?"}
+    Q2 -->|NO| CLASSICAL["<b>CLASSICAL AYURVEDIC FORMULATION</b><br/>D&C Act Form 24-D/25-D<br/>Sec 3(p) Patent Bar: TK<br/>No Clinical Trials Needed"]
+    Q2 -->|YES| PROPRIETARY["<b>PROPRIETARY AYURVEDIC MEDICINE</b><br/>D&C Rules 1945 Rule 158-B"]
+
+    Q1 -->|NO| Q3{"What is the primary intended use?"}
+
+    Q3 -->|"Therapeutic Treatment /<br/>Disease Mitigation"| PROPRIETARY
+    Q3 -->|"Cleansing, Beautifying,<br/>Skin/Hair Application"| COSMETIC["<b>AYURVEDIC COSMETIC</b><br/>D&C Act Sec 3(aaa)<br/>No therapeutic disease claims<br/>Process/base patentable"]
+    Q3 -->|"Food/Dietary Supplement,<br/>Nutritional Support"| AAHAR["<b>AYURVEDA AAHAR</b><br/>FSSAI Regs 2022<br/>Mandatory Ayurveda Aahar Logo<br/>Central FSSAI License"]
+
+    PROPRIETARY --> Q4{"Is it an unaltered ingredient combo<br/>or novel extract/new indication?"}
+    Q4 -->|"Classical Ingredients,<br/>Existing Indication"| PROP_A["<b>Rule 158-B(1)(A)</b><br/>Published Safety Data Required"]
+    Q4 -->|"New Indication / Altered Route"| PROP_B["<b>Rule 158-B(1)(B)</b><br/>Pilot Clinical Trials Required"]
+    Q4 -->|"Novel Phytochemical Extract"| PROP_C["<b>Phytopharmaceutical</b><br/>Full Safety & Clinical Trials"]
+```
+
+#### Deterministic Regulatory Mapping:
+| Classification | Governing Act & Authority | Clinical Trial Obligations | IPR / Patentability Outcome |
+|:---|:---|:---|:---|
+| **Classical Ayurvedic Formulation** | **AYUSH** (Form 25-D / 24-D)<br>Drugs & Cosmetics Act 1940 | **Completely Exempt** (Presumption of traditional safety) | **Non-patentable** under **Section 3(p)** (TK) & **Section 3(e)**. House trademark only. |
+| **Proprietary Medicine (Cat A)** | **AYUSH** (Rule 158-B(1)(A)) | Published safety data + acute toxicity data | Formulation barred under §3(p); novel extraction/NDDS processes patentable. |
+| **Proprietary Medicine (Cat B)** | **AYUSH** (Rule 158-B(1)(B)) | Pilot clinical trials (≥30 patients) required | Patentable only if statistical synergism is demonstrated (§3(e)). |
+| **Phytopharmaceutical Drug** | **CDSCO / DCGI** (Rule 122-E) | Full Phase I, II, III clinical evidence + GMP | Patentable under §2(1)(j) & §3(d). NBA Form III required. |
+| **Ayurveda Aahar** | **FSSAI** (Ayurveda Aahar Regs 2022) | Exempt; heavy metals/pesticide testing mandatory | Recipe barred under §3(p); proprietary process patentable. Food license (not drug). |
+| **Ayurvedic Cosmetic** | **AYUSH / D&C Act** (Sec 3(aaa), Form 32-A) | BIS safety & skin irritation standards | Vehicle/base formulation patentable. No therapeutic disease claims permitted. |
+
+#### Example Classifier API Request & Response:
+
+**Request: Classical Formulation Check**
+```json
+POST /api/v1/classifier/evaluate
+{
+  "productName": "Maha Sudarshan Churna",
+  "matchesScheduleIBook": true,
+  "scheduleIBookName": "Sharangadhara Samhita",
+  "formulaOrRatioModified": false,
+  "intendedUse": "THERAPEUTIC_TREATMENT",
+  "applicantType": "INDIAN_COMPANY",
+  "commercialUtilization": true
+}
+```
+
+**Output Verdict:**
+```json
+{
+  "category": "CLASSICAL_AYURVEDIC_FORMULATION",
+  "categoryDisplayName": "Classical Ayurvedic Formulation (Shastriya Aushadhi)",
+  "governingAct": "Drugs and Cosmetics Act 1940, First Schedule Books; Rule 158-B",
+  "licensingAuthority": "AYUSH State Licensing Authority (Form 25-D / Form 24-D)",
+  "clinicalTrialRequirement": "COMPLETELY EXEMPT from clinical trials. Enjoys legal presumption of safety and efficacy based on centuries of documented traditional usage in authoritative texts.",
+  "formulationPatentableInIndia": false,
+  "patentabilityVerdict": "STRICTLY NON-PATENTABLE. Section 3(p) of the Indian Patents Act 1970 explicitly prohibits patenting any traditional formulation already documented in classical scriptures (and indexed in TKDL).",
+  "relevantPatentSections": [
+    "Section 3(p) - Traditional Knowledge Bar (Absolute)",
+    "Section 3(e) - Mere Admixture"
+  ],
+  "recommendedIprStrategy": "Brand Name Trademark Protection (Trade Marks Act 1999). Note: The generic classical name ('Maha Sudarshan Churna') CANNOT be trademarked, but your brand prefix can (e.g., 'Arogya Maha Sudarshan Churna').",
+  "nbaComplianceStatus": "Prior Intimation to State Biodiversity Board (SBB) required under Section 7 for commercial utilization.",
+  "requiredNbaForm": "SBB Form (Prior Intimation to State Biodiversity Board under Section 7)"
+}
+```
 
 ### 3️⃣ Next Steps / Escalation 🚀
 After analysis, the assistant presents concrete actions:
@@ -106,9 +164,9 @@ flowchart TD
    ```
 3. **Inspect the Authoritative Corpus**:
    - All 27 verified Gazette & Treaty PDFs are pre-loaded in `data/raw/` — see [DATASET_SOURCES.md](file:///d:/general/GenAI/IP-SHAKTI/DATASET_SOURCES.md).
-4. **Run the Spring Boot Backend**:
+4. **Run the Spring Boot Backend (Maven)**:
    ```bash
-   ./gradlew bootRun
+   mvn spring-boot:run
    ```
 5. **Run the React Frontend**:
    ```bash
