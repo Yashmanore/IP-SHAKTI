@@ -1,0 +1,370 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "IP-SHAKTI Sahayak API",
+    "description": "AI Assistant for Intellectual Property Rights (IPR) & Regulatory Guidance in Ayurveda (Smart India Hackathon PS 26045).",
+    "version": "1.0.0",
+    "contact": {
+      "name": "IP-SHAKTI Dev Team",
+      "url": "https://github.com/Yashmanore/IP-SHAKTI"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Local Development Server"
+    },
+    {
+      "url": "https://ip-shakti-backend.onrender.com",
+      "description": "Production Cloud Server (Render)"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Conversational Assistant",
+      "description": "Multi-turn conversational assistant with interactive clarifying chips and 5-Pillar synthesis"
+    },
+    {
+      "name": "Product Classifier",
+      "description": "Deterministic decision tree engine (Rule 158-B, FSSAI 2022, Patents Act §3(p)/§3(e), NBA 2002)"
+    },
+    {
+      "name": "External Portals & Registries",
+      "description": "Live connectors for CBD ABSCH, InPASS, WIPO PATENTSCOPE, USPTO, and AYUSH Research Portal"
+    },
+    {
+      "name": "RAG Legal Search & Ingestion",
+      "description": "Dense vector similarity search across 2,026 legal chunks in Neon pgvector"
+    }
+  ],
+  "paths": {
+    "/api/v1/chat/message": {
+      "post": {
+        "tags": ["Conversational Assistant"],
+        "summary": "Send chat message & receive guidance",
+        "description": "Main conversational entrypoint. If key legal parameters (e.g. classical text match, technical novelty) are missing, returns 'CLARIFICATION_REQUIRED' with interactive button choices. Once answers are provided, executes Rule 158-B, Neon pgvector search, and external portals to return the full 5-Pillar structured analysis.",
+        "operationId": "handleMessage",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatMessageRequest"
+              },
+              "example": {
+                "sessionId": "b4e872c0-...",
+                "message": "I developed a new Ayurvedic formulation using Ashwagandha. Can I patent it in India?",
+                "jurisdiction": "INDIA",
+                "clarificationAnswers": {
+                  "isClassical": "NO",
+                  "technicalNovelty": "NANO_EXTRACT"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response (either clarification prompt or full 5-Pillar assessment)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatMessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/classifier/evaluate": {
+      "post": {
+        "tags": ["Product Classifier"],
+        "summary": "Evaluate Ayurvedic product classification",
+        "description": "Evaluates an Ayurvedic formulation against D&C Act Rule 158-B, FSSAI 2022, Patents Act Section 3(p), and NBA Biodiversity compliance.",
+        "operationId": "evaluateProduct",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassificationRequest"
+              },
+              "example": {
+                "productName": "Maha Sudarshan Churna",
+                "matchesScheduleIBook": true,
+                "scheduleIBookName": "Sharangadhara Samhita",
+                "formulaOrRatioModified": false,
+                "intendedUse": "THERAPEUTIC_TREATMENT",
+                "applicantType": "INDIAN_COMPANY",
+                "commercialUtilization": true
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Evaluation verdict with licensing pathway and patentability bar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassificationResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portals/lookup": {
+      "get": {
+        "tags": ["External Portals & Registries"],
+        "summary": "Lookup all 5 external portals",
+        "description": "Fetches live UN CBD IRCC permits for India, generates InPASS Boolean search syntax, constructs 1-click WIPO PATENTSCOPE deep-links, provides USPTO 35 U.S.C. 101 Product of Nature guidance, and maps AYUSH clinical trial evidence.",
+        "operationId": "lookupPortals",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "description": "Botanical plant name, Sanskrit name, or formulation keyword",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "Ashwagandha"
+            },
+            "example": "Ashwagandha"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Composite payload from all 5 external portals",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExternalPortalsPayload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rag/search": {
+      "get": {
+        "tags": ["RAG Legal Search & Ingestion"],
+        "summary": "Search legal vector corpus",
+        "description": "Performs dense vector similarity search with strict metadata filtering on jurisdiction (INDIA vs INTERNATIONAL) against the 2,026 legal chunks in Neon pgvector.",
+        "operationId": "search",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "description": "Natural language legal inquiry",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "Can I patent an Ashwagandha formulation?"
+          },
+          {
+            "name": "jurisdiction",
+            "in": "query",
+            "description": "Jurisdiction filter (INDIA or INTERNATIONAL)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "INDIA"
+            },
+            "example": "INDIA"
+          },
+          {
+            "name": "maxResults",
+            "in": "query",
+            "description": "Maximum chunks to retrieve",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 5
+            }
+          },
+          {
+            "name": "minScore",
+            "in": "query",
+            "description": "Minimum cosine similarity score threshold",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "default": 0.65
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of matching legal text chunks with scores and citations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ChatMessageRequest": {
+        "type": "object",
+        "properties": {
+          "sessionId": { "type": "string" },
+          "message": { "type": "string" },
+          "jurisdiction": { "type": "string", "example": "INDIA" },
+          "clarificationAnswers": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          }
+        },
+        "required": ["message"]
+      },
+      "ChatMessageResponse": {
+        "type": "object",
+        "properties": {
+          "sessionId": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["CLARIFICATION_REQUIRED", "ASSESSMENT_COMPLETE"]
+          },
+          "botMessage": { "type": "string" },
+          "clarificationPrompt": {
+            "$ref": "#/components/schemas/ClarificationPrompt"
+          },
+          "citationPills": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "confidenceScore": {
+            "$ref": "#/components/schemas/ConfidenceScore"
+          },
+          "pillars": {
+            "$ref": "#/components/schemas/FivePillarsResponse"
+          },
+          "disclaimer": { "type": "string" }
+        }
+      },
+      "ClarificationPrompt": {
+        "type": "object",
+        "properties": {
+          "step": { "type": "integer" },
+          "questionKey": { "type": "string" },
+          "questionText": { "type": "string" },
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClarificationOption"
+            }
+          }
+        }
+      },
+      "ClarificationOption": {
+        "type": "object",
+        "properties": {
+          "label": { "type": "string" },
+          "value": { "type": "string" }
+        }
+      },
+      "ConfidenceScore": {
+        "type": "object",
+        "properties": {
+          "level": { "type": "string" },
+          "overallScore": { "type": "integer" },
+          "retrievalScore": { "type": "integer" },
+          "authorityScore": { "type": "integer" },
+          "citationCoverage": { "type": "integer" }
+        }
+      },
+      "FivePillarsResponse": {
+        "type": "object",
+        "properties": {
+          "ipAnalysis": { "type": "object" },
+          "regulatoryAnalysis": { "type": "object" },
+          "absCheck": { "type": "object" },
+          "tkdlCheck": { "type": "object" },
+          "sources": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/StatutorySourceCitation" }
+          }
+        }
+      },
+      "StatutorySourceCitation": {
+        "type": "object",
+        "properties": {
+          "documentTitle": { "type": "string" },
+          "sectionReference": { "type": "string" },
+          "jurisdiction": { "type": "string" },
+          "snippetText": { "type": "string" },
+          "sourceFilePath": { "type": "string" },
+          "relevanceScore": { "type": "number" }
+        }
+      },
+      "ClassificationRequest": {
+        "type": "object",
+        "properties": {
+          "productName": { "type": "string" },
+          "matchesScheduleIBook": { "type": "boolean" },
+          "scheduleIBookName": { "type": "string" },
+          "formulaOrRatioModified": { "type": "boolean" },
+          "intendedUse": {
+            "type": "string",
+            "enum": ["THERAPEUTIC_TREATMENT", "DIETARY_NUTRITION", "COSMETIC_BEAUTY"]
+          },
+          "applicantType": {
+            "type": "string",
+            "enum": ["INDIAN_INDIVIDUAL", "INDIAN_COMPANY", "FOREIGN_ENTITY_OR_NRI"]
+          },
+          "commercialUtilization": { "type": "boolean" }
+        }
+      },
+      "ClassificationResult": {
+        "type": "object",
+        "properties": {
+          "category": { "type": "string" },
+          "categoryDisplayName": { "type": "string" },
+          "governingAct": { "type": "string" },
+          "licensingAuthority": { "type": "string" },
+          "licensingProcedure": { "type": "string" },
+          "clinicalTrialRequirement": { "type": "string" },
+          "formulationPatentableInIndia": { "type": "boolean" },
+          "patentabilityVerdict": { "type": "string" },
+          "relevantPatentSections": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "recommendedIprStrategy": { "type": "string" },
+          "nbaComplianceStatus": { "type": "string" },
+          "requiredNbaForm": { "type": "string" }
+        }
+      },
+      "ExternalPortalsPayload": {
+        "type": "object",
+        "properties": {
+          "queryTerm": { "type": "string" },
+          "abschCompliance": { "type": "object" },
+          "inpassSearch": { "type": "object" },
+          "wipoPatentscope": { "type": "object" },
+          "usptoGuidance": { "type": "object" },
+          "ayushResearchEvidence": { "type": "object" }
+        }
+      }
+    }
+  }
+}
