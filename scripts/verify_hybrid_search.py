@@ -91,12 +91,36 @@ for query, jurisdiction in test_queries:
         rrf_score = float(rrf_score)
         confidence = min(1.0, rrf_score / max_rrf) * 100.0
         
+        # Parse metadata
+        meta = meta_json if isinstance(meta_json, dict) else (eval(meta_json) if meta_json else {})
+        file_path = meta.get("file_path")
+        c_idx = meta.get("chunk_index")
+        
         # Clean snippet for windows terminal
         snippet = text.replace("\n", " ")[:140].encode('ascii', 'replace').decode('ascii')
         print(f"   #{idx} RRF: {rrf_score:.5f} ({confidence:.1f}% conf) | Dense Rank: {rank_vec} | Sparse Rank: {rank_kw}")
-        print(f"       {snippet}...")
+        print(f"       Doc: {meta.get('doc_title')} | Ref: {meta.get('section_ref')}")
+        print(f"       Seed Chunk: {snippet}...")
+
+        # Demonstrate +-5 Window Expansion for top hit
+        if idx == 1 and file_path and c_idx is not None:
+            c_idx = int(c_idx)
+            start_w = max(0, c_idx - 5)
+            end_w = c_idx + 5
+            cur.execute("""
+                SELECT (metadata->>'chunk_index')::int, metadata->>'page_number', text
+                FROM legal_document_embeddings
+                WHERE metadata->>'file_path' = %s
+                  AND (metadata->>'chunk_index')::int BETWEEN %s AND %s
+                ORDER BY (metadata->>'chunk_index')::int ASC;
+            """, (file_path, start_w, end_w))
+            w_rows = cur.fetchall()
+            print(f"       [+] EXPANDED CONTEXT (Chunks {start_w} to {end_w} | Total {len(w_rows)} Chunks):")
+            stitched_preview = " ".join([wr[2].split("]\n")[-1].replace("\n", " ").strip() for wr in w_rows])[:250]
+            clean_stitched = stitched_preview.encode('ascii', 'replace').decode('ascii')
+            print(f"           Full Stitched Passage: \"{clean_stitched}...\"")
 
 conn.close()
 print("\n" + "=" * 80)
-print(" HYBRID SEARCH VERIFICATION COMPLETE")
+print(" HYBRID SEARCH WITH +-5 WINDOW EXPANSION VERIFICATION COMPLETE")
 print("=" * 80)

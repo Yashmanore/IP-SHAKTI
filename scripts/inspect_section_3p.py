@@ -11,16 +11,12 @@ conn = psycopg2.connect(
 cur = conn.cursor()
 
 cur.execute("""
-SELECT 
-    plainto_tsquery('english', 'Section 3(p)'),
-    websearch_to_tsquery('english', 'Section 3(p)'),
-    plainto_tsquery('english', 'Can I patent Ashwagandha under Section 3(p)?'),
-    websearch_to_tsquery('english', 'Can I patent Ashwagandha under Section 3(p)?');
+SELECT metadata->>'doc_title', metadata->>'file_path', metadata->>'chunk_index'
+FROM legal_document_embeddings
+WHERE metadata->>'file_path' IS NULL OR metadata->>'file_path' ILIKE '%.json'
+LIMIT 5;
 """)
-r = cur.fetchone()
-print("plainto_tsquery('Section 3(p)'):", r[0])
-print("websearch_to_tsquery('Section 3(p)'):", r[1])
-print("plainto_tsquery long:", r[2])
-print("websearch_to_tsquery long:", r[3])
+for r in cur.fetchall():
+    print(r[0], '| file_path:', r[1], '| chunk_index:', r[2])
 
 conn.close()

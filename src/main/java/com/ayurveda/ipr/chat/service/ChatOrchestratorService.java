@@ -142,8 +142,8 @@ public class ChatOrchestratorService {
         String plantKey = extractPlantOrProductName(userMsg);
         ExternalPortalsPayload portals = externalPortalService.resolveAllPortals(plantKey);
 
-        // 3. Run Native PostgreSQL Hybrid RRF Search (Dense pgvector + Sparse BM25)
-        List<Map<String, Object>> rawHits = legalSearchService.searchHybrid(userMsg, jurisdiction, 4);
+        // 3. Run Native PostgreSQL Hybrid RRF Search with ±5 Window Context Expansion
+        List<Map<String, Object>> rawHits = legalSearchService.searchHybridWithWindow(userMsg, jurisdiction, 4, 5);
 
         List<StatutorySourceCitation> citations = new ArrayList<>();
         for (Map<String, Object> hit : rawHits) {
@@ -157,6 +157,9 @@ public class ChatOrchestratorService {
             String docTitle = meta != null && meta.containsKey("doc_title") ? meta.get("doc_title").toString() : "Statute";
             String sectionRef = meta != null && meta.containsKey("section_ref") ? meta.get("section_ref").toString() : "Statutory Provision";
             String sourceFile = meta != null && meta.containsKey("file_path") ? meta.get("file_path").toString() : "";
+            if (meta != null && meta.containsKey("window_chunks")) {
+                sourceFile = (sourceFile.isEmpty() ? "" : sourceFile + " ") + "(Chunks " + meta.get("window_chunks") + ")";
+            }
 
             citations.add(new StatutorySourceCitation(
                     docTitle,

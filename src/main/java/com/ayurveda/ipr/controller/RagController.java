@@ -48,7 +48,7 @@ public class RagController {
     @GetMapping("/hybrid-search")
     @Operation(
             summary = "Hybrid Search (Dense pgvector + Sparse BM25 via Reciprocal Rank Fusion)",
-            description = "Executes fused search combining 384-dim HNSW vector cosine distance and PostgreSQL tsvector/ts_rank_cd full-text search with canonical k=60 RRF scoring to ensure zero-miss precision on exact statutory sections."
+            description = "Executes fused search combining 384-dim HNSW vector cosine distance and PostgreSQL tsvector/ts_rank_cd full-text search with canonical k=60 RRF scoring and optional windowed context expansion (±5 previous/next chunks stitched into continuous statutory text)."
     )
     public ResponseEntity<List<Map<String, Object>>> searchHybrid(
             @Parameter(description = "Natural language legal inquiry or statutory section", example = "Can I patent an Ashwagandha formulation under Section 3(p)?")
@@ -56,8 +56,14 @@ public class RagController {
             @Parameter(description = "Jurisdiction filter (INDIA or INTERNATIONAL)", example = "INDIA")
             @RequestParam(value = "jurisdiction", defaultValue = "INDIA") String jurisdiction,
             @Parameter(description = "Maximum fused chunks to retrieve", example = "5")
-            @RequestParam(value = "maxResults", defaultValue = "5") int maxResults) {
-        List<Map<String, Object>> matches = searchService.searchHybrid(query, jurisdiction, maxResults);
+            @RequestParam(value = "maxResults", defaultValue = "5") int maxResults,
+            @Parameter(description = "Whether to expand context with previous and next chunks", example = "true")
+            @RequestParam(value = "expandWindow", defaultValue = "true") boolean expandWindow,
+            @Parameter(description = "Number of previous and next chunks to stitch (default: 5)", example = "5")
+            @RequestParam(value = "windowSize", defaultValue = "5") int windowSize) {
+        List<Map<String, Object>> matches = expandWindow
+                ? searchService.searchHybridWithWindow(query, jurisdiction, maxResults, windowSize)
+                : searchService.searchHybrid(query, jurisdiction, maxResults);
         return ResponseEntity.ok(matches);
     }
 

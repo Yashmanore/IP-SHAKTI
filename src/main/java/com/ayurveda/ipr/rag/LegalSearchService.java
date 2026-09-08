@@ -178,6 +178,197 @@ public class LegalSearchService {
     }
 
     /**
+     * Executes Hybrid RRF search and expands the top hits by N previous and N next chunks (default windowSize=5),
+     * merging contiguous intervals from the same document into continuous statutory text.
+     */
+    public List<Map<String, Object>> searchHybridWithWindow(String query, String jurisdiction, int maxResults, int windowSize) {
+        List<Map<String, Object>> rawHits = searchHybrid(query, jurisdiction, maxResults);
+        return expandWindowedContext(rawHits, windowSize > 0 ? windowSize : 5);
+    }
+
+    /**
+     * Expands context for retrieved hits by fetching N previous and N next chunks (default windowSize=5),
+     * merging contiguous intervals from the same document, and stitching the full statutory chapter.
+     *
+     * @param hits       Top hits from hybrid search
+     * @param windowSize Number of neighbor chunks before and after each hit (e.g. 5)
+     * @return Expanded and stitched context blocks preserving ranking and scores
+     */
+    public List<Map<String, Object>> expandWindowedContext(List<Map<String, Object>> hits, int windowSize) {
+        if (hits == null || hits.isEmpty() || windowSize <= 0) {
+            return hits != null ? hits : List.of();
+        }
+
+        // Group hits by document file_path
+        Map<String, List<Map<String, Object>>> groupedByDoc = new java.util.LinkedHashMap<>();
+        List<Map<String, Object>> standaloneHits = new ArrayList<>();
+
+        for (Map<String, Object> hit : hits) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> meta = (Map<String, Object>) hit.get("metadata");
+            String filePath = meta != null ? (String) meta.get("file_path") : null;
+            Object chunkIdxObj = meta != null ? meta.get("chunk_index") : null;
+
+            if (filePath != null && !filePath.isBlank() && chunkIdxObj != null) {
+                groupedByDoc.computeIfAbsent(filePath, k -> new ArrayList<>()).add(hit);
+            } else {
+                standaloneHits.add(hit);
+            }
+        }
+
+        List<Map<String, Object>> expandedResults = new ArrayList<>();
+
+        // Process each document group
+        for (Map.Entry<String, List<Map<String, Object>>> entry : groupedByDoc.entrySet()) {
+            String filePath = entry.getKey();
+            List<Map<String, Object>> docHits = entry.getValue();
+
+            // Build intervals: [max(0, idx - windowSize), idx + windowSize]
+            List<int[]> intervals = new ArrayList<>();
+            for (Map<String, Object> hit : docHits) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> meta = (Map<String, Object>) hit.get("metadata");
+                int cIdx = ((Number) meta.get("chunk_index")).intValue();
+                int start = Math.max(0, cIdx - windowSize);
+                int end = cIdx + windowSize;
+                intervals.add(new int[]{start, end});
+            }
+
+            // Sort intervals by start index
+            intervals.sort(java.util.Comparator.comparingInt(a -> a[0]));
+
+            // Merge overlapping or contiguous intervals
+            List<int[]> mergedIntervals = new ArrayList<>();
+            for (int[] current : intervals) {
+                if (mergedIntervals.isEmpty()) {
+                    mergedIntervals.add(new int[]{current[0], current[1]});
+                } else {
+                    int[] last = mergedIntervals.get(mergedIntervals.size() - 1);
+                    if (current[0] <= last[1] + 1) {
+                        last[1] = Math.max(last[1], current[1]);
+                    } else {
+                        mergedIntervals.add(new int[]{current[0], current[1]});
+                    }
+                }
+            }
+
+            String fetchSql = """
+                SELECT 
+                    (metadata->>'chunk_index')::int as c_idx,
+                    metadata->>'page_number' as page_num,
+                    metadata->>'section_ref' as sec_ref,
+                    text
+                FROM legal_document_embeddings
+                WHERE metadata->>'file_path' = ?
+                  AND (metadata->>'chunk_index')::int BETWEEN ? AND ?
+                ORDER BY (metadata->>'chunk_index')::int ASC;
+                """;
+
+            for (int[] range : mergedIntervals) {
+                int start = range[0];
+                int end = range[1];
+
+                // Find the best score among seeds that contributed to this interval
+                Map<String, Object> bestSeed = docHits.stream()
+                        .filter(h -> {
+                            @SuppressWarnings("unchecked")
+                            Map<String, Object> m = (Map<String, Object>) h.get("metadata");
+                            int idx = ((Number) m.get("chunk_index")).intValue();
+                            return idx >= start - windowSize && idx <= end + windowSize;
+                        })
+                        .max(java.util.Comparator.comparingDouble(h -> ((Number) h.getOrDefault("score", 0.0)).doubleValue()))
+                        .orElse(docHits.get(0));
+
+                List<Map<String, Object>> sequence = jdbcTemplate.query(
+                        fetchSql,
+                        ps -> {
+                            ps.setString(1, filePath);
+                            ps.setInt(2, start);
+                            ps.setInt(3, end);
+                        },
+                        (rs, rowNum) -> {
+                            Map<String, Object> row = new HashMap<>();
+                            row.put("c_idx", rs.getInt("c_idx"));
+                            row.put("page_num", rs.getString("page_num"));
+                            row.put("sec_ref", rs.getString("sec_ref"));
+                            row.put("text", rs.getString("text"));
+                            return row;
+                        }
+                );
+
+                if (!sequence.isEmpty()) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> seedMeta = (Map<String, Object>) bestSeed.get("metadata");
+                    String docTitle = seedMeta != null && seedMeta.containsKey("doc_title") ? (String) seedMeta.get("doc_title") : "Statute";
+
+                    StringBuilder stitchedText = new StringBuilder();
+                    stitchedText.append(String.format("=== [%s | Continuous Chunks %d to %d (±%d Window)] ===\n\n", docTitle, start, end, windowSize));
+
+                    java.util.Set<String> sectionRefs = new java.util.LinkedHashSet<>();
+                    String firstPage = null;
+                    String lastPage = null;
+
+                    for (Map<String, Object> chunk : sequence) {
+                        String rawText = (String) chunk.get("text");
+                        String pNum = (String) chunk.get("page_num");
+                        String sRef = (String) chunk.get("sec_ref");
+
+                        if (pNum != null) {
+                            if (firstPage == null) firstPage = pNum;
+                            lastPage = pNum;
+                        }
+                        if (sRef != null && !sRef.isBlank() && !sRef.equalsIgnoreCase("Preamble / General Provisions")) {
+                            sectionRefs.add(sRef);
+                        }
+
+                        // Remove repetitive bracket headers for clean reading flow
+                        if (rawText != null) {
+                            String body = rawText;
+                            if (body.startsWith("[") && body.contains("]\n")) {
+                                body = body.substring(body.indexOf("]\n") + 2);
+                            }
+                            stitchedText.append(body.trim()).append("\n\n");
+                        }
+                    }
+
+                    Map<String, Object> expandedHit = new HashMap<>(bestSeed);
+                    expandedHit.put("text", stitchedText.toString().trim());
+                    expandedHit.put("is_window_expanded", true);
+                    expandedHit.put("window_start_chunk", start);
+                    expandedHit.put("window_end_chunk", end);
+                    expandedHit.put("window_chunk_count", sequence.size());
+
+                    Map<String, Object> updatedMeta = new HashMap<>(seedMeta != null ? seedMeta : Map.of());
+                    updatedMeta.put("window_chunks", String.format("%d-%d", start, end));
+                    if (firstPage != null && lastPage != null) {
+                        updatedMeta.put("page_range", firstPage.equals(lastPage) ? "Page " + firstPage : "Pages " + firstPage + "-" + lastPage);
+                    }
+                    if (!sectionRefs.isEmpty()) {
+                        updatedMeta.put("section_ref", String.join(" / ", sectionRefs));
+                    }
+                    expandedHit.put("metadata", updatedMeta);
+
+                    expandedResults.add(expandedHit);
+                } else {
+                    expandedResults.add(bestSeed);
+                }
+            }
+        }
+
+        // Add standalone hits (e.g., TKDL monographs)
+        expandedResults.addAll(standaloneHits);
+
+        // Keep highest scores first
+        expandedResults.sort((a, b) -> {
+            double sA = ((Number) a.getOrDefault("score", 0.0)).doubleValue();
+            double sB = ((Number) b.getOrDefault("score", 0.0)).doubleValue();
+            return Double.compare(sB, sA);
+        });
+
+        return expandedResults;
+    }
+
+    /**
      * Search pgvector strictly filtered by user-selected jurisdiction (Dense Vector Only)
      */
     public List<Map<String, Object>> searchLegalCorpus(String query, String jurisdiction, int maxResults, double minScore) {
