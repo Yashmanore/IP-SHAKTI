@@ -142,14 +142,15 @@ public class ChatOrchestratorService {
         String plantKey = extractPlantOrProductName(userMsg);
         ExternalPortalsPayload portals = externalPortalService.resolveAllPortals(plantKey);
 
-        // 3. Run Neon pgvector Dense Similarity Search
-        String searchQuery = userMsg + " " + plantKey + " Section 3p 3e Rule 158-B patentability";
-        List<Map<String, Object>> rawHits = legalSearchService.search(searchQuery, jurisdiction, 4);
+        // 3. Run Native PostgreSQL Hybrid RRF Search (Dense pgvector + Sparse BM25)
+        List<Map<String, Object>> rawHits = legalSearchService.searchHybrid(userMsg, jurisdiction, 4);
 
         List<StatutorySourceCitation> citations = new ArrayList<>();
         for (Map<String, Object> hit : rawHits) {
             String text = (String) hit.get("text");
+            Double confidence = (Double) hit.get("confidence");
             Double score = (Double) hit.get("score");
+            double displayScore = confidence != null ? confidence : (score != null ? Math.round(score * 100.0) / 100.0 : 0.85);
             @SuppressWarnings("unchecked")
             Map<String, Object> meta = (Map<String, Object>) hit.get("metadata");
 
@@ -163,7 +164,7 @@ public class ChatOrchestratorService {
                     jurisdiction,
                     text != null && text.length() > 300 ? text.substring(0, 300) + "..." : text,
                     sourceFile,
-                    score != null ? Math.round(score * 100.0) / 100.0 : 0.85
+                    displayScore
             ));
         }
 

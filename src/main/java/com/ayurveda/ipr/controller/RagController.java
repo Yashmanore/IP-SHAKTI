@@ -43,11 +43,30 @@ public class RagController {
     }
 
     /**
-     * Endpoint to query the legal RAG with strict jurisdiction filtering
+     * Endpoint to query the legal RAG using Hybrid Reciprocal Rank Fusion (pgvector HNSW + PostgreSQL BM25 FTS)
+     */
+    @GetMapping("/hybrid-search")
+    @Operation(
+            summary = "Hybrid Search (Dense pgvector + Sparse BM25 via Reciprocal Rank Fusion)",
+            description = "Executes fused search combining 384-dim HNSW vector cosine distance and PostgreSQL tsvector/ts_rank_cd full-text search with canonical k=60 RRF scoring to ensure zero-miss precision on exact statutory sections."
+    )
+    public ResponseEntity<List<Map<String, Object>>> searchHybrid(
+            @Parameter(description = "Natural language legal inquiry or statutory section", example = "Can I patent an Ashwagandha formulation under Section 3(p)?")
+            @RequestParam("query") String query,
+            @Parameter(description = "Jurisdiction filter (INDIA or INTERNATIONAL)", example = "INDIA")
+            @RequestParam(value = "jurisdiction", defaultValue = "INDIA") String jurisdiction,
+            @Parameter(description = "Maximum fused chunks to retrieve", example = "5")
+            @RequestParam(value = "maxResults", defaultValue = "5") int maxResults) {
+        List<Map<String, Object>> matches = searchService.searchHybrid(query, jurisdiction, maxResults);
+        return ResponseEntity.ok(matches);
+    }
+
+    /**
+     * Endpoint to query the legal RAG with strict jurisdiction filtering (Dense Vector Only)
      */
     @GetMapping("/search")
     @Operation(
-            summary = "Search legal vector corpus",
+            summary = "Search legal vector corpus (Dense Only)",
             description = "Performs dense vector similarity search with strict metadata filtering on jurisdiction (INDIA vs INTERNATIONAL) against the 2,026 legal chunks in Neon pgvector."
     )
     public ResponseEntity<List<Map<String, Object>>> search(

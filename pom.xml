@@ -18,7 +18,7 @@
     <description>IP-SHAKTI Sahayak - AI Assistant for Ayurveda IPR and Regulatory Guidance</description>
 
     <properties>
-        <java.version>21</java.version>
+        <java.version>17</java.version>
         <langchain4j.version>0.35.0</langchain4j.version>
     </properties>
 
