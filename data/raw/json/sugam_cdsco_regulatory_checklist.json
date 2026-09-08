@@ -1,0 +1,133 @@
+[
+  {
+    "category": "PHYTOMEDICINES_AND_NEW_BOTANICALS",
+    "portal": "CDSCO SUGAM Online Portal (cdscoonline.gov.in)",
+    "form_name": "Form 44 & Form CT-04",
+    "statutory_reference": "Drugs and Cosmetics Rules 1945, Rule 122-E & New Drugs and Clinical Trials Rules 2019",
+    "description": "Application for permission to conduct Clinical Trials and manufacture/import a Phytopharmaceutical Drug (defined as purified and standardized fraction with minimum 4 bioactive markers of botanical origin).",
+    "mandatory_dossier_requirements": [
+      "Botanical identification, geographical origin, and herbarium voucher specimen documentation",
+      "Chromatographic fingerprinting (HPLC / HPTLC / LC-MS) with quantified minimum 4 bioactive phytochemical markers",
+      "Heavy metal limits compliance (Lead < 10 ppm, Arsenic < 3 ppm, Cadmium < 0.3 ppm, Mercury < 1 ppm)",
+      "Pesticide residue testing (EPA / European Pharmacopoeia limits) and Aflatoxin testing (B1 < 2 ppb, Total < 4 ppb)",
+      "Non-clinical safety: Acute oral toxicity, 28-day sub-acute toxicity, Ames mutagenicity test",
+      "Phase I, Phase II, and Phase III clinical trial protocol approved by registered Institutional Ethics Committee (IEC)",
+      "Good Manufacturing Practice (GMP) certificate of manufacturing premises"
+    ],
+    "fee_structure_inr": "INR 50,000 for clinical trial permission; INR 2,00,000 for new phytopharmaceutical drug manufacturing permission.",
+    "average_timeline_days": "90 to 180 days for CDSCO Subject Expert Committee (SEC) review."
+  },
+  {
+    "category": "PROPRIETARY_AYURVEDIC_MEDICINE_CAT_A",
+    "portal": "State AYUSH e-Aushadhi / State Licensing Authority Portal",
+    "form_name": "Form 25-D (Direct Manufacturing License) & Form 24-D (Loan License)",
+    "statutory_reference": "Drugs and Cosmetics Rules 1945, Rule 158-B(1)(A)",
+    "description": "License to manufacture Proprietary Ayurvedic Medicines whose ingredients are all listed in First Schedule classical texts, with traditional indications and standard dosage forms.",
+    "mandatory_dossier_requirements": [
+      "Formulation composition with Sanskrit and botanical names of all raw ingredients",
+      "Exact citations from First Schedule authoritative texts establishing traditional medicinal use",
+      "Acute oral toxicity data (OECD Guideline 423) demonstrating safety in animal models",
+      "Batch Manufacturing Record (BMR) and shelf-life stability test protocol (minimum 3 years)",
+      "Schedule 'T' GMP compliance certificate for premises, water treatment, and machinery",
+      "Bio-data and appointment letter of full-time qualified Ayurvedic physician and analytical chemist"
+    ],
+    "fee_structure_inr": "INR 1,000 to INR 3,000 per product formulation depending on the State AYUSH authority.",
+    "average_timeline_days": "30 to 45 days."
+  },
+  {
+    "category": "PROPRIETARY_AYURVEDIC_MEDICINE_CAT_B",
+    "portal": "State AYUSH Licensing Authority Portal with Expert Technical Committee",
+    "form_name": "Form 25-D (New Indication / Modified Form)",
+    "statutory_reference": "Drugs and Cosmetics Rules 1945, Rule 158-B(1)(B)",
+    "description": "License for Proprietary Ayurvedic Medicines using classical ingredients but claiming a new therapeutic indication, modified dosage route (e.g. sublingual nano-drops), or altered ratio of components.",
+    "mandatory_dossier_requirements": [
+      "Full pharmacological rationale for the modification or new indication",
+      "Pilot Clinical Trial Report conducted on at least 30 patients under the supervision of a qualified MD (Ayurveda) physician or hospital",
+      "Acute and sub-acute (28-day) animal toxicity study reports from an approved testing laboratory",
+      "Accelerated and real-time stability testing data (minimum 6 months accelerated)",
+      "Proof of heavy metal, aflatoxin, microbial, and pesticide residue compliance",
+      "Schedule 'T' GMP certified manufacturing facility"
+    ],
+    "fee_structure_inr": "INR 5,000 to INR 10,000 per product formulation + clinical protocol inspection fees.",
+    "average_timeline_days": "60 to 90 days."
+  },
+  {
+    "category": "CLASSICAL_AYURVEDIC_FORMULATION",
+    "portal": "State AYUSH Licensing Authority Portal",
+    "form_name": "Form 25-D / Form 24-D (Shastriya Aushadhi)",
+    "statutory_reference": "Drugs and Cosmetics Act 1940, Section 3(a) & Rule 158-B",
+    "description": "Manufacturing license for traditional classical formulations directly matching recipes in authoritative books listed in the First Schedule (Charaka Samhita, Sushruta Samhita, Sharangadhara, etc.).",
+    "mandatory_dossier_requirements": [
+      "Exact name and shloka/verse citation of the classical scripture where the recipe is documented",
+      "Undertaking that no alteration has been made to the formulation ratio, processing method, or excipients",
+      "COMPLETELY EXEMPT from clinical trials and animal safety studies (legal presumption of safety)",
+      "Schedule 'T' GMP compliance of premises, raw herb authenticity testing, and finished product quality specs"
+    ],
+    "fee_structure_inr": "INR 500 to INR 2,000 per classical formulation.",
+    "average_timeline_days": "21 to 30 days."
+  },
+  {
+    "category": "AYURVEDIC_COSMETICS",
+    "portal": "State AYUSH Licensing Authority",
+    "form_name": "Form 32-A (Cosmetic Manufacturing License) & Form 32 (Loan License)",
+    "statutory_reference": "Drugs and Cosmetics Act 1940, Section 3(aaa) & Cosmetic Rules",
+    "description": "License to manufacture Ayurvedic cosmetics (Saundarya Prasadak) intended for external cleansing, beautification, or skin/hair vitality.",
+    "mandatory_dossier_requirements": [
+      "List of herbal ingredients with extraction methods and certificates of analysis (CoA)",
+      "Compliance with Bureau of Indian Standards (BIS) specifications for skin irritation, patch test, and ocular irritation",
+      "Heavy metals safety report (Lead < 20 ppm, Arsenic < 2 ppm, Mercury < 1 ppm)",
+      "Draft label layout strictly free from medicinal/disease cure claims",
+      "Qualified Ayurvedic or cosmetic chemist supervision proof"
+    ],
+    "fee_structure_inr": "INR 2,500 for license fee + INR 1,000 inspection fee.",
+    "average_timeline_days": "30 to 45 days."
+  },
+  {
+    "category": "AYURVEDA_AAHAR",
+    "portal": "Food Safety and Standards Authority of India (FOSCOS - foscos.fssai.gov.in)",
+    "form_name": "FSSAI Central Food Business Operator (FBO) License",
+    "statutory_reference": "Food Safety and Standards (Ayurveda Aahar) Regulations, 2022",
+    "description": "Mandatory central license for foods prepared in accordance with Ayurvedic recipes for nutritional support, dietary supplementation, and physiological harmony.",
+    "mandatory_dossier_requirements": [
+      "Evidence that all ingredients are documented in authoritative Ayurvedic texts (Schedule I books)",
+      "Strict declaration that the product is NOT for parenteral or injectable administration",
+      "Packaging layout displaying the official registered 'Ayurveda Aahar' logo on the principal display panel",
+      "Mandatory disclaimer: 'NOT FOR MEDICINAL USE - To be used as a dietary supplement only'",
+      "FSSAI Food Safety Plan, water test report, and food handler medical fitness certificates"
+    ],
+    "fee_structure_inr": "INR 7,500 per year for Central FSSAI License.",
+    "average_timeline_days": "30 to 45 days."
+  },
+  {
+    "category": "NBA_BIODIVERSITY_FORM_1",
+    "portal": "National Biodiversity Authority e-Filing Portal (absefiling.nic.in)",
+    "form_name": "NBA Form I (Access to Biological Resources / TK)",
+    "statutory_reference": "Biological Diversity Act 2002, Section 3 & BD Rules 2024 Rule 14",
+    "description": "Mandatory statutory application for non-Indian entities, NRIs, foreign citizens, or Indian companies with any foreign shareholding to access Indian biological resources or associated traditional knowledge for commercial utilization or research.",
+    "mandatory_dossier_requirements": [
+      "Detailed description of biological resource (botanical name, plant parts, quantity required)",
+      "Geographical location of harvest/collection and proof of local BMC (Biodiversity Management Committee) consultation",
+      "Executive summary of proposed commercial project, manufacturing process, and target markets",
+      "Benefit Sharing Agreement commitment: Undertaking to share 0.1% to 0.5% of ex-factory sales or 3.0% to 5.0% of purchase price with NBA",
+      "Criminal penalty warning: Accessing Indian biological resources without Form I approval is punishable with imprisonment up to 5 years and fines under Section 55"
+    ],
+    "fee_structure_inr": "INR 10,000 application fee payable to National Biodiversity Authority, Chennai.",
+    "average_timeline_days": "90 to 180 days."
+  },
+  {
+    "category": "NBA_BIODIVERSITY_FORM_3",
+    "portal": "National Biodiversity Authority e-Filing Portal (absefiling.nic.in)",
+    "form_name": "NBA Form III (Application for IPR / Patent Approval)",
+    "statutory_reference": "Biological Diversity Act 2002, Section 6 & BD Rules 2024 Rule 18",
+    "description": "Mandatory statutory approval required before applying for or sealing ANY Intellectual Property Right (patent) in India or outside India based on biological resources or traditional knowledge obtained from India.",
+    "mandatory_dossier_requirements": [
+      "Copy of patent application, patent specification, and claims filed or intended to be filed",
+      "Exact source and geographical origin of biological resources used in the patent specification",
+      "Declaration whether the patent applicant is an Indian citizen, Indian entity, or foreign entity",
+      "Benefit sharing proposal for commercial exploitation of the patent (0.2% to 1.0% royalty on sales)",
+      "Mandatory requirement: Indian Patent Office (IPO) will NOT grant a patent without Form III clearance under Section 6"
+    ],
+    "fee_structure_inr": "INR 500 for Indian individual / MSME; INR 10,000 for large entities / foreign applicants.",
+    "average_timeline_days": "60 to 120 days."
+  }
+]

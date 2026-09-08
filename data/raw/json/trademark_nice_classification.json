@@ -1,0 +1,96 @@
+[
+  {
+    "class_number": 5,
+    "class_heading": "Pharmaceuticals, medical and veterinary preparations; sanitary preparations for medical purposes; dietetic food and substances adapted for medical use.",
+    "ayush_applicability": "PRIMARY STATUTORY CLASS FOR AYURVEDIC MEDICINES & DRUGS",
+    "covered_goods": [
+      "Classical Ayurvedic Medicines (Asava, Arishta, Churna, Vati, Guti, Bhasma, Taila, Ghruta, Avaleha, Rasayanas)",
+      "Proprietary Ayurvedic Medicines (ASU drugs manufactured under State AYUSH Form 25-D / Form 24-D licenses)",
+      "Herbal medicinal extracts, purified botanical active pharmaceutical ingredients (APIs)",
+      "Medicated herbal skin balms, pain-relief liniments, and therapeutic joint oils",
+      "Phytopharmaceutical drugs approved under CDSCO Rule 122-E",
+      "Therapeutic herbal dietary supplements with clinical therapeutic claims"
+    ],
+    "trademark_rules_and_pitfalls": [
+      "Section 9(1)(b) Trade Marks Act 1999 Absolute Ground for Refusal: Descriptive marks and generic formulation names cannot be monopolized. Generic classical terms (e.g. 'Chyawanprash', 'Triphala Churna', 'Sitopaladi', 'Dashamularishta', 'Ashwagandharishta') CANNOT be registered as exclusive trademarks.",
+      "Landmark Judicial Precedent: In Dabur India Ltd. v. Shree Baidyanath Ayurved Bhawan Ltd. (ILR 2008 I Delhi 833), the Delhi High Court held that 'Chyawanprash' is a generic word from classical Ayurvedic scriptures and no single company can claim monopoly over it. Dabur was allowed to trademark 'Dabur Chyawanprash' but had to disclaim the exclusive right to 'Chyawanprash'.",
+      "Deceptive Similarity Precedent: In The Himalaya Drug Company v. SBL Limited (2010 (43) PTC 739 Del), the court held that Himalaya's mark 'Liv.52' had acquired extraordinary goodwill and SBL's mark 'LIV-T' for an Ayurvedic liver formulation was deceptively similar, infringing Section 29(2).",
+      "Filing Strategy: Always file a composite label consisting of an arbitrary/coined house brand prefix + the descriptive Ayurvedic formulation name, with an explicit disclaimer on the classical generic component."
+    ]
+  },
+  {
+    "class_number": 3,
+    "class_heading": "Non-medicated cosmetics and toiletry preparations; non-medicated dentifrices; perfumery, essential oils; bleaching preparations and other substances for laundry use.",
+    "ayush_applicability": "PRIMARY STATUTORY CLASS FOR AYURVEDIC COSMETICS (Saundarya Prasadak)",
+    "covered_goods": [
+      "Ayurvedic cosmetic face washes, herbal cleansers, and scrubs",
+      "Herbal non-medicinal hair vitality oils (Bhringraj oils, Amla hair oils), herbal shampoos, conditioners",
+      "Herbal anti-blemish face creams, serums (Kumkumadi Tailam cosmetic facial oils), lip balms",
+      "Traditional body cleansers, herbal bath powders (Ubtan / Snana Churna)",
+      "Essential oils extracted from Indian medicinal plants (Sandalwood oil, Lemongrass oil, Rose water/Gulab Jal)",
+      "Herbal dentifrices (Danta Manjan, herbal toothpastes, mouthwashes without therapeutic claims)"
+    ],
+    "trademark_rules_and_pitfalls": [
+      "Cross-Regime Borderline Danger: If a mark in Class 3 suggests disease cure or therapeutic treatment (e.g. 'PsoriasisHeal Oil' or 'EczemaFree Cream'), the Trade Marks Registry and State Licensing Authorities will treat it as a misbranded/unlicensed drug under Section 18 of the Drugs & Cosmetics Act.",
+      "Descriptive Words: Words like '100% Ayurvedic', 'Pure Herbal', 'Organic Haldi' are descriptive under Section 9 and must be disclaimed unless accompanied by a unique, distinctive logo/device mark."
+    ]
+  },
+  {
+    "class_number": 30,
+    "class_heading": "Coffee, tea, cocoa and artificial coffee; rice, pasta and noodles; tapioca and sago; flour and preparations made from cereals; bread, pastries and confectionery; spices; seasonings.",
+    "ayush_applicability": "PRIMARY CLASS FOR AYURVEDA AAHAR & HERBAL TEAS",
+    "covered_goods": [
+      "Ayurveda Aahar nutritional food products (FSSAI Ayurveda Aahar Regulations 2022)",
+      "Herbal infusions and herbal non-medicinal teas (Tulsi green tea, Ashwagandha tea, CCF tea - Cumin Coriander Fennel)",
+      "Ayurvedic spiced cooking churnas, Rasam powders, and nutritional herbal powders",
+      "Herbal honeys, fortified jaggery preparations, and botanical food spreads",
+      "Traditional roasted grain and pulse mixtures (Sattu, herbal porridges)"
+    ],
+    "trademark_rules_and_pitfalls": [
+      "Mandatory Food Disclaimer: Packaging and advertising must strictly avoid claiming disease cure to comply with FSSAI Advertising and Claims Regulations 2018.",
+      "Generic Agricultural Names: Words like 'Ginger Tea' or 'Turmeric Latte' cannot be registered without distinctive coined prefixes."
+    ]
+  },
+  {
+    "class_number": 31,
+    "class_heading": "Raw and unprocessed agricultural, aquacultural, horticultural and forestry products; raw and unprocessed grains and seeds; fresh fruits and vegetables, fresh herbs; natural plants and flowers.",
+    "ayush_applicability": "STATUTORY CLASS FOR RAW AYURVEDIC BOTANICAL RESOURCES",
+    "covered_goods": [
+      "Raw, dried, or whole medicinal plants, roots, rhizomes, and wild-collected herbs",
+      "Medicinal plant seeds, tubers, and propagation material for AYUSH cultivation",
+      "Fresh botanicals supplied by farmers to Ayurvedic drug manufacturers"
+    ],
+    "trademark_rules_and_pitfalls": [
+      "Biological Diversity Act Cross-Reference: Commercializing raw bio-resources under registered trademarks triggers Section 7 intimation to State Biodiversity Boards (SBB) for Indian entities, or Section 3 Form I prior approval for foreign entities.",
+      "Plant variety names registered under the PPV&FR Act 2001 cannot be registered as trademarks."
+    ]
+  },
+  {
+    "class_number": 44,
+    "class_heading": "Medical services; veterinary services; hygienic and beauty care for human beings or animals; agriculture, aquaculture, horticulture and forestry services.",
+    "ayush_applicability": "PRIMARY CLASS FOR AYURVEDIC HOSPITALS, PANCHAKARMA CLINICS & WELLNESS RETREATS",
+    "covered_goods": [
+      "Ayurvedic medical consultation services (Vaidya consultations, telemedicine)",
+      "Panchakarma treatment centers, Ayurvedic wellness resorts, and holistic healing clinics",
+      "Nadi Pariksha (pulse diagnosis) diagnostic clinics",
+      "Therapeutic spa and rejuvenation therapy centers operating on Ayurvedic principles"
+    ],
+    "trademark_rules_and_pitfalls": [
+      "Protection of Clinic Names: Essential for Ayurvedic healthcare providers to protect their hospital/clinic brand identity.",
+      "Descriptive Terms: Terms like 'Panchakarma Center' or 'Ayurvedic Wellness Clinic' must be disclaimed, protecting only the unique clinic prefix."
+    ]
+  },
+  {
+    "class_number": 41,
+    "class_heading": "Education; providing of training; entertainment; sporting and cultural activities.",
+    "ayush_applicability": "CLASS FOR AYURVEDIC ACADEMIES, YOGA SCHOOLS & WELLNESS TRAINING",
+    "covered_goods": [
+      "Conducting training workshops in Ayurveda, Panchakarma, and herbal medicine",
+      "Yoga teacher training certification academies and traditional lifestyle seminars",
+      "Publishing Ayurvedic medical journals, educational books, and digital courses"
+    ],
+    "trademark_rules_and_pitfalls": [
+      "Traditional Knowledge Defense: General Sanskrit educational terms ('Gurukula', 'Ayurveda Shiksha') cannot be monopolized."
+    ]
+  }
+]

@@ -1,0 +1,146 @@
+[
+  {
+    "gi_app_number": 47,
+    "gi_name": "Navara Rice (ഞവര അരി)",
+    "state_origin": "Kerala",
+    "botanical_identity": "Oryza sativa L. (medicinal black/gold awned ecotype)",
+    "ayurvedic_significance": "Crucial medicinal rice exclusively referenced in Ashtanga Hridaya and Charaka Samhita. Primary raw material used in Navarakkizhi (Shashtika Shali Pinda Sweda) Ayurvedic rejuvenation panchakarma therapy. High in polyphenols, oryzanol, and anti-inflammatory compounds.",
+    "protection_rules": "Governed by Geographical Indications of Goods Act, 1999. Only cultivators in the demarcated geographical tracts of Palakkad, Malappuram, and Wayanad registered as Authorized Users can market rice as 'Navara Rice'. Commercial AYUSH manufacturers using Navara rice must ensure authenticity and source verification."
+  },
+  {
+    "gi_app_number": 49,
+    "gi_name": "Malabar Pepper (മലബാർ കുരുമുളക്)",
+    "state_origin": "Kerala, Karnataka, Tamil Nadu",
+    "botanical_identity": "Piper nigrum L. (Panniyur & Karimunda cultivars)",
+    "ayurvedic_significance": "One of the three pillars of 'Trikatu' (Pippali, Maricha, Shunti), the fundamental Ayurvedic bioavailability enhancer (Yogavahi). Rich in piperine, which enhances intestinal absorption of withanolides and curcumin. Extensively used in respiratory and digestive formulations.",
+    "protection_rules": "Prohibits unauthorized use of the 'Malabar' geographical name for black pepper cultivated outside the Western Ghats region. Section 22 infringement actions apply for deceptive origin labelling."
+  },
+  {
+    "gi_app_number": 278,
+    "gi_name": "Erode Manjal / Erode Turmeric",
+    "state_origin": "Tamil Nadu",
+    "botanical_identity": "Curcuma longa L. (Chinadan & Naadan varieties)",
+    "ayurvedic_significance": "High-curcumin (3.5% to 4.5%) golden-yellow rhizome traditionally cultivated along the Bhavani and Kaveri river basins. Renowned in Siddha and Ayurveda for high anti-inflammatory and antiseptic potency.",
+    "protection_rules": "Protected under GI Act 1999. Third parties marketing generic turmeric powder cannot label it as 'Erode Turmeric' unless certified by the Erode Turmeric Merchants Association Authorized User registry."
+  },
+  {
+    "gi_app_number": 635,
+    "gi_name": "Kashmir Saffron (Kashmiri Kesar / Kumkuma)",
+    "state_origin": "Jammu & Kashmir",
+    "botanical_identity": "Crocus sativus L.",
+    "ayurvedic_significance": "Only saffron in the world grown at an altitude of 1,600m to 1,800m above mean sea level. Revered in Charaka Samhita as 'Varnya' (complexion enhancer) and 'Tridoshahara'. Primary active ingredient in Kumkumadi Tailam and classical anti-aging formulations. Exceptionally high safranal, crocin, and picrocrocin content.",
+    "protection_rules": "Strict GI enforcement. Saffron harvested outside the Karewas of Kashmir (Pampore, Srinagar, Kishtwar) cannot use the Kashmiri Saffron GI tag. Testing and certification handled by National Saffron Mission."
+  },
+  {
+    "gi_app_number": 35,
+    "gi_name": "Alleppey Green Cardamom (ഏലക്ക)",
+    "state_origin": "Kerala",
+    "botanical_identity": "Elettaria cardamomum (L.) Maton",
+    "ayurvedic_significance": "Known as 'Ela' in Ayurveda. Part of the 'Trisugandhi' and 'Chaturbhadra' aromatic drug groups. Digestive stimulant (Deepana-Pachana), mouth refresher, and carminative used in Eladi Vati and Sitopaladi Churna.",
+    "protection_rules": "Protected GI product. Cardamom harvested outside the Travancore-Cochin Cardamom Hills cannot be designated as Alleppey Green Cardamom."
+  },
+  {
+    "gi_app_number": 562,
+    "gi_name": "Nilambur Teak (നിലമ്പൂർ തേക്ക്)",
+    "state_origin": "Kerala",
+    "botanical_identity": "Tectona grandis L.f.",
+    "ayurvedic_significance": "Bark, wood, and flowers referenced in classical texts for Kaphapittahara and blood-purifying properties. Historically used for carving Ayurvedic treatment tables (Droni) due to resistance to medicated oils and termite decay.",
+    "protection_rules": "Protected GI timber. High wood density and antioxidant extractive content due to specific micro-climate of Nilambur."
+  },
+  {
+    "gi_app_number": 133,
+    "gi_name": "Pokkali Rice (പൊക്കാളി അരി)",
+    "state_origin": "Kerala",
+    "botanical_identity": "Oryza sativa L. (saline-tolerant heritage cultivar)",
+    "ayurvedic_significance": "Remarkable salt-tolerant heritage organic rice cultivated in the tidal coastal zones of Ernakulam, Alappuzha, and Thrissur. Highly praised in folk Ayurveda for post-operative recovery, low glycemic index, and building physical vitality (Ojas).",
+    "protection_rules": "Certified GI product. Must be harvested from organic Pokkali rotational shrimp-rice paddy ecosystems."
+  },
+  {
+    "gi_app_number": 435,
+    "gi_name": "Kalanamak Rice (काला नमक चावल)",
+    "state_origin": "Uttar Pradesh",
+    "botanical_identity": "Oryza sativa L. (scented black-husk rice)",
+    "ayurvedic_significance": "Known as 'Buddha's Rice'. Celebrated in Buddhist and Ayurvedic folklore for high iron, zinc, and antioxidant anthocyanin levels. Used in nutritional convalescence regimens for balancing Pitta and Vata.",
+    "protection_rules": "Demarcated to the Terai belt of Eastern Uttar Pradesh (Siddharthnagar, Sant Kabir Nagar, Basti, Gorakhpur, Maharajganj)."
+  },
+  {
+    "gi_app_number": 68,
+    "gi_name": "Ganjam Kewda Rooh / Flower Oil (केवड़ा)",
+    "state_origin": "Odisha",
+    "botanical_identity": "Pandanus odorifer (Forssk.) Kuntze",
+    "ayurvedic_significance": "Reverently known as 'Ketaki' in classical texts. Renowned as a nervine sedative, cardiac cooler, and aromatic carminative. Essential ingredient in classical perfumery and cooling syrups.",
+    "protection_rules": "Over 90% of India's Kewda oil is produced along the Ganjam coastal strip. Unauthorized synthetic approximations cannot be sold as Ganjam Kewda."
+  },
+  {
+    "gi_app_number": 1,
+    "gi_name": "Darjeeling Tea (दार्जिलिंग चाय)",
+    "state_origin": "West Bengal",
+    "botanical_identity": "Camellia sinensis (L.) Kuntze",
+    "ayurvedic_significance": "High-altitude antioxidant-rich tea containing catechins, L-theanine, and theaflavins. Used in modern herbal adaptations as a metabolic booster and cognitive stimulant.",
+    "protection_rules": "India's very first GI registration (GI No. 1). Strict enforcement under the Tea Act 1953 and GI Act 1999."
+  },
+  {
+    "gi_app_number": 8,
+    "gi_name": "Kangra Tea (कांगड़ा चाय)",
+    "state_origin": "Himachal Pradesh",
+    "botanical_identity": "Camellia sinensis var. sinensis",
+    "ayurvedic_significance": "Unique terpene-rich orthodox green and black teas grown along the Dhauladhar mountain range. High EGCG content supporting anti-inflammatory and cellular longevity actions.",
+    "protection_rules": "Protected under both Indian GI law and European Union Protected Geographical Indication (PGI) status."
+  },
+  {
+    "gi_app_number": 88,
+    "gi_name": "Coorg Green Cardamom (കൂർഗ് ഏലക്ക)",
+    "state_origin": "Karnataka",
+    "botanical_identity": "Elettaria cardamomum (Vazhukka cultivar)",
+    "ayurvedic_significance": "Unique high-cineole green cardamom grown under shaded canopy trees in Kodagu. Aromatic digestive stimulant (Agnideepani) and mouth refresher.",
+    "protection_rules": "Reserved exclusively for producers within the Kodagu district boundary."
+  },
+  {
+    "gi_app_number": 530,
+    "gi_name": "Sirsi Supari (सिर्सी सुपारी)",
+    "state_origin": "Karnataka",
+    "botanical_identity": "Areca catechu L.",
+    "ayurvedic_significance": "Known as 'Pooga' in Ayurveda. Key astringent ingredient in classical Tambula (betel leaf digestive chew) and mouth fresheners. Exhibits strong Kaphahara and Krumihara (anti-parasitic) properties.",
+    "protection_rules": "First arecanut to receive GI tag in India. Renowned for round shape, ash-colored exterior, and mellow taste."
+  },
+  {
+    "gi_app_number": 579,
+    "gi_name": "Marayoor Jaggery / Marayoor Sarkkara (മറയൂർ ശർക്കര)",
+    "state_origin": "Kerala",
+    "botanical_identity": "Saccharum officinarum L.",
+    "ayurvedic_significance": "Pure, unrefined heritage jaggery produced by the Muthuvan tribal community of the Western Ghats. Free from synthetic chemicals or sodium hydrosulphite. Prime Ayurvedic formulation base ('Guda') used in Asavas, Arishtas, and Rasayanas.",
+    "protection_rules": "Recognized for high iron content and sweetness derived from the unique rain-shadow climate of Marayoor."
+  },
+  {
+    "gi_app_number": 372,
+    "gi_name": "Naga Mircha / King Chilli (राजा मिर्च)",
+    "state_origin": "Nagaland",
+    "botanical_identity": "Capsicum chinense Jacq.",
+    "ayurvedic_significance": "Historically one of the hottest natural peppers (over 1,000,000 Scoville Heat Units). High capsaicin content used in tribal indigenous medicine for topical counter-irritant pain relief, neuralgia, and stimulation of sluggish metabolism.",
+    "protection_rules": "Protected GI of Nagaland. Any commercial extraction of capsaicin must comply with Nagaland State Biodiversity Board ABS rules."
+  },
+  {
+    "gi_app_number": 178,
+    "gi_name": "Wayanad Jeerakasala Rice (ജീരകശാല അരി)",
+    "state_origin": "Kerala",
+    "botanical_identity": "Oryza sativa L. (scented short-grain)",
+    "ayurvedic_significance": "Fine aromatic medicinal rice historically cultivated by Wayanad tribal farmers. Known for easy digestibility (Laghu), cooling potency (Sheeta Veerya), and nourishment of digestive fire.",
+    "protection_rules": "Exclusive to the high-altitude Wayanad plateau agro-climatic tract."
+  },
+  {
+    "gi_app_number": 179,
+    "gi_name": "Wayanad Gandhakasala Rice (ഗന്ധകശാല അരി)",
+    "state_origin": "Kerala",
+    "botanical_identity": "Oryza sativa L.",
+    "ayurvedic_significance": "Fragrant heritage rice renowned for its high mineral density, pleasant natural scent, and role in recuperative diets for balancing Pitta disorders.",
+    "protection_rules": "Protected tribal heritage grain registered under the GI Act 1999."
+  },
+  {
+    "gi_app_number": 232,
+    "gi_name": "Joha Rice of Assam (जहा चावल)",
+    "state_origin": "Assam",
+    "botanical_identity": "Oryza sativa L.",
+    "ayurvedic_significance": "Specialty aromatic rice endemic to the Brahmaputra valley. Scientifically validated to contain linoleic acid, GABA, and anti-diabetic aroma compounds that help lower blood glucose spikes.",
+    "protection_rules": "Protected GI asset of Assam agriculture."
+  }
+]

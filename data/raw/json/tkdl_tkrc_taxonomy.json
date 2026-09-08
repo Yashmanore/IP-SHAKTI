@@ -1,0 +1,435 @@
+[
+  {
+    "id": "TKDL-001",
+    "sanskrit_name": "Ashwagandha (अश्वगंधा)",
+    "common_names": ["Indian Ginseng", "Winter Cherry", "Asgandh"],
+    "botanical_name": "Withania somnifera (L.) Dunal",
+    "family": "Solanaceae",
+    "tkrc_ipc_code": "A61K 36/81",
+    "classical_references": [
+      {"treatise": "Charaka Samhita", "section": "Chikitsa Sthana, Chapter 1 (Rasayana Adhyaya)"},
+      {"treatise": "Sushruta Samhita", "section": "Sutra Sthana, Chapter 39"},
+      {"treatise": "Bhavaprakasha Nighantu", "section": "Guduchyadi Varga, Shloka 189-190"}
+    ],
+    "traditional_indications": ["Rasayana (rejuvenator)", "Balya (strength promoter)", "Vata-hara (nervous system tonic)", "Nidrajanana (sleep inducing)", "Shukrala (aphrodisiac)"],
+    "classical_formulations": ["Ashwagandharishta", "Ashwagandhadi Lehya", "Ashwagandha Churna", "Ashwagandha Ghrita"],
+    "section_3p_prior_art_trigger": "HIGH RISK. Any patent claim covering raw root powder, hydroalcoholic crude extract, or classical therapeutic uses (stress, anxiety, vigor, arthritis) is strictly barred under Section 3(p) and Section 3(e) due to prior documentation in TKDL.",
+    "patentable_innovation_window": "Patentable under Section 2(1)(j): Novel standardized withanolide delivery systems (lipid nanoparticles, liposomal carriers, sustained-release microcapsules), verified non-obvious synergistic combinations, and novel extraction processes isolating specific purified fractions."
+  },
+  {
+    "id": "TKDL-002",
+    "sanskrit_name": "Haridra / Nisha (हरिद्रा / हल्दी)",
+    "common_names": ["Turmeric", "Haldi", "Yellow Zedoary"],
+    "botanical_name": "Curcuma longa L.",
+    "family": "Zingiberaceae",
+    "tkrc_ipc_code": "A61K 36/9066",
+    "classical_references": [
+      {"treatise": "Charaka Samhita", "section": "Sutra Sthana, Chapter 4 (Lekhaniya, Kusthaghna Dashemani)"},
+      {"treatise": "Sushruta Samhita", "section": "Sutra Sthana, Chapter 38"},
+      {"treatise": "Ashtanga Hridaya", "section": "Sutra Sthana, Chapter 15"}
+    ],
+    "traditional_indications": ["Kusthaghna (anti-dermatosis)", "Vranaropana (wound healing)", "Pramehaghna (anti-diabetic)", "Vishaghna (anti-toxic)", "Krimighna (anti-microbial)"],
+    "classical_formulations": ["Haridra Khanda", "Nisha Amalaki Churna", "Khadiradi Vati"],
+    "section_3p_prior_art_trigger": "CRITICAL REJECTION TRIGGER. Historic precedent: US Patent No. 5,401,504 for wound healing was revoked by USPTO upon TKDL submitting 32 classical citations. Any claim on Curcuma longa or crude curcumin for wound healing, skin inflammation, or blood purification faces an absolute Section 3(p) bar.",
+    "patentable_innovation_window": "Patentable: High bio-availability formulations overcoming curcumin's poor water solubility (SEDDS, phytosomes, phospholipid complexes), synthetic curcumin analogs, or novel non-obvious combinations with statistical synergism."
+  },
+  {
+    "id": "TKDL-003",
+    "sanskrit_name": "Tulasi / Surasa (तुलसी)",
+    "common_names": ["Holy Basil", "Sacred Basil"],
+    "botanical_name": "Ocimum sanctum L. / Ocimum tenuiflorum L.",
+    "family": "Lamiaceae",
+    "tkrc_ipc_code": "A61K 36/53",
+    "classical_references": [
+      {"treatise": "Charaka Samhita", "section": "Chikitsa Sthana, Chapter 17 (Hikka-Shwasa Chikitsa)"},
+      {"treatise": "Bhavaprakasha Nighantu", "section": "Pushpa Varga"},
+      {"treatise": "Dhanvantari Nighantu", "section": "Karaviradi Varga"}
+    ],
+    "traditional_indications": ["Kaphaghna (anti-tussive)", "Kasahara (relieves cough)", "Shwasahara (relieves asthma)", "Jvaraghna (anti-pyretic)", "Hridya (cardioprotective)"],
+    "classical_formulations": ["Tribhuvankirti Rasa", "Surasadi Gana Kashaya", "Tulasi Swarasa"],
+    "section_3p_prior_art_trigger": "HIGH RISK. Any patent claiming Ocimum sanctum extracts or blends for respiratory ailments, viral fevers, or cough is barred by TKDL references under Section 3(p).",
+    "patentable_innovation_window": "Patentable: Isolated active fractions (e.g., eugenol-depleted rosmarinic acid concentrates) with proven synergistic antiviral activity, or proprietary aerosolized pulmonary delivery devices."
+  },
+  {
+    "id": "TKDL-004",
+    "sanskrit_name": "Nimba / Arishta (निम्ब / नीम)",
+    "common_names": ["Neem", "Margosa Tree", "Indian Lilac"],
+    "botanical_name": "Azadirachta indica A. Juss.",
+    "family": "Meliaceae",
+    "tkrc_ipc_code": "A61K 36/58",
+    "classical_references": [
+      {"treatise": "Charaka Samhita", "section": "Sutra Sthana, Chapter 27"},
+      {"treatise": "Sushruta Samhita", "section": "Sutra Sthana, Chapter 45"},
+      {"treatise": "Bhavaprakasha Nighantu", "section": "Guduchyadi Varga"}
+    ],
+    "traditional_indications": ["Kandughna (relieves pruritus/itching)", "Krimighna (anti-parasitic)", "Vranashodhana (wound cleanser)", "Pittahara", "Lekhaniya"],
+    "classical_formulations": ["Nimbadi Kashaya", "Nimbadi Taila", "Panchatikta Ghrita Guggulu"],
+    "section_3p_prior_art_trigger": "CRITICAL REJECTION TRIGGER. Historic revocation of European Patent EPO 436257 (anti-fungal neem extract) by EPO Board of Appeal based on traditional knowledge. Any broad fungicidal, insecticidal, or topical antibacterial claims on neem extract are rejected under Section 3(p).",
+    "patentable_innovation_window": "Patentable: Novel solvent-free selective azadirachtin extraction processes yielding zero toxic residue, or stabilized nano-emulsions for non-agricultural dermatological applications."
+  },
+  {
+    "id": "TKDL-005",
+    "sanskrit_name": "Guggulu (गुग्गुलु)",
+    "common_names": ["Indian Bdellium", "Guggul"],
+    "botanical_name": "Commiphora mukul (Stocks) Hook. / Commiphora wightii",
+    "family": "Burseraceae",
+    "tkrc_ipc_code": "A61K 36/328",
+    "classical_references": [
+      {"treatise": "Sushruta Samhita", "section": "Sutra Sthana, Chapter 15 (Medoroga Chikitsa)"},
+      {"treatise": "Charaka Samhita", "section": "Sutra Sthana, Chapter 25"},
+      {"treatise": "Bhavaprakasha Nighantu", "section": "Vatadi Varga"}
+    ],
+    "traditional_indications": ["Medohara (hypolipidemic, anti-obesity)", "Amavataghna (rheumatoid arthritis relief)", "Sandhivata (osteoarthritis)", "Bhagnasandhanakrit (bone healing)"],
+    "classical_formulations": ["Yogaraja Guggulu", "Kaishore Guggulu", "Simhanada Guggulu", "Medohar Guggulu"],
+    "section_3p_prior_art_trigger": "HIGH RISK. Any claim covering guggul resin for cholesterol lowering, lipid management, or joint pain is barred under Section 3(p) as traditional knowledge.",
+    "patentable_innovation_window": "Patentable: High-purity E- and Z-guggulsterone isolation and standardization processes, novel enteric formulations preventing gastrointestinal irritation, or synthetic derivatives."
+  },
+  {
+    "id": "TKDL-006",
+    "sanskrit_name": "Guduchi / Amrita (गुडूची / गिलोय)",
+    "common_names": ["Heart-leaved Moonseed", "Giloy", "Tinospora"],
+    "botanical_name": "Tinospora cordifolia (Willd.) Miers",
+    "family": "Menispermaceae",
+    "tkrc_ipc_code": "A61K 36/59",
+    "classical_references": [
+      {"treatise": "Charaka Samhita", "section": "Chikitsa Sthana, Chapter 1 (Rasayana)"},
+      {"treatise": "Bhavaprakasha Nighantu", "section": "Guduchyadi Varga, Shloka 1-10"},
+      {"treatise": "Sushruta Samhita", "section": "Sutra Sthana, Chapter 38"}
+    ],
+    "traditional_indications": ["Jvaraghna (anti-pyretic)", "Rasayana (immunomodulator)", "Deepaniya (digestive fire booster)", "Pramehaghna", "Vatarakta (gout relief)"],
+    "classical_formulations": ["Guduchi Satva", "Amritarishta", "Sudarshana Churna", "Samshamani Vati"],
+    "section_3p_prior_art_trigger": "HIGH RISK. Uses for chronic fever, immune stimulation, and liver tonic are heavily documented in TKDL. Claims on crude Guduchi starch (Satva) or aqueous extract are barred.",
+    "patentable_innovation_window": "Patentable: Standardized arabinogalactan polysaccharide fractions with validated targeted cytokine-modulation assays, or shelf-stable liquid formulations preventing degradation of active tinosporoside."
+  },
+  {
+    "id": "TKDL-007",
+    "sanskrit_name": "Shatavari (शतावरी)",
+    "common_names": ["Wild Asparagus", "Satavar"],
+    "botanical_name": "Asparagus racemosus Willd.",
+    "family": "Asparagaceae",
+    "tkrc_ipc_code": "A61K 36/896",
+    "classical_references": [
+      {"treatise": "Charaka Samhita", "section": "Chikitsa Sthana, Chapter 30 (Yonivyapat Chikitsa)"},
+      {"treatise": "Sushruta Samhita", "section": "Sharira Sthana, Chapter 10"},
+      {"treatise": "Ashtanga Hridaya", "section": "Uttara Tantra, Chapter 39"}
+    ],
+    "traditional_indications": ["Stanyajanana (galactagogue)", "Shukrala (reproductive tonic)", "Rasayana", "Pittahara", "Medhya (cognitive support)"],
+    "classical_formulations": ["Shatavari Ghruta", "Shatavaryadi Churna", "Phala Ghruta"],
+    "section_3p_prior_art_trigger": "HIGH RISK. Patent claims on Asparagus racemosus for female reproductive health, lactation enhancement, or gastric ulcers face direct Section 3(p) objections.",
+    "patentable_innovation_window": "Patentable: Purified shatavarin IV-enriched extracts demonstrating enhanced pharmacokinetic bioavailability, or controlled-release formulations for menopausal hormone regulation."
+  },
+  {
+    "id": "TKDL-008",
+    "sanskrit_name": "Brahmi (ब्राह्मी)",
+    "common_names": ["Water Hyssop", "Herb of Grace", "Jalanimba"],
+    "botanical_name": "Bacopa monnieri (L.) Wettst.",
+    "family": "Plantaginaceae",
+    "tkrc_ipc_code": "A61K 36/68",
+    "classical_references": [
+      {"treatise": "Charaka Samhita", "section": "Sharira Sthana, Chapter 8"},
+      {"treatise": "Sushruta Samhita", "section": "Chikitsa Sthana, Chapter 28"},
+      {"treatise": "Bhavaprakasha Nighantu", "section": "Guduchyadi Varga"}
+    ],
+    "traditional_indications": ["Medhya (memory booster)", "Ayushya (longevity enhancer)", "Smritiprada (cognition enhancer)", "Kushthaghna", "Unmadahara (alleviates psychosis)"],
+    "classical_formulations": ["Brahmi Ghrita", "Brahmi Vati", "Saraswatarishta"],
+    "section_3p_prior_art_trigger": "HIGH RISK. Any composition claim for cognitive enhancement, Alzheimer's prevention, or memory boosting using Bacopa monnieri is rejected under Section 3(p).",
+    "patentable_innovation_window": "Patentable: Bacoside A and B enrichment processes achieving >55% purity with heavy metal remediation below 1 ppm, or blood-brain barrier (BBB) crossing liposomal nano-carriers."
+  },
+  {
+    "id": "TKDL-009",
+    "sanskrit_name": "Amalaki / Dhatri (आमलकी / आँवला)",
+    "common_names": ["Indian Gooseberry", "Amla"],
+    "botanical_name": "Phyllanthus emblica L. / Emblica officinalis Gaertn.",
+    "family": "Phyllanthaceae",
+    "tkrc_ipc_code": "A61K 36/47",
+    "classical_references": [
+      {"treatise": "Charaka Samhita", "section": "Chikitsa Sthana, Chapter 1:1 (Chyawanprash Awaleha)"},
+      {"treatise": "Sushruta Samhita", "section": "Sutra Sthana, Chapter 46"},
+      {"treatise": "Bhavaprakasha Nighantu", "section": "Haritakyadi Varga, Shloka 38-41"}
+    ],
+    "traditional_indications": ["Rasayana (anti-aging)", "Chakshushya (vision enhancer)", "Vayahsthapana (longevity)", "Pramehaghna", "Vrishya"],
+    "classical_formulations": ["Chyawanprash", "Triphala Churna", "Dhatri Lauha", "Brahma Rasayana"],
+    "section_3p_prior_art_trigger": "ABSOLUTE BAR. Primary ingredient of Chyawanprash and Triphala. Claims on vitamin C retention, antioxidant capacity, or hair vitality using raw amla juice/extract are completely barred under Section 3(p).",
+    "patentable_innovation_window": "Patentable: Low-temperature vacuum microwave drying retaining polyphenolic stability, isolated low-molecular-weight hydrolyzable tannins (emblicanin A & B) in standardized therapeutic complexes."
+  },
+  {
+    "id": "TKDL-010",
+    "sanskrit_name": "Haritaki / Abhaya (हरीतकी / हरड़)",
+    "common_names": ["Chebulic Myrobalan", "Harad"],
+    "botanical_name": "Terminalia chebula Retz.",
+    "family": "Combretaceae",
+    "tkrc_ipc_code": "A61K 36/185",
+    "classical_references": [
+      {"treatise": "Charaka Samhita", "section": "Chikitsa Sthana, Chapter 1:1, Shloka 29-34"},
+      {"treatise": "Bhavaprakasha Nighantu", "section": "Haritakyadi Varga, Shloka 1-37"}
+    ],
+    "traditional_indications": ["Tridoshahara", "Anulomana (mild laxative)", "Deepana-Pachana", "Rasayana", "Kanthya (throat care)"],
+    "classical_formulations": ["Triphala Churna", "Abhayarishta", "Haritaki Khanda", "Agastya Haritaki"],
+    "section_3p_prior_art_trigger": "HIGH RISK. Any patent claiming bowel regulation, wound washing, or digestive tonics using Haritaki is rejected under Section 3(p).",
+    "patentable_innovation_window": "Patentable: Standardized chebulagic acid fractions demonstrating targeted matrix metalloproteinase (MMP) inhibition in osteoarthritis."
+  },
+  {
+    "id": "TKDL-011",
+    "sanskrit_name": "Bibhitaki / Vibhitaka (विभीतक / बहेड़ा)",
+    "common_names": ["Belleric Myrobalan", "Baheda"],
+    "botanical_name": "Terminalia bellirica (Gaertn.) Roxb.",
+    "family": "Combretaceae",
+    "tkrc_ipc_code": "A61K 36/185",
+    "classical_references": [
+      {"treatise": "Charaka Samhita", "section": "Sutra Sthana, Chapter 4"},
+      {"treatise": "Bhavaprakasha Nighantu", "section": "Haritakyadi Varga"}
+    ],
+    "traditional_indications": ["Kaphapittahara", "Bhedana", "Netrahita (eye beneficial)", "Keshya (hair tonic)", "Kasahara"],
+    "classical_formulations": ["Triphala Churna", "Talishadi Churna", "Lavangadi Vati"],
+    "section_3p_prior_art_trigger": "HIGH RISK. Third component of Triphala. Throat lozenges or cough syrups containing crude Bibhitaki extracts are rejected under Section 3(p).",
+    "patentable_innovation_window": "Patentable: Standardized bellericanin/gallic acid complexes with targeted uric-acid lowering (xanthine oxidase inhibition) properties in gout therapeutics."
+  },
+  {
+    "id": "TKDL-012",
+    "sanskrit_name": "Arjuna (अर्जुन)",
+    "common_names": ["Arjun Tree", "White Marudah"],
+    "botanical_name": "Terminalia arjuna (Roxb. ex DC.) Wight & Arn.",
+    "family": "Combretaceae",
+    "tkrc_ipc_code": "A61K 36/185",
+    "classical_references": [
+      {"treatise": "Charaka Samhita", "section": "Chikitsa Sthana, Chapter 26 (Trimarmiya Chikitsa)"},
+      {"treatise": "Chakradatta", "section": "Hridroga Chikitsa"},
+      {"treatise": "Bhavaprakasha Nighantu", "section": "Vatadi Varga"}
+    ],
+    "traditional_indications": ["Hridya (cardiotonic)", "Kshata-Kshinahara", "Medohara", "Bhagnasandhana", "Raktapittahara"],
+    "classical_formulations": ["Arjunarishta (Parthadhyarishta)", "Arjuna Ksheerapaka", "Kakubhadi Churna"],
+    "section_3p_prior_art_trigger": "CRITICAL REJECTION TRIGGER. Landmark traditional cardioprotective herb. Any patent claiming Terminalia arjuna bark extract for heart failure, angina, hypertension, or ischemic heart disease will be struck down under Section 3(p).",
+    "patentable_innovation_window": "Patentable: Standardized arjunic acid / arjunetin sub-lingual delivery wafers or micro-emulsions showing rapid absorption during acute myocardial ischemia."
+  },
+  {
+    "id": "TKDL-013",
+    "sanskrit_name": "Shunthi / Nagara (शुण्ठी / सोंठ)",
+    "common_names": ["Dry Ginger", "Zingiber"],
+    "botanical_name": "Zingiber officinale Roscoe",
+    "family": "Zingiberaceae",
+    "tkrc_ipc_code": "A61K 36/9068",
+    "classical_references": [
+      {"treatise": "Charaka Samhita", "section": "Sutra Sthana, Chapter 4 (Triptighna, Arshoghna Dashemani)"},
+      {"treatise": "Bhavaprakasha Nighantu", "section": "Haritakyadi Varga"}
+    ],
+    "traditional_indications": ["Deepana (digestive stimulant)", "Pachana", "Vatakaphahara", "Shoolaprashamana (pain reliever)", "Hridya"],
+    "classical_formulations": ["Trikatu Churna", "Saubhagya Shunthi Paka", "Shunthi Ghrita"],
+    "section_3p_prior_art_trigger": "ABSOLUTE BAR. Dry ginger is extensively documented for nausea, motion sickness, digestive fire, and joint stiffness. Barred under Section 3(p) and Section 3(e).",
+    "patentable_innovation_window": "Patentable: High-concentration 6-shogaol and 6-gingerol stabilized nano-capsules protecting volatiles against gastric acid breakdown."
+  },
+  {
+    "id": "TKDL-014",
+    "sanskrit_name": "Pippali / Magadhi (पिप्पली)",
+    "common_names": ["Indian Long Pepper"],
+    "botanical_name": "Piper longum L.",
+    "family": "Piperaceae",
+    "tkrc_ipc_code": "A61K 36/67",
+    "classical_references": [
+      {"treatise": "Charaka Samhita", "section": "Chikitsa Sthana, Chapter 1:3 (Pippali Rasayana)"},
+      {"treatise": "Sushruta Samhita", "section": "Sutra Sthana, Chapter 38"},
+      {"treatise": "Bhavaprakasha Nighantu", "section": "Haritakyadi Varga"}
+    ],
+    "traditional_indications": ["Kasahara", "Shwasahara", "Rasayana", "Krimighna", "Yogavahi (bioavailability enhancer)"],
+    "classical_formulations": ["Pippalyasava", "Trikatu Churna", "Pippali Rasayana", "Sitopaladi Churna"],
+    "section_3p_prior_art_trigger": "CRITICAL REJECTION TRIGGER. Classical Ayurvedic concept of 'Yogavahi' (catalytic bioavailability enhancement). Any claim asserting piperine enhances drug absorption without unexpected synergism is barred under Section 3(p) as traditional knowledge.",
+    "patentable_innovation_window": "Patentable: Novel synthetic piperlongumine derivatives with proven selective cancer-cell apoptosis and zero toxicity to healthy cells."
+  },
+  {
+    "id": "TKDL-015",
+    "sanskrit_name": "Yashtimadhu / Madhuka (यष्टिमधु / मुलेठी)",
+    "common_names": ["Licorice", "Mulethi"],
+    "botanical_name": "Glycyrrhiza glabra L.",
+    "family": "Fabaceae",
+    "tkrc_ipc_code": "A61K 36/484",
+    "classical_references": [
+      {"treatise": "Charaka Samhita", "section": "Sutra Sthana, Chapter 4 (Kanthya, Varnya Dashemani)"},
+      {"treatise": "Bhavaprakasha Nighantu", "section": "Haritakyadi Varga"}
+    ],
+    "traditional_indications": ["Kanthya (throat soothing)", "Chakshushya", "Vranaropana", "Varnya", "Rasayana"],
+    "classical_formulations": ["Yashtimadhu Churna", "Yashtimadhvadya Taila", "Eladi Vati"],
+    "section_3p_prior_art_trigger": "HIGH RISK. Throat lozenges, gastric ulcer healing syrups, and skin lightening creams using crude licorice extracts are barred under Section 3(p).",
+    "patentable_innovation_window": "Patentable: Deglycyrrhizinated licorice (DGL) delivery formats retaining anti-ulcer efficacy without triggering mineralocorticoid-induced hypertension, or isolated glabridin skin-carrier lipids."
+  },
+  {
+    "id": "TKDL-016",
+    "sanskrit_name": "Bhringaraja / Markava (भृंगराज)",
+    "common_names": ["False Daisy", "Eclipta"],
+    "botanical_name": "Eclipta alba (L.) Hassk. / Eclipta prostrata (L.) L.",
+    "family": "Asteraceae",
+    "tkrc_ipc_code": "A61K 36/28",
+    "classical_references": [
+      {"treatise": "Charaka Samhita", "section": "Siddhisthana, Chapter 12"},
+      {"treatise": "Sushruta Samhita", "section": "Chikitsa Sthana, Chapter 25"},
+      {"treatise": "Bhavaprakasha Nighantu", "section": "Guduchyadi Varga"}
+    ],
+    "traditional_indications": ["Keshya (promotes hair growth)", "Twachya", "Yakrit-uttejaka (hepatoprotective)", "Drishtiprada", "Rasayana"],
+    "classical_formulations": ["Bhringamalakadi Taila", "Bhringaraja Taila", "Mahabhringaraj Oil", "Bhringarajadi Churna"],
+    "section_3p_prior_art_trigger": "CRITICAL REJECTION TRIGGER. Primary Ayurvedic hair-growth drug. Any patent claim claiming Eclipta alba for preventing alopecia, hair fall, or premature greying is barred under Section 3(p).",
+    "patentable_innovation_window": "Patentable: Standardized wedelolactone liposomal micro-emulsions demonstrating targeted hair follicle dermal papilla cellular uptake."
+  },
+  {
+    "id": "TKDL-017",
+    "sanskrit_name": "Sarpagandha / Nakuli (सर्पगंधा)",
+    "common_names": ["Indian Snakeroot", "Rauvolfia"],
+    "botanical_name": "Rauvolfia serpentina (L.) Benth. ex Kurz",
+    "family": "Apocynaceae",
+    "tkrc_ipc_code": "A61K 36/16",
+    "classical_references": [
+      {"treatise": "Charaka Samhita", "section": "Chikitsa Sthana, Chapter 23 (Visha Chikitsa)"},
+      {"treatise": "Sushruta Samhita", "section": "Kalpa Sthana, Chapter 5"}
+    ],
+    "traditional_indications": ["Nidrajanana (hypnotic)", "Manodoshahara (relieves psychiatric agitation)", "Hridya", "Sarpavishahara"],
+    "classical_formulations": ["Sarpagandha Vati", "Sarpagandha Churna", "Maheshwari Vati"],
+    "section_3p_prior_art_trigger": "HIGH RISK. Classical use for hypertension and psychotic agitation (Unmada/Apasmara). Crude reserpine extractions face prior art objections.",
+    "patentable_innovation_window": "Patentable: Ultra-purified ajmaline / serpentine fractions configured with targeted central nervous system receptor delivery with reduced depressive side effects."
+  },
+  {
+    "id": "TKDL-018",
+    "sanskrit_name": "Shankhapushpi (शंखपुष्पी)",
+    "common_names": ["Speedwheel", "Morning Glory"],
+    "botanical_name": "Convolvulus pluricaulis Choisy / Evolvulus alsinoides (L.) L.",
+    "family": "Convolvulaceae",
+    "tkrc_ipc_code": "A61K 36/39",
+    "classical_references": [
+      {"treatise": "Charaka Samhita", "section": "Chikitsa Sthana, Chapter 1:3 (Medhya Rasayana, Shloka 30-31)"},
+      {"treatise": "Bhavaprakasha Nighantu", "section": "Guduchyadi Varga"}
+    ],
+    "traditional_indications": ["Medhya (premier intellect promoter)", "Smritikrit (memory enhancer)", "Unmadahara", "Nidrajanana", "Manasadoshahara"],
+    "classical_formulations": ["Shankhapushpi Syrup", "Medhya Rasayana", "Brahmi Vati"],
+    "section_3p_prior_art_trigger": "HIGH RISK. Charaka designates Shankhapushpi as the foremost among Medhya Rasayanas. Memory-enhancing compositions are barred under Section 3(p).",
+    "patentable_innovation_window": "Patentable: Standardized scopoletin-enriched extracts formulated for neuroprotection against beta-amyloid aggregation in dementia."
+  },
+  {
+    "id": "TKDL-019",
+    "sanskrit_name": "Kalamegha / Bhunimba (कालमेघ / चिरायता)",
+    "common_names": ["Green Chiretta", "King of Bitters"],
+    "botanical_name": "Andrographis paniculata (Burm. f.) Nees",
+    "family": "Acanthaceae",
+    "tkrc_ipc_code": "A61K 36/19",
+    "classical_references": [
+      {"treatise": "Bhavaprakasha Nighantu", "section": "Guduchyadi Varga"},
+      {"treatise": "Dhanvantari Nighantu", "section": "Chandanadi Varga"}
+    ],
+    "traditional_indications": ["Yakrit-roga (hepatoprotective)", "Jvaraghna (anti-pyretic)", "Krimighna", "Kusthaghna", "Deepana"],
+    "classical_formulations": ["Kalameghasava", "Sudarshana Churna", "Bhunimbadi Kashaya"],
+    "section_3p_prior_art_trigger": "HIGH RISK. Any broad antiviral, hepatoprotective, or malaria-fever claim using crude Andrographis extract is barred under Section 3(p).",
+    "patentable_innovation_window": "Patentable: High-yield standardized andrographolide crystallization techniques, or novel water-soluble andrographolide sodium bisulfite derivatives with improved therapeutic indices."
+  },
+  {
+    "id": "TKDL-020",
+    "sanskrit_name": "Katuka / Kutki (कटुका / कुटकी)",
+    "common_names": ["Hellebore", "Yellow Gentian of Himalayas"],
+    "botanical_name": "Picrorhiza kurroa Royle ex Benth.",
+    "family": "Plantaginaceae",
+    "tkrc_ipc_code": "A61K 36/68",
+    "classical_references": [
+      {"treatise": "Charaka Samhita", "section": "Sutra Sthana, Chapter 4 (Bhedaniya, Stanyashodhana Dashemani)"},
+      {"treatise": "Sushruta Samhita", "section": "Sutra Sthana, Chapter 38"},
+      {"treatise": "Bhavaprakasha Nighantu", "section": "Haritakyadi Varga"}
+    ],
+    "traditional_indications": ["Bhedani (purgative)", "Deepani", "Hridya", "Jvaraghna", "Yakrit-pleeha roga (hepatosplenomegaly)"],
+    "classical_formulations": ["Arogyavardhini Vati", "Katukadi Churna", "Punarnavadi Kwath"],
+    "section_3p_prior_art_trigger": "HIGH RISK. Essential constituent of Arogyavardhini Vati. Claims for liver cirrhosis protection, viral hepatitis, or jaundice treatment using Kutki face immediate Section 3(p) objections.",
+    "patentable_innovation_window": "Patentable: Standardized kutkin (picroside I & II) enriched fractions extracted with supercritical CO2 and formulated for non-alcoholic fatty liver disease (NAFLD)."
+  },
+  {
+    "id": "TKDL-021",
+    "sanskrit_name": "Punarnava (पुनर्नवा)",
+    "common_names": ["Spreading Hogweed", "Boerhavia"],
+    "botanical_name": "Boerhavia diffusa L.",
+    "family": "Nyctaginaceae",
+    "tkrc_ipc_code": "A61K 36/65",
+    "classical_references": [
+      {"treatise": "Charaka Samhita", "section": "Sutra Sthana, Chapter 4 (Sothahara, Kasahara Dashemani)"},
+      {"treatise": "Sushruta Samhita", "section": "Sutra Sthana, Chapter 39"},
+      {"treatise": "Bhavaprakasha Nighantu", "section": "Guduchyadi Varga"}
+    ],
+    "traditional_indications": ["Shothahara (anti-edema, diuretic)", "Mootrala", "Pandurogahara (anti-anemic)", "Hridya", "Rasayana"],
+    "classical_formulations": ["Punarnavasava", "Punarnavadi Mandura", "Punarnavashtaka Kwath"],
+    "section_3p_prior_art_trigger": "HIGH RISK. Kidney and urinary diuretic claims on Boerhavia diffusa are barred under Section 3(p).",
+    "patentable_innovation_window": "Patentable: Standardized boeravinone fractions demonstrating specific renal tubule protective properties in chronic kidney disease."
+  },
+  {
+    "id": "TKDL-022",
+    "sanskrit_name": "Meshashringi / Gurmar (मेषशृंगी / गुड़मार)",
+    "common_names": ["Sugar Destroyer", "Gymnema"],
+    "botanical_name": "Gymnema sylvestre (Retz.) R. Br. ex Schult.",
+    "family": "Apocynaceae",
+    "tkrc_ipc_code": "A61K 36/27",
+    "classical_references": [
+      {"treatise": "Sushruta Samhita", "section": "Sutra Sthana, Chapter 38 (Salsaradi Gana)"},
+      {"treatise": "Bhavaprakasha Nighantu", "section": "Guduchyadi Varga"}
+    ],
+    "traditional_indications": ["Madhumehaghna (anti-diabetic)", "Deepana", "Kaphapittashamana", "Shothahara"],
+    "classical_formulations": ["Meshashringi Churna", "Ayaskriti", "Nisha Amalaki combinations"],
+    "section_3p_prior_art_trigger": "CRITICAL REJECTION TRIGGER. Classical sugar-taste suppressing drug. Broad anti-diabetic or pancreatic regeneration claims using Gymnema extracts face strict Section 3(p) objections.",
+    "patentable_innovation_window": "Patentable: High-purity deacylgymnemic acid oral films suppressing sweetness sensation for appetite regulation in obesity."
+  },
+  {
+    "id": "TKDL-023",
+    "sanskrit_name": "Shallaki (शल्लकी)",
+    "common_names": ["Indian Frankincense", "Boswellia"],
+    "botanical_name": "Boswellia serrata Roxb. ex Colebr.",
+    "family": "Burseraceae",
+    "tkrc_ipc_code": "A61K 36/324",
+    "classical_references": [
+      {"treatise": "Charaka Samhita", "section": "Sutra Sthana, Chapter 4 (Purishasangrahaniya Dashemani)"},
+      {"treatise": "Bhavaprakasha Nighantu", "section": "Vatadi Varga"}
+    ],
+    "traditional_indications": ["Sandhivata (osteoarthritis relief)", "Amavata", "Vranaropana", "Raktapittahara", "Atisarahara"],
+    "classical_formulations": ["Shallaki Churna", "Shallaki Guggulu", "Shallaki Ointment"],
+    "section_3p_prior_art_trigger": "HIGH RISK. Crude resin extracts for arthritis, asthma, or ulcerative colitis are heavily cited in TKDL.",
+    "patentable_innovation_window": "Patentable: Standardized 3-O-acetyl-11-keto-beta-boswellic acid (AKBA) enrichment up to >30% bioavailability complexes with enhanced joint synovial fluid penetration."
+  },
+  {
+    "id": "TKDL-024",
+    "sanskrit_name": "Shilajatu (शिलाजतु / शिलाजीत)",
+    "common_names": ["Mineral Pitch", "Asphaltum", "Shilajit"],
+    "botanical_name": "Asphaltum punjabianum (Natural Mineral-Botanical Exudate)",
+    "family": "Mineral-Vegetable Complex",
+    "tkrc_ipc_code": "A61K 35/02",
+    "classical_references": [
+      {"treatise": "Charaka Samhita", "section": "Chikitsa Sthana, Chapter 1:3 (Shilajatu Rasayana, Shloka 48-65)"},
+      {"treatise": "Sushruta Samhita", "section": "Chikitsa Sthana, Chapter 13"},
+      {"treatise": "Bhavaprakasha Nighantu", "section": "Dhatu-Upadhatu Varga"}
+    ],
+    "traditional_indications": ["Sarvarogahara (alleviates all curable diseases)", "Pramehaghna", "Rasayana (supreme re-energizer)", "Medohara", "Kshayahara"],
+    "classical_formulations": ["Shiva Gutika", "Chandraprabha Vati", "Arogyavardhini Vati"],
+    "section_3p_prior_art_trigger": "ABSOLUTE BAR. Charaka famously declares: 'There is no curable disease on earth that cannot be cured by Shilajit when administered properly with milk.' Broad claims on energy, vitality, or testosterone support are barred under Section 3(p).",
+    "patentable_innovation_window": "Patentable: Novel purification processes removing heavy metals (lead, arsenic, mercury) below 0.1 ppm while preserving native fulvic acid-dibenzo-alpha-pyrone complexes."
+  },
+  {
+    "id": "TKDL-025",
+    "sanskrit_name": "Manjistha / Yojanavalli (मंजिष्ठा)",
+    "common_names": ["Indian Madder"],
+    "botanical_name": "Rubia cordifolia L.",
+    "family": "Rubiaceae",
+    "tkrc_ipc_code": "A61K 36/74",
+    "classical_references": [
+      {"treatise": "Charaka Samhita", "section": "Sutra Sthana, Chapter 4 (Varnya, Vishaghna Dashemani)"},
+      {"treatise": "Sushruta Samhita", "section": "Sutra Sthana, Chapter 38"},
+      {"treatise": "Bhavaprakasha Nighantu", "section": "Haritakyadi Varga"}
+    ],
+    "traditional_indications": ["Raktashodhaka (blood purifier)", "Varnya (complexion promoter)", "Kusthaghna", "Vranaropana", "Vishaghna"],
+    "classical_formulations": ["Manjisthadi Kwath", "Maha Manjisthadi Kashaya", "Kumkumadi Tailam", "Manjishtadi Taila"],
+    "section_3p_prior_art_trigger": "HIGH RISK. Landmark skin and blood-purifier. Claims on acne reduction, melasma treatment, or blood purification using Rubia cordifolia face Section 3(p) objections.",
+    "patentable_innovation_window": "Patentable: Purified purpurin and alizarin fractions devoid of cytotoxic anthraquinones, formulated as targeted follicular acne-clearing gels."
+  },
+  {
+    "id": "TKDL-026",
+    "sanskrit_name": "Vasa / Adhatoda (वासा / अडूसा)",
+    "common_names": ["Malabar Nut", "Adusa"],
+    "botanical_name": "Justicia adhatoda L. / Adhatoda vasica Nees",
+    "family": "Acanthaceae",
+    "tkrc_ipc_code": "A61K 36/19",
+    "classical_references": [
+      {"treatise": "Charaka Samhita", "section": "Chikitsa Sthana, Chapter 4 (Raktapitta Chikitsa)"},
+      {"treatise": "Sushruta Samhita", "section": "Uttara Tantra, Chapter 51"},
+      {"treatise": "Bhavaprakasha Nighantu", "section": "Guduchyadi Varga"}
+    ],
+    "traditional_indications": ["Kasahara", "Shwasahara (bronchodilator)", "Raktapittahara (anti-hemorrhagic)", "Kaphapittahara", "Jvaraghna"],
+    "classical_formulations": ["Vasasava", "Vasavaleha", "Vasachandanadi Taila"],
+    "section_3p_prior_art_trigger": "HIGH RISK. Historic origin of synthetic bromhexine and ambroxol. Any patent claim claiming vasicine or Adhatoda vasica for cough relief or bronchodilation is barred under Section 3(p).",
+    "patentable_innovation_window": "Patentable: Semi-synthetic vasicine derivatives with enhanced metabolic half-life and reduced uterotonic side effects."
+  }
+]
