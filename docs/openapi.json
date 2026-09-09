@@ -39,6 +39,18 @@
     {
       "name": "RAG Legal Search & Ingestion",
       "description": "Dense vector similarity search across 2,026 legal chunks in Neon pgvector"
+    },
+    {
+      "name": "Document Analysis",
+      "description": "Multi-format document ingestion (PDF, DOCX, TXT) and automated 5-Pillar IPR & regulatory analysis"
+    },
+    {
+      "name": "Sovereign Audit & DPDP Compliance",
+      "description": "DPDP Act 2023 compliant audit logs with redacted personal identifiers and safe abstention tracking"
+    },
+    {
+      "name": "Multilingual Engine",
+      "description": "Legal-accurate translation across English, Hindi, and Marathi"
     }
   ],
   "paths": {
@@ -219,6 +231,130 @@
           }
         }
       }
+    },
+    "/api/v1/document/analyze": {
+      "post": {
+        "tags": ["Document Analysis"],
+        "summary": "Upload and analyze document (PDF, DOCX, TXT)",
+        "description": "Multi-format document ingestion with automated DPDP Act PII masking, Gemini LLM structured JSON extraction, and full 5-Pillar assessment.",
+        "operationId": "uploadAndAnalyze",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": { "type": "string", "format": "binary", "description": "Patent specification PDF, DOCX, or TXT" },
+                  "sessionId": { "type": "string", "description": "Optional conversation session UUID" },
+                  "jurisdiction": { "type": "string", "default": "INDIA" },
+                  "language": { "type": "string", "default": "AUTO" }
+                },
+                "required": ["file"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document analysis response with extracted profile and 5-pillar assessment",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DocumentAnalysisResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/document/analyze-text": {
+      "post": {
+        "tags": ["Document Analysis"],
+        "summary": "Analyze inline formulation description or specification text",
+        "description": "Direct JSON text analysis with DPDP PII masking, structured Gemini extraction, and 5-pillar advisory report.",
+        "operationId": "analyzeTextQuery",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": { "type": "string" },
+                  "sessionId": { "type": "string" },
+                  "jurisdiction": { "type": "string", "default": "INDIA" },
+                  "language": { "type": "string", "default": "AUTO" }
+                },
+                "required": ["text"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Analysis response with structured profile and legal assessment",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DocumentAnalysisResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/audit/recent": {
+      "get": {
+        "tags": ["Sovereign Audit & DPDP Compliance"],
+        "summary": "Retrieve 20 most recent sovereign audit logs",
+        "description": "Returns sovereign audit logs with redacted personal identifiers and confidence scoring.",
+        "operationId": "getRecentAuditLogs",
+        "responses": {
+          "200": {
+            "description": "List of recent audit log records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "type": "object" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/multilingual/translate": {
+      "post": {
+        "tags": ["Multilingual Engine"],
+        "summary": "Translate legal advisory content into Hindi, Marathi, or English",
+        "description": "Uses specialized legal terminology dictionaries and Gemini multilingual models.",
+        "operationId": "translateLegalContent",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": { "type": "string" },
+                  "targetLanguage": { "type": "string", "enum": ["EN", "HI", "MR"] }
+                },
+                "required": ["text", "targetLanguage"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Translated content with glossary annotations",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -363,6 +499,80 @@
           "wipoPatentscope": { "type": "object" },
           "usptoGuidance": { "type": "object" },
           "ayushResearchEvidence": { "type": "object" }
+        }
+      },
+      "DocumentAnalysisResponse": {
+        "type": "object",
+        "properties": {
+          "extractedProfile": {
+            "type": "object",
+            "properties": {
+              "fileName": { "type": "string" },
+              "fileType": { "type": "string" },
+              "fileSizeBytes": { "type": "integer" },
+              "sourceMode": { "type": "string" },
+              "applicantCredentials": {
+                "type": "object",
+                "properties": {
+                  "applicantName": { "type": "string" },
+                  "aadhaarNumber": { "type": "string" },
+                  "panNumber": { "type": "string" },
+                  "phoneNumber": { "type": "string" },
+                  "emailAddress": { "type": "string" },
+                  "locationOrAddress": { "type": "string" }
+                }
+              },
+              "productDetails": {
+                "type": "object",
+                "properties": {
+                  "documentTitle": { "type": "string" },
+                  "productName": { "type": "string" },
+                  "botanicalBinomials": { "type": "array", "items": { "type": "string" } },
+                  "regulatoryCategory": { "type": "string" },
+                  "governingActAndRules": { "type": "string" },
+                  "licensingAuthority": { "type": "string" }
+                }
+              },
+              "patentabilityAndStatutoryAnalysis": {
+                "type": "object",
+                "properties": {
+                  "technicalNovelty": { "type": "string" },
+                  "isClassicalScriptureRecipe": { "type": "boolean" },
+                  "section3pTraditionalKnowledgeBar": {
+                    "type": "object",
+                    "properties": {
+                      "isBarred": { "type": "boolean" },
+                      "rationale": { "type": "string" }
+                    }
+                  },
+                  "synergismOrEfficacy": {
+                    "type": "object",
+                    "properties": {
+                      "proven": { "type": "boolean" },
+                      "evidence": { "type": "string" }
+                    }
+                  },
+                  "biodiversityActRequirement": { "type": "string" },
+                  "clinicalTrialObligations": { "type": "string" },
+                  "claimsSummary": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "claimNumber": { "type": "integer" },
+                        "type": { "type": "string" },
+                        "summary": { "type": "string" }
+                      }
+                    }
+                  },
+                  "immediateNextSteps": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            }
+          },
+          "assessment": {
+            "$ref": "#/components/schemas/ChatMessageResponse"
+          }
         }
       }
     }

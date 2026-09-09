@@ -1,215 +1,238 @@
-# IP‑SHAKTI Project Specification (Condensed)
+# IP-SHAKTI Sahayak — Technical Architecture Specification (SPEC)
 
-## 1. Technical Architecture Overview
-```
-                         ┌─────────────────┐
-                         │      USER       │
-                         │ Web / Mobile UI │
-                         └────────┬────────┘
-                                  │
-                                  ▼
-                    ┌─────────────────────────┐
-                    │   Query Understanding   │
-                    │ • Language Detection    │
-                    │ • Intent Detection      │
-                    │ • Jurisdiction          │
-                    └────────────┬────────────┘
-                                 │
-                                 ▼
-                    ┌─────────────────────────┐
-                    │ Product Classification  │
-                    └────────────┬────────────┘
-                                 │
-                 ┌───────────────┴───────────────┐
-                 ▼                               ▼
-        ┌───────────────┐               ┌──────────────┐
-        │ IP Protection │               │ Regulatory   │
-        │   Analysis    │               │    Check     │
-        └───────┬───────┘               └──────┬───────┘
-                │                              │
-                └───────────────┬──────────────┘
-                                ▼
-                       ┌─────────────────────┐
-                       │   RAG Retrieval Layer│
-                       │  Vector DB + Filters│
-                       └────────────┬─────────┘
-                                    ▼
-                       ┌─────────────────────┐
-                       │       LLM Engine    │
-                       │ Citation + Safety   │
-                       └────────────┬─────────┘
-                                    ▼
-                               FINAL ANSWER
-```
-
-## 2. Recommended Tech Stack
-
-### 2.1 Primary Default Configuration (100% Free & Open-Source / FOSS)
-*Designed for Smart India Hackathon (SIH), national data sovereignty, and zero recurring infrastructure cost:*
-- **Frontend**: React (Vite), Tailwind CSS, React Router, Axios, i18next *(MIT License — 100% Free & Open Source)*.
-- **Backend**: Spring Boot 3.x (Java 21 OpenJDK), Spring AI, Spring WebFlux, Spring Security *(Apache 2.0 / OpenJDK — 100% Free & Open Source)*.
-- **Database & Vector Store (Unified)**: **PostgreSQL with `pgvector` extension** *(PostgreSQL License — 100% Free & Open Source)*.
-  - Serves as the single unified engine for structured relational entities (users, chats, audit logs) and dense vector embeddings.
-  - Eliminates external cloud dependencies and commercial SaaS costs.
-- **Embeddings & LLM**:
-  - *Primary Free Cloud*: Google AI Studio Gemini 1.5 Flash *(Generous 15 RPM Free Tier)*.
-  - *100% Offline / Sovereign Alternative*: Local **Ollama** (Llama 3.1 8B / Gemma 2 9B) with open-source embeddings (`bge-small-en-v1.5` / `all-MiniLM-L6-v2`) via Spring AI / LangChain4j.
-- **Deployment**: **Docker & Docker Compose** *(Self-hosted, offline hackathon-ready, zero hosting expense)*.
-
-### 2.2 Optional / Secondary Cloud Alternatives
-- **Vector DB**: Qdrant (Self-hosted/Cloud), Pinecone (Proprietary SaaS starter tier).
-- **LLMs**: OpenAI API (Paid commercial).
-- **Cloud Hosting**: Render, Railway, AWS, Vercel (Hobby tiers).
-
-## 3. Core MVP Features
-### 3.1 Jurisdiction Switch
-- Store `jurisdiction` in each document chunk metadata.
-- Filter vector‑DB queries by `jurisdiction` (`INDIA` vs `INTERNATIONAL`).
-
-### 3.2 Product Classification Engine (Rule 158-B Decision Tree)
-A deterministic rule-based decision tree that classifies Ayurvedic products prior to RAG retrieval according to the Drugs and Cosmetics Act 1940 (Rule 158-B), FSSAI Ayurveda Aahar Regulations 2022, Indian Patents Act 1970 (§3(p), §3(e), §2(1)(j)), and Biological Diversity Act 2002.
-
-```mermaid
-flowchart TD
-    Start([Innovator Enters Product Details]) --> Q1{"Is exact formulation found in<br/>First Schedule Authoritative Books?<br/><i>e.g., Charaka, Sharangadhara</i>"}
-
-    Q1 -->|YES| Q2{"Was the formula, ratio, or<br/>excipients modified?"}
-    Q2 -->|NO| CLASSICAL["<b>CLASSICAL AYURVEDIC FORMULATION</b><br/>D&C Act Form 24-D/25-D<br/>Sec 3(p) Patent Bar: TK<br/>No Clinical Trials Needed"]
-    Q2 -->|YES| PROPRIETARY["<b>PROPRIETARY AYURVEDIC MEDICINE</b><br/>D&C Rules 1945 Rule 158-B"]
-
-    Q1 -->|NO| Q3{"What is the primary intended use?"}
-
-    Q3 -->|"Therapeutic Treatment /<br/>Disease Mitigation"| PROPRIETARY
-    Q3 -->|"Cleansing, Beautifying,<br/>Skin/Hair Application"| COSMETIC["<b>AYURVEDIC COSMETIC</b><br/>D&C Act Sec 3(aaa)<br/>No therapeutic disease claims<br/>Process/base patentable"]
-    Q3 -->|"Food/Dietary Supplement,<br/>Nutritional Support"| AAHAR["<b>AYURVEDA AAHAR</b><br/>FSSAI Regs 2022<br/>Mandatory Ayurveda Aahar Logo<br/>Central FSSAI License"]
-
-    PROPRIETARY --> Q4{"Is it an unaltered ingredient combo<br/>or novel extract/new indication?"}
-    Q4 -->|"Classical Ingredients,<br/>Existing Indication"| PROP_A["<b>Rule 158-B(1)(A)</b><br/>Published Safety Data Required"]
-    Q4 -->|"New Indication / Altered Route"| PROP_B["<b>Rule 158-B(1)(B)</b><br/>Pilot Clinical Trials Required"]
-    Q4 -->|"Novel Phytochemical Extract"| PROP_C["<b>Phytopharmaceutical</b><br/>Full Safety & Clinical Trials"]
-```
-
-#### Deterministic Classification Logic:
-1. **Classical Ayurvedic Formulation (Shastriya Aushadhi)**:
-   - Found verbatim in First Schedule textbooks (e.g., *Charaka Samhita*, *Sushruta Samhita*, *Sharangadhara Samhita*).
-   - Form 25-D / 24-D state AYUSH manufacturing license.
-   - **Clinical Trials**: Completely exempt (presumption of traditional safety & efficacy).
-   - **Patent Bar**: Strictly non-patentable under **Section 3(p)** (traditional knowledge) and **Section 3(e)** (mere admixture) of Patents Act 1970.
-   - **IP Protection**: Trademark protection on house brand name only (generic classical name cannot be trademarked).
-2. **Proprietary Ayurvedic Medicine (Rule 158-B)**:
-   - Contains Ayurvedic ingredients, but proprietary ratio, new excipients, or new clinical indication.
-   - **Category A (Rule 158-B(1)(A))**: Published textual references and acute toxicity data required.
-   - **Category B (Rule 158-B(1)(B))**: New indication or altered route of administration; pilot clinical trials (≥30 patients) required.
-   - **Patentability**: Product composition barred under §3(p)/§3(e) unless statistical synergism is demonstrated; novel extraction processes and delivery mechanisms (NDDS) are patentable under §2(1)(j).
-3. **Phytopharmaceutical Drug (Rule 122-E)**:
-   - Purified bioactive fractions / standardized botanical extract.
-   - CDSCO / DCGI regulatory pathway with mandatory Phase I–III clinical trials.
-   - Patentable under §2(1)(j) & §3(d).
-4. **Ayurveda Aahar (FSSAI Regulations 2022)**:
-   - Nutritional food/dietary supplement prepared according to Ayurvedic principles without therapeutic claims or parenteral form.
-   - Central FSSAI License with mandatory "Ayurveda Aahar" logo.
-   - Prohibited from claiming disease cure; exempt from clinical trials.
-5. **Ayurvedic Cosmetic (D&C Act Section 3(aaa))**:
-   - Cleansing, beautifying, or altering skin/hair appearance without therapeutic claims.
-   - Form 32-A AYUSH cosmetic license; BIS safety compliance.
-
-#### Example API Request & Response:
-
-**Request: Classical Formulation Check**
-```json
-POST /api/v1/classifier/evaluate
-{
-  "productName": "Maha Sudarshan Churna",
-  "matchesScheduleIBook": true,
-  "scheduleIBookName": "Sharangadhara Samhita",
-  "formulaOrRatioModified": false,
-  "intendedUse": "THERAPEUTIC_TREATMENT",
-  "applicantType": "INDIAN_COMPANY",
-  "commercialUtilization": true
-}
-```
-
-**Output Verdict:**
-```json
-{
-  "category": "CLASSICAL_AYURVEDIC_FORMULATION",
-  "categoryDisplayName": "Classical Ayurvedic Formulation (Shastriya Aushadhi)",
-  "governingAct": "Drugs and Cosmetics Act 1940, First Schedule Books; Rule 158-B",
-  "licensingAuthority": "AYUSH State Licensing Authority (Form 25-D / Form 24-D)",
-  "clinicalTrialRequirement": "COMPLETELY EXEMPT from clinical trials. Enjoys legal presumption of safety and efficacy based on centuries of documented traditional usage in authoritative texts.",
-  "formulationPatentableInIndia": false,
-  "patentabilityVerdict": "STRICTLY NON-PATENTABLE. Section 3(p) of the Indian Patents Act 1970 explicitly prohibits patenting any traditional formulation already documented in classical scriptures (and indexed in TKDL).",
-  "relevantPatentSections": [
-    "Section 3(p) - Traditional Knowledge Bar (Absolute)",
-    "Section 3(e) - Mere Admixture"
-  ],
-  "recommendedIprStrategy": "Brand Name Trademark Protection (Trade Marks Act 1999). Note: The generic classical name ('Maha Sudarshan Churna') CANNOT be trademarked, but your brand prefix can (e.g., 'Arogya Maha Sudarshan Churna').",
-  "nbaComplianceStatus": "Prior Intimation to State Biodiversity Board (SBB) required under Section 7 for commercial utilization.",
-  "requiredNbaForm": "SBB Form (Prior Intimation to State Biodiversity Board under Section 7)"
-}
-```
-
-### 3.3 IP Protection Router
-- After classification, route to appropriate IP type (Patent, Trademark, GI, Design).
-- Simple Java service returns list of viable protections.
-
-### 3.4 Regulatory Check Engine
-- Mapping table (`product_type → authority → requirements`).
-- Returns regulatory guidelines for the selected product.
-
-### 3.5 RAG System (Citation‑Based)
-- **Embedding → Vector Search → Keyword Search → Reranker → LLM**.
-- Every answer includes structured citation blocks.
-- Confidence score (high/medium/low) calculated from retrieval & authority scores.
-
-## 4. Document Ingestion Pipeline
-1. Harvest PDFs/HTML from government sites.
-2. Text extraction → cleaning → hierarchical chunking (chapter/section/subsection).
-3. Generate embeddings → store in vector DB with rich metadata (jurisdiction, section, etc.).
-
-## 5. Citation & Confidence Engine
-- Each chunk stores `{document, section, citation, source_url}`.
-- LLM prompt enforces: *Only answer using provided context; always cite.*
-- Confidence = `0.5*retrievalScore + 0.3*authorityScore + 0.2*citationCoverage`.
-- Low confidence triggers safe‑abstention message.
-
-## 6. Database Schema (PostgreSQL)
-```sql
-CREATE TABLE users(id SERIAL PRIMARY KEY, name TEXT, email TEXT);
-CREATE TABLE conversations(id SERIAL PRIMARY KEY, user_id INT, jurisdiction TEXT);
-CREATE TABLE documents(id SERIAL PRIMARY KEY, title TEXT, source TEXT, jurisdiction TEXT, version TEXT);
-CREATE TABLE document_chunks(id SERIAL PRIMARY KEY, document_id INT, content TEXT, section TEXT, embedding BYTEA);
-CREATE TABLE citations(id SERIAL PRIMARY KEY, document_id INT, section TEXT, source_url TEXT);
-CREATE TABLE product_classifications(id SERIAL PRIMARY KEY, product_type TEXT, confidence NUMERIC);
-CREATE TABLE audit_logs(id SERIAL PRIMARY KEY, user_query TEXT, retrieved_sources TEXT, generated_answer TEXT, timestamp TIMESTAMP);
-```
-
-## 7. Backend Service Flow (Package Layout)
-```
-com.ayurveda.ipr
-│   ├─ controller
-│   ├─ service
-│   │   ├─ QueryService
-│   │   ├─ ClassificationService
-│   │   ├─ RetrievalService
-│   │   ├─ IPAnalysisService
-│   │   ├─ RegulatoryService
-│   │   ├─ ConfidenceService
-│   │   └─ CitationService
-│   ├─ rag (Embedding, VectorStore, HybridSearch, Reranker)
-│   ├─ agent (Orchestrator, IPAgent, RegulatoryAgent, CitationAgent)
-│   ├─ repository
-│   ├─ entity
-│   └─ config
-```
-
-## 8. Roadmap (Phased Development)
-**Phase 1 – MVP**: Jurisdiction filter + RAG + Citation + basic UI.
-**Phase 2 – Classification & IP Router**: Rule‑based questionnaire, IP options.
-**Phase 3 – Hybrid Search & Confidence**: Add keyword search, confidence scoring, safe abstention.
-**Phase 4 – Knowledge Graph**: Neo4j for entity relationships.
-**Phase 5 – Agentic AI**: Specialized agents (IP, Regulatory, ABS, Citation).
-**Phase 6 – Multilingual & Voice**: Bhashini integration, Hindi/Marathi UI.
+**Document Version**: 2.1  
+**Target Platform**: Spring Boot 3.3.4 (Java 21 LTS) | PostgreSQL 16 (`pgvector`) | Google Gemini Flash  
+**Compliance**: DPDP Act 2023 | Patents Act 1970 | Drugs & Cosmetics Rules 1945 Rule 158-B  
 
 ---
-*Only the most critical components are listed (≈70 % of the original detail) to keep the spec concise while preserving the architectural vision.*
+
+## 1. System Architecture Overview
+
+```
+                         ┌─────────────────────────────┐
+                         │   INNOVATOR / PRACTITIONER  │
+                         │   React Web UI / Mobile     │
+                         └──────────────┬──────────────┘
+                                        │
+                         ┌──────────────▼──────────────┐
+                         │  Spring Boot Gateway / API  │
+                         │  (CORS, Security, OpenAPI)  │
+                         └──────────────┬──────────────┘
+                                        │
+           ┌────────────────────────────┼────────────────────────────┐
+           ▼                            ▼                            ▼
+┌──────────────────────┐     ┌──────────────────────┐     ┌──────────────────────┐
+│  Document Ingestion  │     │ Conversational Chat  │     │ Rule 158-B Statutory │
+│  & Multimodal LLM    │     │ Orchestrator Service │     │  Classifier Engine   │
+│  (PDFBox, POI, TXT)  │     │ (Multi-turn Chips)   │     │ (Deterministic Tree) │
+└──────────┬───────────┘     └──────────┬───────────┘     └──────────┬───────────┘
+           │                            │                            │
+           └────────────────────────────┼────────────────────────────┘
+                                        ▼
+                         ┌─────────────────────────────┐
+                         │ DPDP Act 2023 Sanitization  │
+                         │ (Aadhaar, PAN, Phone Mask)  │
+                         └──────────────┬──────────────┘
+                                        │
+           ┌────────────────────────────┼────────────────────────────┐
+           ▼                            ▼                            ▼
+┌──────────────────────┐     ┌──────────────────────┐     ┌──────────────────────┐
+│ PostgreSQL Session   │     │ Hybrid Legal RAG     │     │ Sovereign Audit Log  │
+│ Isolated Memory      │     │ Engine (pgvector +   │     │ Service (PostgreSQL  │
+│ (chat_messages DB)   │     │ BM25 GIN Full-Text)  │     │ audit_logs DB)       │
+└──────────────────────┘     └──────────┬───────────┘     └──────────────────────┘
+                                        │
+                                        ▼
+                         ┌─────────────────────────────┐
+                         │ Google Gemini Flash LLM     │
+                         │ Generative Legal Synthesis  │
+                         │ (Executive Brief & Claims)  │
+                         └──────────────┬──────────────┘
+                                        │
+                                        ▼
+                         ┌─────────────────────────────┐
+                         │ Safe Abstention Gatekeeper  │
+                         │ (Magic Remedies & Thresh.)  │
+                         └──────────────┬──────────────┘
+                                        │
+                                        ▼
+                         ┌─────────────────────────────┐
+                         │ FINAL 5-PILLAR ADVISORY     │
+                         │ REPORT WITH LEGAL CITATIONS │
+                         └─────────────────────────────┘
+```
+
+---
+
+## 2. Database DDL Specifications (PostgreSQL 16 + `pgvector`)
+
+### 2.1 Statutory Knowledge Corpus (`statutory_chunks`)
+Stores 1,514 pre-indexed legal sections across Indian and international intellectual property and regulatory regimes.
+
+```sql
+CREATE EXTENSION IF NOT EXISTS vector;
+
+CREATE TABLE IF NOT EXISTS statutory_chunks (
+    id SERIAL PRIMARY KEY,
+    document_title VARCHAR(255) NOT NULL,
+    act_or_treaty VARCHAR(255) NOT NULL,
+    section_reference VARCHAR(100) NOT NULL,
+    statutory_hierarchy VARCHAR(100),
+    jurisdiction VARCHAR(50) NOT NULL,         -- 'INDIA' or 'INTERNATIONAL'
+    category VARCHAR(100) NOT NULL,            -- 'PATENT', 'BIODIVERSITY', 'REGULATORY', 'TKDL'
+    chunk_index INT NOT NULL,
+    content TEXT NOT NULL,
+    embedding vector(768) NOT NULL,            -- text-embedding-004
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Vector Cosine Distance Index (HNSW for high-concurrency sub-millisecond retrieval)
+CREATE INDEX IF NOT EXISTS idx_statutory_chunks_embedding 
+ON statutory_chunks USING hnsw (embedding vector_cosine_ops);
+
+-- Full-Text GIN Index for Sparse Keyword Matching
+ALTER TABLE statutory_chunks ADD COLUMN IF NOT EXISTS tsv_content tsvector;
+
+UPDATE statutory_chunks 
+SET tsv_content = to_tsvector('english', coalesce(act_or_treaty, '') || ' ' || coalesce(section_reference, '') || ' ' || content);
+
+CREATE INDEX IF NOT EXISTS idx_statutory_chunks_tsv 
+ON statutory_chunks USING gin (tsv_content);
+```
+
+### 2.2 Session-Isolated Chat Memory (`chat_messages`)
+Maintains conversational continuity across multi-turn clarifying dialogues without cross-session pollution.
+
+```sql
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id BIGSERIAL PRIMARY KEY,
+    session_id VARCHAR(100) NOT NULL,
+    sender VARCHAR(20) NOT NULL,               -- 'USER' or 'BOT'
+    content TEXT NOT NULL,
+    product_name VARCHAR(255),
+    jurisdiction VARCHAR(50) DEFAULT 'INDIA',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_chat_messages_session 
+ON chat_messages (session_id, created_at ASC);
+```
+
+### 2.3 Sovereign DPDP Audit Trail (`audit_logs`)
+Records every legal inquiry with redacted personal identifiers, confidence scoring, and statutory citations.
+
+```sql
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id BIGSERIAL PRIMARY KEY,
+    session_id VARCHAR(100) NOT NULL,
+    original_length INT NOT NULL,
+    sanitized_prompt TEXT NOT NULL,
+    detected_pii_types VARCHAR(255),          -- e.g. 'AADHAAR,PAN,PHONE'
+    overall_confidence_score DOUBLE PRECISION NOT NULL,
+    confidence_level VARCHAR(20) NOT NULL,    -- 'HIGH', 'MEDIUM', 'LOW'
+    safe_abstention_triggered BOOLEAN DEFAULT FALSE,
+    abstention_reason VARCHAR(255),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_session 
+ON audit_logs (session_id);
+```
+
+---
+
+## 3. Hybrid RAG Algorithm: Reciprocal Rank Fusion (RRF)
+
+To eliminate vector retrieval blind spots (e.g. failing to match specific statutory rule numbers like "Rule 158-B(1)(A)"), the system executes **Reciprocal Rank Fusion (RRF)**:
+
+$$\text{RRF\_Score}(d) = \frac{1}{k + \text{Rank}_{\text{dense}}(d)} + \frac{1}{k + \text{Rank}_{\text{sparse}}(d)}$$
+
+Where $k = 60$ (standard TREC smoothing constant).
+
+### Execution Pipeline:
+1. **Dense Retrieval**: `text-embedding-004` converts the user query into a 768-dim float vector. PostgreSQL computes cosine similarity:
+   $$\text{similarity} = 1 - (\text{embedding} \Leftrightarrow \mathbf{q})$$
+2. **Sparse Lexical Retrieval**: Query is tokenized and executed against the `tsv_content` GIN index via `plainto_tsquery('english', :query)`.
+3. **Fusion & Windowed Expansion**: For the top 5 fused documents, the system automatically retrieves preceding ($chunk - 1$) and succeeding ($chunk + 1$) sections from the same statute to ensure comprehensive judicial grounding.
+
+---
+
+## 4. Multi-Format Document Ingestion Engine
+
+### 4.1 Input Ingestion Matrix
+- **PDF Documents**: Direct base64 transmission via Google Gemini Flash `inlineData` (`mimeType: "application/pdf"`) combined with Apache PDFBox text parsing for DPDP sanitization.
+- **Word (`.docx`) Documents**: Extracted via Apache POI `XWPFDocument` and `XWPFWordExtractor`.
+- **Plain Text / Query Strings**: Cleaned and UTF-8 encoded.
+
+### 4.2 Standardized Extraction JSON Schema
+```json
+{
+  "applicantCredentials": {
+    "applicantName": "string",
+    "aadhaarNumber": "string or null",
+    "panNumber": "string or null",
+    "phoneNumber": "string or null",
+    "emailAddress": "string or null",
+    "locationOrAddress": "string or null"
+  },
+  "productDetails": {
+    "documentTitle": "string",
+    "productName": "string",
+    "botanicalBinomials": ["string"],
+    "regulatoryCategory": "AYURVEDIC_COSMETIC | PHYTOPHARMACEUTICAL | CLASSICAL_AYURVEDIC_FORMULATION | PROPRIETARY_AYURVEDIC_MEDICINE | AYURVEDA_AAHAR",
+    "governingActAndRules": "string",
+    "licensingAuthority": "string"
+  },
+  "patentabilityAndStatutoryAnalysis": {
+    "technicalNovelty": "string",
+    "isClassicalScriptureRecipe": false,
+    "section3pTraditionalKnowledgeBar": {
+      "isBarred": false,
+      "rationale": "string"
+    },
+    "synergismOrEfficacy": {
+      "proven": true,
+      "evidence": "string"
+    },
+    "biodiversityActRequirement": "string",
+    "clinicalTrialObligations": "string",
+    "claimsSummary": [
+      { "claimNumber": 1, "type": "PRODUCT", "summary": "string" },
+      { "claimNumber": 2, "type": "PROCESS", "summary": "string" }
+    ],
+    "immediateNextSteps": ["string"]
+  }
+}
+```
+
+---
+
+## 5. Sovereign Guardrails & Safe Abstention Engine
+
+### 5.1 DPDP Act 2023 Masking Rules
+- **Aadhaar**: Redacted into `[REDACTED_AADHAAR]` via `\b[2-9]\d{3}[\s\-]?\d{4}[\s\-]?\d{4}\b`.
+- **PAN**: Redacted into `[REDACTED_PAN]` via `\b[A-Z]{5}[0-9]{4}[A-Z]\b`.
+- **Indian Mobile**: Redacted into `[REDACTED_PHONE]` via `(?:\+91[\-\s]?|91[\-\s]?|0)?[6-9]\d{9}\b`.
+- **Email**: Redacted into `[REDACTED_EMAIL]` via standard RFC-5322 regex.
+
+### 5.2 Drugs & Magic Remedies Act 1954 Interception
+The engine enforces a strict blacklist of claims prohibited under the Schedule to the Drugs and Magic Remedies Act:
+- Cancer cure, Diabetes reversal, Epilepsy cure, Blindness restoration, Kidney stone dissolution.
+- If detected, generation halts and a mandatory statutory warning is appended to the advisory report.
+
+### 5.3 Confidence Gatekeeper (< 60%)
+- If the RAG retrieval similarity score falls below 0.60 or conflicting statutory provisions are identified:
+  - Status is flagged as `ABSTENTION_REQUIRED`.
+  - The engine outputs a safe abstention advisory directing the user to the appropriate State AYUSH Licensing Authority or an enrolled Indian Patent Agent.
+
+---
+
+## 6. End-to-End Test Matrix
+
+| Suite | Script | Scope | Target Threshold |
+| :--- | :--- | :--- | :--- |
+| **Hybrid Search** | `scripts/verify_hybrid_search.py` | pgvector dense + GIN sparse retrieval | Latency < 800ms, RRF Top-5 precision 100% |
+| **Legal Synthesis** | `scripts/verify_module4_gemini.py` | Gemini Flash 5-Pillar synthesis | Zero hallucinated citations; valid JSON |
+| **DPDP & Audit** | `scripts/verify_module5_dpdp_audit.py` | PII redaction and audit persistence | 100% PII masked into `[REDACTED_*]` tokens |
+| **Session Memory** | `scripts/verify_session_memory.py` | Multi-turn contextual continuity | Zero cross-session leakage |
+| **Document Triage** | `verify_document_analysis.py` | Universal PDF/DOCX/Text extraction | 100% schema adherence across cosmetic & phyto patents |
