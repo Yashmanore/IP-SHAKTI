@@ -11,6 +11,9 @@ public class StatutorySourceCitation {
     private String snippetText;     // Text clause
     private String sourceFilePath;  // data/raw/national/statutes/Patents_Act_1970.pdf
     private double relevanceScore;
+    private String officialUrl;     // e.g. https://indiacode.gov.in/act/a49ad42b-f2dc-4ee2-9884-11ef0839798d
+    private String governingBody;   // e.g. "Indian Patent Office / DPIIT"
+    private Integer actYear;
 
     public StatutorySourceCitation() {
     }
@@ -23,6 +26,20 @@ public class StatutorySourceCitation {
         this.snippetText = snippetText;
         this.sourceFilePath = sourceFilePath;
         this.relevanceScore = relevanceScore;
+    }
+
+    public StatutorySourceCitation(String documentTitle, String sectionReference, String jurisdiction, 
+                                    String snippetText, String sourceFilePath, double relevanceScore,
+                                    String officialUrl, String governingBody, Integer actYear) {
+        this.documentTitle = documentTitle;
+        this.sectionReference = sectionReference;
+        this.jurisdiction = jurisdiction;
+        this.snippetText = snippetText;
+        this.sourceFilePath = sourceFilePath;
+        this.relevanceScore = relevanceScore;
+        this.officialUrl = officialUrl;
+        this.governingBody = governingBody;
+        this.actYear = actYear;
     }
 
     public String getDocumentTitle() {
@@ -71,5 +88,29 @@ public class StatutorySourceCitation {
 
     public void setRelevanceScore(double relevanceScore) {
         this.relevanceScore = relevanceScore;
+    }
+
+    public String getOfficialUrl() {
+        return officialUrl;
+    }
+
+    public void setOfficialUrl(String officialUrl) {
+        this.officialUrl = officialUrl;
+    }
+
+    public String getGoverningBody() {
+        return governingBody;
+    }
+
+    public void setGoverningBody(String governingBody) {
+        this.governingBody = governingBody;
+    }
+
+    public Integer getActYear() {
+        return actYear;
+    }
+
+    public void setActYear(Integer actYear) {
+        this.actYear = actYear;
     }
 }

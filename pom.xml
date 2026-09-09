@@ -51,6 +51,13 @@
             <version>${langchain4j.version}</version>
         </dependency>
 
+        <!-- LangChain4j Google AI Gemini Integration (gemini-1.5-flash / gemini-2.0-flash) -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-google-ai-gemini</artifactId>
+            <version>${langchain4j.version}</version>
+        </dependency>
+
         <!-- LangChain4j pgvector Embedding Store -->
         <dependency>
             <groupId>dev.langchain4j</groupId>

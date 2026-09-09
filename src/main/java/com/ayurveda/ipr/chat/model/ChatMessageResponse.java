@@ -10,7 +10,8 @@ public class ChatMessageResponse {
 
     public enum DialogueStatus {
         CLARIFICATION_REQUIRED,
-        ASSESSMENT_COMPLETE
+        ASSESSMENT_COMPLETE,
+        SAFE_ABSTENTION
     }
 
     private String sessionId;
@@ -20,6 +21,11 @@ public class ChatMessageResponse {
     private List<String> citationPills = new ArrayList<>();
     private ConfidenceScore confidenceScore;         // Populated if ASSESSMENT_COMPLETE
     private FivePillarsResponse pillars;             // Populated if ASSESSMENT_COMPLETE
+    private String jurisdiction = "INDIA";
+    private String language = "en";
+    private String detectedLanguage = "en";
+    private ExecutiveLegalDeliverables llmDeliverables; // Populated if ASSESSMENT_COMPLETE
+    private List<ActionRoadmapItem> actionRoadmap = new ArrayList<>(); // Populated if ASSESSMENT_COMPLETE
     private String disclaimer = "Information provided is for educational and guidance purposes under Indian law and does not constitute formal legal counsel.";
 
     public ChatMessageResponse() {
@@ -86,6 +92,46 @@ public class ChatMessageResponse {
 
     public void setPillars(FivePillarsResponse pillars) {
         this.pillars = pillars;
+    }
+
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
+    }
+
+    public String getDetectedLanguage() {
+        return detectedLanguage;
+    }
+
+    public void setDetectedLanguage(String detectedLanguage) {
+        this.detectedLanguage = detectedLanguage;
+    }
+
+    public String getJurisdiction() {
+        return jurisdiction;
+    }
+
+    public void setJurisdiction(String jurisdiction) {
+        this.jurisdiction = jurisdiction;
+    }
+
+    public ExecutiveLegalDeliverables getLlmDeliverables() {
+        return llmDeliverables;
+    }
+
+    public void setLlmDeliverables(ExecutiveLegalDeliverables llmDeliverables) {
+        this.llmDeliverables = llmDeliverables;
+    }
+
+    public List<ActionRoadmapItem> getActionRoadmap() {
+        return actionRoadmap;
+    }
+
+    public void setActionRoadmap(List<ActionRoadmapItem> actionRoadmap) {
+        this.actionRoadmap = actionRoadmap;
     }
 
     public String getDisclaimer() {

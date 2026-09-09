@@ -11,6 +11,7 @@ public class ChatMessageRequest {
     private String sessionId;
     private String message;
     private String jurisdiction = "INDIA"; // "INDIA" or "INTERNATIONAL"
+    private String language = "AUTO";      // "AUTO", "EN", "HI", "MR"
     private Map<String, String> clarificationAnswers = new HashMap<>();
 
     public ChatMessageRequest() {
@@ -46,6 +47,14 @@ public class ChatMessageRequest {
 
     public void setJurisdiction(String jurisdiction) {
         this.jurisdiction = jurisdiction;
+    }
+
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
     }
 
     public Map<String, String> getClarificationAnswers() {

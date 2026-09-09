@@ -36,8 +36,8 @@ public class ChatController {
      */
     @PostMapping("/message")
     @Operation(
-            summary = "Send chat message & receive guidance",
-            description = "Main conversational entrypoint. If key legal parameters (e.g. classical text match, technical novelty) are missing, returns 'CLARIFICATION_REQUIRED' with interactive button choices. Once answers are provided, executes Rule 158-B, Neon pgvector search, and external portals to return the full 5-Pillar structured analysis.",
+            summary = "Send chat message & receive guidance (Multilingual: EN, HI, MR)",
+            description = "Main conversational entrypoint with native multilingual support (English, Hindi, Marathi). Supports automatic Devanagari language detection or explicit 'language' parameter ('AUTO' | 'EN' | 'HI' | 'MR'). If key legal parameters (e.g. classical text match, technical novelty) are missing, returns 'CLARIFICATION_REQUIRED' with interactive button choices localized in the user's language. Once answers are provided, executes Rule 158-B, Neon pgvector search, and external portals to return the full 5-Pillar structured analysis in Devanagari with statutory tokens intact.",
             responses = {
                     @ApiResponse(
                             responseCode = "200",

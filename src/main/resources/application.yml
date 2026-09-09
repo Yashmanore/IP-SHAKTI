@@ -31,3 +31,10 @@ rag:
     table-name: "legal_document_embeddings"
     create-table: true
     drop-table-first: false
+
+# Google AI Studio Gemini LLM Configuration (LangChain4j)
+gemini:
+  api-key: ${GEMINI_API_KEY:}
+  model-name: ${GEMINI_MODEL:gemini-flash-lite-latest}
+  temperature: 0.1
+  max-output-tokens: 2048

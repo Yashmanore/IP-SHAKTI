@@ -82,6 +82,9 @@ public class FivePillarsResponse {
         private String filingStrategy;
         private String inpassBooleanSyntax;
         private String usptoSection101Guidance;
+        private TrademarkGuidance trademarkGuidance;
+        private String wipoGratkDisclosure;
+        private String designProtectionRelevance;
 
         public IpPillar() {}
 
@@ -97,6 +100,12 @@ public class FivePillarsResponse {
         public void setInpassBooleanSyntax(String inpassBooleanSyntax) { this.inpassBooleanSyntax = inpassBooleanSyntax; }
         public String getUsptoSection101Guidance() { return usptoSection101Guidance; }
         public void setUsptoSection101Guidance(String usptoSection101Guidance) { this.usptoSection101Guidance = usptoSection101Guidance; }
+        public TrademarkGuidance getTrademarkGuidance() { return trademarkGuidance; }
+        public void setTrademarkGuidance(TrademarkGuidance trademarkGuidance) { this.trademarkGuidance = trademarkGuidance; }
+        public String getWipoGratkDisclosure() { return wipoGratkDisclosure; }
+        public void setWipoGratkDisclosure(String wipoGratkDisclosure) { this.wipoGratkDisclosure = wipoGratkDisclosure; }
+        public String getDesignProtectionRelevance() { return designProtectionRelevance; }
+        public void setDesignProtectionRelevance(String designProtectionRelevance) { this.designProtectionRelevance = designProtectionRelevance; }
     }
 
     public static class RegulatoryPillar {
@@ -106,6 +115,7 @@ public class FivePillarsResponse {
         private String clinicalTrialObligation;
         private String governingActAndRules;
         private String ayushEvidenceChecklist;
+        private String fssaiOrCosmeticGuidance;
 
         public RegulatoryPillar() {}
 
@@ -121,6 +131,8 @@ public class FivePillarsResponse {
         public void setGoverningActAndRules(String governingActAndRules) { this.governingActAndRules = governingActAndRules; }
         public String getAyushEvidenceChecklist() { return ayushEvidenceChecklist; }
         public void setAyushEvidenceChecklist(String ayushEvidenceChecklist) { this.ayushEvidenceChecklist = ayushEvidenceChecklist; }
+        public String getFssaiOrCosmeticGuidance() { return fssaiOrCosmeticGuidance; }
+        public void setFssaiOrCosmeticGuidance(String fssaiOrCosmeticGuidance) { this.fssaiOrCosmeticGuidance = fssaiOrCosmeticGuidance; }
     }
 
     public static class AbsPillar {

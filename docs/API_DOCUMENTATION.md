@@ -57,6 +57,9 @@ Returned when clarification answers are provided:
 {
   "sessionId": "b4e872c0-...",
   "status": "ASSESSMENT_COMPLETE",
+  "jurisdiction": "INDIA",
+  "language": "en",
+  "detectedLanguage": "en",
   "botMessage": "Assessment complete. Here is the verified 5-pillar IPR, Regulatory, and Biodiversity analysis for your Ashwagandha formulation under Indian and International Law.",
   "confidenceScore": {
     "level": "HIGH",
@@ -69,24 +72,72 @@ Returned when clarification answers are provided:
     "Patents Act 1970 §3(p)",
     "D&C Rules 1945 Rule 158-B",
     "Biological Diversity Act §6",
-    "WIPO GRATK Treaty 2024"
+    "WIPO GRATK Treaty 2024",
+    "Trade Marks Act 1999 Class 5"
   ],
+  "llmDeliverables": {
+    "executiveSummary": {
+      "caseTitle": "IPR & Regulatory Blueprint for Ashwagandha Formulation",
+      "overallPatentabilityScore": 85,
+      "riskLevel": "MEDIUM",
+      "primaryStatutoryHurdle": "Patents Act 1970 §3(p) (Traditional Knowledge) & §3(e) (Mere Admixture)",
+      "primaryDefensiveStrategy": "Structure claims strictly on novel carrier encapsulation kinetics and proven statistical synergism rather than crude botanical extract."
+    },
+    "plainLanguageSummary": {
+      "targetLanguage": "en",
+      "headline": "Plain-Language Summary for Ashwagandha Innovators",
+      "canISellToday": "No, commercial manufacturing requires an AYUSH State License (Form 25-D) and NBA compliance first.",
+      "patentGuidance": "Novel nano-delivery and synergistic ratios can be patented in India, but raw herbal extracts cannot under Section 3(p).",
+      "immediateNextSteps": [
+        "Step 1: Obtain Form 25-D manufacturing license from State AYUSH Licensing Authority.",
+        "Step 2: Submit NBA Form 1 & Form 3 prior approval under Biological Diversity Act.",
+        "Step 3: Register distinctive house mark brand in Class 5 & Class 30."
+      ]
+    },
+    "draftPatentClaims": {
+      "claimStrategySummary": "Drafted to circumvent Section 3(p) and Section 3(e) by targeting novel pharmacokinetic delivery vehicles.",
+      "section3pDefense": "Claims do not monopolize Withania somnifera per se, but an artificial sub-micron delivery vehicle not disclosed in classical Samhitas.",
+      "claims": [
+        {
+          "claimNumber": 1,
+          "type": "INDEPENDENT_PRODUCT",
+          "claimText": "1. A synergistic pharmaceutical delivery composition comprising: (a) a standardized fraction of Withania somnifera... (b) a specialized carrier matrix in a weight ratio of 1:2 to 1:5; wherein said composition demonstrates enhanced bioavailability...",
+          "statutoryRationale": "Overcomes Section 3(p) bar by monopolizing an artificial carrier kinetics matrix rather than natural botanical per se."
+        },
+        {
+          "claimNumber": 2,
+          "type": "DEPENDENT_PROCESS",
+          "claimText": "2. A process for preparing the composition of claim 1, comprising controlled ultrasonic-assisted extraction followed by micro-encapsulation...",
+          "statutoryRationale": "Novel manufacturing process qualifying under Section 2(1)(j) of Patents Act 1970."
+        }
+      ]
+    }
+  },
   "pillars": {
     "ipAnalysis": {
       "patentableInIndia": true,
       "verdict": "Novel delivery mechanisms (e.g. nano-carriers) are PATENTABLE under Section 2(1)(j)...",
       "relevantPatentSections": ["Section 2(1)(j)", "Section 3(p)", "Section 3(e)"],
       "filingStrategy": "File patent claims strictly focused on the nano-carrier encapsulation process...",
+      "trademarkGuidance": {
+        "recommendedNiceClass": "Class 5 (Ayurvedic Pharmaceuticals & Herbal Formulations), Class 30 (Ayurveda Aahar), Class 3 (Herbal Cosmetics)",
+        "houseMarkStrategy": "Register distinctive coined house prefix as brand trademark (e.g. 'BrandName Ashwagandha'). Classical names from First Schedule texts cannot be monopolized under Section 9/11 (Dabur India v. Baidyanath).",
+        "classicalNameBarWarning": "Generic classical Ayurvedic formulation names are publici juris and strictly barred from exclusive trademark monopolization.",
+        "giRelevance": "Verify geographical origin under GI Act 1999 if raw botanical cultivars originate from registered GI clusters."
+      },
+      "wipoGratkDisclosure": "Article 3 WIPO GRATK Treaty 2024: Mandatory patent applicant disclosure of genetic resources country of origin (India) and associated traditional knowledge.",
+      "designProtectionRelevance": "Designs Act 2000: Novel ergonomic bottle geometry, dropper mechanism, or topical applicator shapes can be registered independently in Class 09-01.",
       "inpassBooleanSyntax": "((IPC: A61K 36/81) AND (Abstract: \"Withania somnifera\" OR \"Ashwagandha\"))",
       "usptoSection101Guidance": "35 U.S.C. § 101 Subject-Matter Eligibility Assessment: Raw extracts barred under Product of Nature doctrine..."
     },
     "regulatoryAnalysis": {
       "productCategory": "Proprietary Ayurvedic Medicine - Category B (New Indication / Modified Form)",
       "licensingAuthority": "AYUSH State Licensing Authority with DCGI / Technical Review",
-      "licensingForm": "Apply for Proprietary Ayurvedic Medicine license...",
+      "licensingForm": "Apply for Proprietary Ayurvedic Medicine license (Form 25-D)...",
       "clinicalTrialObligation": "Rule 158-B(1)(B) requires Pilot Clinical Trials on at least 30 patients...",
       "governingActAndRules": "Drugs & Cosmetics Rules 1945, Rule 158-B(1)(B)",
-      "ayushEvidenceChecklist": "Rule 158-B(1)(A) Regulatory Submission Dossier: Compile at least 2 published peer-reviewed human clinical trial papers..."
+      "ayushEvidenceChecklist": "Rule 158-B(1)(A) Regulatory Submission Dossier: Compile at least 2 published peer-reviewed human clinical trial papers...",
+      "fssaiOrCosmeticGuidance": "If marketed as Ayurveda Aahar: Central FSSAI License with mandatory Ayurveda Aahar logo required under FSSAI Regulations 2022."
     },
     "absCheck": {
       "complianceStatus": "Prior Intimation to State Biodiversity Board (SBB) required under Section 7 for commercial utilization...",
@@ -109,10 +160,59 @@ Returned when clarification answers are provided:
         "jurisdiction": "INDIA",
         "snippetText": "an invention which in effect, is traditional knowledge or which is an aggregation or duplication of known properties...",
         "sourceFilePath": "data/raw/national/statutes/Patents_Act_1970.pdf",
+        "officialUrl": "https://indiacode.gov.in/act/a49ad42b-f2dc-4ee2-9884-11ef0839798d",
+        "governingBody": "Indian Patent Office / DPIIT",
+        "actYear": 1970,
         "relevanceScore": 0.88
       }
     ]
   },
+  "actionRoadmap": [
+    {
+      "stepNumber": 1,
+      "phase": "REGULATORY_COMPLIANCE",
+      "action": "Apply for AYUSH Manufacturing License (Form 25-D)",
+      "authority": "State AYUSH Licensing Authority (SLA)",
+      "governingAct": "Drugs and Cosmetics Rules 1945, Rule 158-B",
+      "portalName": "e-Aushadhi / State AYUSH Licensing Portal",
+      "portalUrl": "https://e-aushadhi.gov.in",
+      "mandatory": true,
+      "estimatedTimeline": "60-90 days"
+    },
+    {
+      "stepNumber": 2,
+      "phase": "BIODIVERSITY_APPROVAL",
+      "action": "Submit Form 1 for Commercial Utilization & Form 3 for IPR Prior Approval",
+      "authority": "National Biodiversity Authority (Chennai)",
+      "governingAct": "Biological Diversity Act 2002, Section 3, 6(1) & 7",
+      "portalName": "ABS e-Filing Portal",
+      "portalUrl": "https://absefiling.nic.in",
+      "mandatory": true,
+      "estimatedTimeline": "90-180 days"
+    },
+    {
+      "stepNumber": 3,
+      "phase": "IPR_PATENT_PROTECTION",
+      "action": "File Process / Drug Delivery Patent Application with Mandatory Origin Declaration (Form 1 & 2)",
+      "authority": "Indian Patent Office (IPO / DPIIT)",
+      "governingAct": "Patents Act 1970 §2(1)(j), §3(p), §10(4)(d)(ii)",
+      "portalName": "InPASS e-Filing Portal",
+      "portalUrl": "https://ipindiaonline.gov.in",
+      "mandatory": false,
+      "estimatedTimeline": "1-3 days for provisional filing"
+    },
+    {
+      "stepNumber": 4,
+      "phase": "TRADEMARK_BRAND_PROTECTION",
+      "action": "Register Coined House Mark & Product Logo in Class 5 (Pharma) and Class 30 (Aahar)",
+      "authority": "Trade Marks Registry (TMR)",
+      "governingAct": "Trade Marks Act 1999, Section 18",
+      "portalName": "IP India Trademark Portal",
+      "portalUrl": "https://ipindiaonline.gov.in",
+      "mandatory": true,
+      "estimatedTimeline": "7-15 days for formal filing receipt"
+    }
+  ],
   "disclaimer": "Information provided is for educational and guidance purposes under Indian law and does not constitute formal legal counsel."
 }
 ```
