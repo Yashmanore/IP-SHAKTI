@@ -91,7 +91,19 @@ Generates structured legal deliverables via Google Gemini Flash:
 - Backed by the PostgreSQL `chat_messages` table and an in-memory sliding window cache.
 - Isolates conversation state strictly by `sessionId` to support multi-turn clarifying dialogues without cross-session pollution.
 
+### 7. Detailed PDF Legal Dossier Generation & Registered Email Dispatch
+- Generates an exhaustive, multi-page **Official IPR & Regulatory Dossier PDF** containing:
+  - 🏛️ Executive Summary & Patentability Scorecard (0–100 gauge with risk rating)
+  - 📋 Rule 158-B Regulatory Classification Matrix (forms, clinical trial obligations)
+  - 🛡️ Section 3(p) TKDL Bar & Synergism Defense (Combination Index $CI < 0.7$, lipid matrix)
+  - 🌿 Biological Diversity Act Checklist (NBA Form I/III or SBB Section 7 intimation)
+  - ⚖️ Synthesized Draft Patent Claims (Claim 1 Product & Claim 2 Process claims)
+  - 📜 Statutory Source Citations & Phase-by-Phase Roadmap
+  - 🔒 DPDP Act 2023 Masking Stamp & Sovereign Disclaimer
+- Automatically delivers the attached PDF dossier to the applicant's registered email inbox via Spring Boot `JavaMailSender`.
+
 ---
+
 
 ## 🛠️ Technology Stack
 
@@ -180,9 +192,9 @@ mvn clean compile -DskipTests
 ```powershell
 mvn spring-boot:run
 ```
-The server starts at `http://localhost:8080`.
-- **Interactive Swagger UI**: `http://localhost:8080/swagger-ui/index.html`
-- **OpenAPI Schema**: `http://localhost:8080/v3/api-docs`
+The server starts at `http://localhost:8085`.
+- **Interactive Swagger UI**: `http://localhost:8085/swagger-ui/index.html`
+- **OpenAPI Schema**: `http://localhost:8085/v3/api-docs`
 
 ---
 
@@ -205,7 +217,11 @@ python scripts/verify_session_memory.py
 
 # 5. Verify Unified Multi-Format Document Ingestion (PDF / DOCX / Text)
 python verify_document_analysis.py
+
+# 6. Verify Detailed PDF Legal Dossier Generation & Registered Email Dispatch
+python scripts/verify_pdf_report_and_email.py
 ```
+
 
 ---
 

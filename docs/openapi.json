@@ -51,6 +51,10 @@
     {
       "name": "Multilingual Engine",
       "description": "Legal-accurate translation across English, Hindi, and Marathi"
+    },
+    {
+      "name": "Report Generation & Email",
+      "description": "Multi-page legal PDF dossier generation and registered email dispatch"
     }
   ],
   "paths": {
@@ -350,6 +354,87 @@
             "content": {
               "application/json": {
                 "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/report/download/{sessionId}": {
+      "get": {
+        "tags": ["Report Generation & Email"],
+        "summary": "Download minute 7-Pillar PDF Legal Dossier",
+        "description": "Compiles executive summary, Rule 158-B classification, Section 3(p) defense, NBA checklist, synthesized patent claims, and statutory citations into a high-resolution PDF.",
+        "operationId": "downloadDossierPdf",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "productName",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Binary PDF Legal Dossier stream",
+            "content": {
+              "application/pdf": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/report/email/{sessionId}": {
+      "post": {
+        "tags": ["Report Generation & Email"],
+        "summary": "Email PDF Legal Dossier to registered applicant",
+        "description": "Generates the exhaustive PDF dossier and dispatches it as an email attachment to the registered email.",
+        "operationId": "emailDossierPdf",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "recipientEmail": { "type": "string" },
+                  "applicantName": { "type": "string" },
+                  "productName": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email dispatch confirmation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "recipient": { "type": "string" },
+                    "message": { "type": "string" },
+                    "attachmentName": { "type": "string" }
+                  }
+                }
               }
             }
           }

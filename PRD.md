@@ -99,7 +99,20 @@ flowchart TD
 - Backed by PostgreSQL `chat_messages` table with an in-memory sliding window cache.
 - Prevents cross-session context pollution while allowing interactive, multi-turn clarification dialogue.
 
+### Module 7: Detailed PDF Legal Dossier Generation & Registered Email Dispatch
+- Compiles every statutory parameter into an exhaustive, multi-page **Official IPR & Regulatory Legal Dossier PDF**:
+  1. **Executive Summary & Patentability Score** (0–100 gauge with risk rating).
+  2. **Rule 158-B Regulatory Classification Matrix** (Licensing forms, clinical trial obligations, acute toxicity requirements).
+  3. **Section 3(p) TKDL Bar & Synergism Defense** (Botanical binomials, prior art density, Combination Index $CI < 0.7$, novel lipid matrix).
+  4. **Biological Diversity Act Checklist** (NBA Form I/III or State Biodiversity Board Section 7 intimation, WIPO GRATK Treaty origin declaration).
+  5. **Synthesized Draft Patent Claims** (Verbatim Claim 1 Product and Claim 2 Process claims formatted for the Indian Patent Office).
+  6. **Statutory Source Citations & Phase-by-Phase Roadmap** (Citations table and chronological action timeline).
+  7. **DPDP Act 2023 Masking Stamp & Official Legal Disclaimer**.
+- Direct browser download via `GET /api/v1/report/download/{sessionId}`.
+- Automated email dispatch of the attached PDF dossier to the applicant's registered email via Spring Boot `JavaMailSender`.
+
 ---
+
 
 ## 4. Non-Functional & Security Requirements
 

@@ -2,9 +2,9 @@
 
 This document outlines all backend endpoints for the **IP-SHAKTI Sahayak** AI Assistant. 
 When the backend runs locally, interactive Swagger UI is live at:
-👉 **`http://localhost:8080/swagger-ui/index.html`**  
+👉 **`http://localhost:8085/swagger-ui/index.html`**  
 OpenAPI JSON is available at:  
-👉 **`http://localhost:8080/v3/api-docs`**
+👉 **`http://localhost:8085/v3/api-docs`**
 
 ---
 
@@ -387,4 +387,47 @@ Returns the 20 most recent sovereign audit logs with redacted personal identifie
 
 ### `GET /api/v1/audit/session/{sessionId}`
 Returns all audit records for a given session UUID.
+
+---
+
+## 7. PDF Legal Dossier Generation & Registered Email Dispatch
+
+### `GET /api/v1/report/download/{sessionId}`
+Generates and downloads a multi-page, publication-grade PDF Legal Dossier compiling all 7 statutory pillars.
+
+#### Query Parameters:
+* `productName`: (Optional override for the product name)
+
+#### Response:
+* `Content-Type: application/pdf`
+* `Content-Disposition: attachment; filename="IP_SHAKTI_Legal_Dossier_{sessionId}.pdf"`
+
+### `POST /api/v1/report/email/{sessionId}`
+Compiles the complete 7-pillar legal dossier and dispatches it via Spring Boot `JavaMailSender` directly to the applicant's registered email inbox.
+
+#### Request Body (`EmailDossierRequest`):
+```json
+{
+  "recipientEmail": "innovator@ayurcosmeceuticals.in",
+  "applicantName": "Dr. Sunita Deshmukh",
+  "productName": "Haridra & Kumkumadi Radiance Cream"
+}
+```
+
+#### Response (`EmailDispatchResult`):
+```json
+{
+  "success": true,
+  "recipient": "innovator@ayurcosmeceuticals.in",
+  "message": "Legal Dossier PDF successfully delivered to registered email: innovator@ayurcosmeceuticals.in",
+  "attachmentName": "IP_SHAKTI_Legal_Dossier_b4e872c0.pdf"
+}
+```
+
+### `POST /api/v1/report/generate-from-analysis`
+Generates the legal dossier PDF directly from a `DocumentAnalysisResponse` payload.
+
+### `POST /api/v1/report/email-analysis-dossier`
+Generates the legal dossier PDF directly from a `DocumentAnalysisResponse` payload and dispatches it to the applicant email extracted from the document credentials.
+
 
