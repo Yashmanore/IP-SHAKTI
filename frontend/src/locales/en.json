@@ -1,0 +1,103 @@
+{
+  "dashboard": {
+    "title": "IP-SAKTI Dashboard",
+    "subtitle": "Source-grounded intellectual property and regulatory guidance for Ayurveda.",
+    "startAssessment": "Start New Assessment",
+    "snapshot": {
+      "title": "Today's Snapshot",
+      "empty": "No assessment activity yet"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "askIpSakti": "Ask IP-SAKTI",
+      "askIpSaktiDesc": "Ask an IP or regulatory question.",
+      "productClassification": "Product Classification",
+      "productClassificationDesc": "Determine the relevant Ayurveda product category.",
+      "ipProtection": "IP Protection",
+      "ipProtectionDesc": "Review potentially relevant IP protection routes.",
+      "regulatoryCheck": "Regulatory Check",
+      "regulatoryCheckDesc": "Review regulatory requirements that may apply."
+    },
+    "recentAssessments": {
+      "title": "Recent Assessments",
+      "empty": "No assessments yet",
+      "supporting": "Your completed assessments will appear here.",
+      "action": "Start New Assessment"
+    },
+    "knowledgeIntelligence": {
+      "title": "Knowledge Intelligence",
+      "description": "IP-SAKTI is designed around source-grounded guidance, jurisdiction-aware reasoning, Ayurveda-specific IP and regulatory context, traceable citations, and human expert escalation when needed.",
+      "emptySource": "Authoritative source connectivity will be shown when available."
+    },
+    "trust": {
+      "title": "Why Trust IP-SAKTI",
+      "sourceGrounded": "Source-grounded",
+      "sourceGroundedDesc": "Guidance is designed to reference authoritative legal and regulatory sources.",
+      "jurisdictionAware": "Jurisdiction-aware",
+      "jurisdictionAwareDesc": "India and international guidance are kept clearly separated.",
+      "transparent": "Transparent",
+      "transparentDesc": "Relevant sources and reasoning context can be reviewed where available.",
+      "humanEscalation": "Human escalation",
+      "humanEscalationDesc": "Complex or low-confidence matters can be referred to a human IP facilitator."
+    },
+    "disclaimer": "IP-SAKTI provides information and guidance based on available sources. It is not a substitute for legal advice, regulatory approval, licensing, certification, or professional consultation."
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "askIpSakti": "Ask IP-SAKTI",
+    "productClassification": "Product Classification",
+    "ipProtection": "IP Protection",
+    "regulatoryCheck": "Regulatory Check",
+    "absBiodiversity": "ABS & Biodiversity",
+    "tkdlPriorArt": "TKDL / Prior Art",
+    "sourceExplorer": "Source Explorer",
+    "myCases": "My Cases",
+    "expertEscalation": "Expert Escalation",
+    "legalDossier": "Legal Dossier"
+  },
+  "header": {
+    "dashboard": "Dashboard",
+    "askIpSakti": "Ask IP-SAKTI"
+  },
+  "askIpSakti": {
+    "title": "Ask IP-SAKTI",
+    "subtitle": "Ask an intellectual property or regulatory question related to your Ayurveda product.",
+    "questionLabel": "What would you like to know?",
+    "questionHelper": "Ask about patents, trademarks, geographical indications, copyright, designs, traditional knowledge, biodiversity and ABS, or product regulations.",
+    "questionPlaceholder": "Describe your IP or regulatory question...",
+    "questionRequired": "Please enter your question.",
+    "productContext": {
+      "title": "Product Context",
+      "helper": "Providing product details helps IP-SAKTI give more relevant guidance. All fields are optional.",
+      "productName": "Product name",
+      "productNamePlaceholder": "Enter product name",
+      "mainIngredients": "Main ingredient(s)",
+      "mainIngredientsPlaceholder": "List the main ingredients or biological resources",
+      "intendedUse": "Intended use",
+      "intendedUsePlaceholder": "Describe the intended use of the product"
+    },
+    "jurisdiction": {
+      "title": "Jurisdiction",
+      "helper": "India and international guidance are handled separately. Select the jurisdiction that applies to your situation.",
+      "india": "India",
+      "international": "International",
+      "destinationMarket": "Destination market",
+      "destinationMarketPlaceholder": "Enter destination country or region",
+      "destinationMarketHelper": "Specify the target country or market for international guidance."
+    },
+    "submit": "Analyze with IP-SAKTI",
+    "submitting": "Analyzing with IP-SAKTI…",
+    "notSure": "Not sure what to ask?",
+    "serviceUnavailable": "Analysis service is not connected yet.",
+    "commonQuestions": {
+      "title": "Common Questions",
+      "helper": "Select a template to populate the question field."
+    },
+    "sourceGrounded": {
+      "title": "Source-Grounded Guidance",
+      "description": "IP-SAKTI is designed to provide guidance grounded in authoritative legal, regulatory, biodiversity and traditional-knowledge sources.",
+      "emptySource": "Authoritative source connectivity will be shown when available."
+    },
+    "disclaimer": "IP-SAKTI provides information and guidance based on available sources. It is not a substitute for legal advice, regulatory approval, licensing, certification, or professional consultation."
+  }
+}
