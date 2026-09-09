@@ -84,10 +84,24 @@ public class GeminiGenerativeService {
             ExternalPortalsPayload portals,
             List<StatutorySourceCitation> citations,
             Language targetLang) {
+        return generateDeliverables(plantKey, classRes, portals, citations, targetLang, "");
+    }
+
+    /**
+     * Synthesizes ExecutiveLegalDeliverables using Google Gemini Flash or deterministic fallback,
+     * grounding against session-isolated conversation history.
+     */
+    public ExecutiveLegalDeliverables generateDeliverables(
+            String plantKey,
+            ClassificationResult classRes,
+            ExternalPortalsPayload portals,
+            List<StatutorySourceCitation> citations,
+            Language targetLang,
+            String conversationHistory) {
 
         if (geminiModel != null) {
             try {
-                String prompt = buildGroundedPrompt(plantKey, classRes, portals, citations, targetLang);
+                String prompt = buildGroundedPrompt(plantKey, classRes, portals, citations, targetLang, conversationHistory);
                 log.debug("Sending prompt to Gemini Flash ({} tokens approx)...", prompt.length() / 4);
                 String responseText = geminiModel.generate(prompt);
                 log.debug("Received raw response from Gemini Flash");
@@ -110,9 +124,15 @@ public class GeminiGenerativeService {
             ClassificationResult classRes,
             ExternalPortalsPayload portals,
             List<StatutorySourceCitation> citations,
-            Language targetLang) {
+            Language targetLang,
+            String conversationHistory) {
 
         StringBuilder sb = new StringBuilder();
+
+        if (conversationHistory != null && !conversationHistory.isBlank()) {
+            sb.append("=== SESSION CONVERSATION HISTORY (PRIOR DIALOGUE TURNS) ===\n");
+            sb.append(conversationHistory).append("\n\n");
+        }
 
         // 1. Role & Strict Negative Constraints
         sb.append("You are IP-SHAKTI Sahayak, an authoritative Senior Patent Attorney and AYUSH Regulatory Counsel in India.\n\n");

@@ -291,3 +291,100 @@ Queries the 2,026 chunks in Neon `pgvector` with strict jurisdiction filtering.
 
 #### Example Request:
 `GET http://localhost:8080/api/v1/rag/search?query=Section%203p%20traditional%20knowledge&jurisdiction=INDIA`
+
+---
+
+## 5. Multi-Format Document Ingestion & Analysis
+
+### `POST /api/v1/document/analyze`
+Uploads and parses a complete specification or dossier (PDF, DOCX, TXT), performs automated DPDP Act PII masking, extracts statutory parameters via Gemini LLM JSON mode, and returns both the structured profile and the full 5-Pillar assessment.
+
+#### Request (`multipart/form-data`):
+* `file`: (Binary PDF, Word `.docx`, or `.txt` specification)
+* `sessionId`: (Optional UUID to maintain conversational memory)
+* `jurisdiction`: `INDIA` or `INTERNATIONAL` (Default: `INDIA`)
+* `language`: `EN`, `HI`, `MR`, or `AUTO` (Default: `AUTO`)
+
+### `POST /api/v1/document/analyze-text`
+Analyzes an inline formulation description or specification string via JSON without requiring a file upload.
+
+#### Request Body (`TextAnalysisRequest`):
+```json
+{
+  "text": "Applicant: Dr. Rajesh Sharma, PAN: ABCPS1234K, Aadhaar: 3344 5566 7788. Synergistic extract of Withania somnifera and Curcuma longa in a 3:1 ratio showing 4x bioavailability...",
+  "sessionId": "optional-uuid",
+  "jurisdiction": "INDIA",
+  "language": "EN"
+}
+```
+
+#### Response (`DocumentAnalysisResponse`):
+```json
+{
+  "extractedProfile": {
+    "fileName": "patent.pdf",
+    "fileType": "PDF",
+    "fileSizeBytes": 142850,
+    "sourceMode": "PDF Document (Direct LLM)",
+    "applicantCredentials": {
+      "applicantName": "Dr. Sunita Deshmukh / AyurCosmeceuticals Pvt Ltd",
+      "aadhaarNumber": "9876 5432 1098",
+      "panNumber": "ABCDE1234F",
+      "phoneNumber": "+91 9822012345",
+      "emailAddress": null,
+      "locationOrAddress": "Maharashtra and Jammu & Kashmir"
+    },
+    "productDetails": {
+      "documentTitle": "A SYNERGISTIC PHYTO-LIPOSOMAL TOPICAL COSMETIC COMPOSITION...",
+      "productName": "Phyto-liposomal topical cosmetic composition comprising Haridra and Kumkumadi actives",
+      "botanicalBinomials": ["Curcuma longa", "Crocus sativus", "Pterocarpus santalinus"],
+      "regulatoryCategory": "AYURVEDIC_COSMETIC",
+      "governingActAndRules": "Drugs & Cosmetics Act 1940, Section 3(aaa), Rule 158-B",
+      "licensingAuthority": "State AYUSH Licensing Authority / FDA Maharashtra"
+    },
+    "patentabilityAndStatutoryAnalysis": {
+      "technicalNovelty": "Proprietary sub-micron phospholipid lipid bilayer encapsulation (110-140 nm)...",
+      "isClassicalScriptureRecipe": false,
+      "section3pTraditionalKnowledgeBar": {
+        "isBarred": false,
+        "rationale": "Overcomes Section 3(p) TKDL bar by creating an artificial sub-micron liposomal delivery matrix."
+      },
+      "synergismOrEfficacy": {
+        "proven": true,
+        "evidence": "Combination Index (CI) of 0.62 under Section 3(e) with 6.2-fold increase in dermal retention."
+      },
+      "biodiversityActRequirement": "Section 7 intimation to Maharashtra State Biodiversity Board (MSBB).",
+      "clinicalTrialObligations": "Cosmetic formulation exemption from therapeutic clinical trials under Schedule Y.",
+      "claimsSummary": [
+        { "claimNumber": 1, "type": "PRODUCT", "summary": "Sub-micron liposomal composition (110-140 nm)..." },
+        { "claimNumber": 2, "type": "PROCESS", "summary": "Process for preparing via rotary thin-film hydration..." }
+      ],
+      "immediateNextSteps": [
+        "File Form 32-A Cosmetic License application with FDA Maharashtra.",
+        "Submit Section 7 intimation to MSBB."
+      ]
+    }
+  },
+  "assessment": {
+    "sessionId": "b4e872c0-...",
+    "status": "ASSESSMENT_COMPLETE",
+    "jurisdiction": "INDIA",
+    "confidenceScore": { "overallScore": 92, "level": "HIGH" },
+    "pillars": { ... },
+    "llmDeliverables": { ... },
+    "actionRoadmap": [ ... ]
+  }
+}
+```
+
+
+---
+
+## 6. Sovereign Audit & DPDP Act Compliance
+
+### `GET /api/v1/audit/recent`
+Returns the 20 most recent sovereign audit logs with redacted personal identifiers.
+
+### `GET /api/v1/audit/session/{sessionId}`
+Returns all audit records for a given session UUID.
+

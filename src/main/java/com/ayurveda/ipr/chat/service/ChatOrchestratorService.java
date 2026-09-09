@@ -31,6 +31,7 @@ public class ChatOrchestratorService {
     private final DpdpSanitizationService dpdpSanitizationService;
     private final SafeAbstentionEngine safeAbstentionEngine;
     private final AuditLogRepository auditLogRepository;
+    private final ChatSessionMemoryService chatSessionMemoryService;
 
     public ChatOrchestratorService(Rule158BClassificationEngine classificationEngine,
                                    LegalSearchService legalSearchService,
@@ -39,7 +40,8 @@ public class ChatOrchestratorService {
                                    GeminiGenerativeService geminiGenerativeService,
                                    DpdpSanitizationService dpdpSanitizationService,
                                    SafeAbstentionEngine safeAbstentionEngine,
-                                   AuditLogRepository auditLogRepository) {
+                                   AuditLogRepository auditLogRepository,
+                                   ChatSessionMemoryService chatSessionMemoryService) {
         this.classificationEngine = classificationEngine;
         this.legalSearchService = legalSearchService;
         this.externalPortalService = externalPortalService;
@@ -48,6 +50,7 @@ public class ChatOrchestratorService {
         this.dpdpSanitizationService = dpdpSanitizationService;
         this.safeAbstentionEngine = safeAbstentionEngine;
         this.auditLogRepository = auditLogRepository;
+        this.chatSessionMemoryService = chatSessionMemoryService;
     }
 
     public ChatMessageResponse processMessage(ChatMessageRequest request) {
@@ -63,6 +66,9 @@ public class ChatOrchestratorService {
         DpdpSanitizationService.SanitizationResult sanitizationResult = dpdpSanitizationService.sanitize(rawMsg);
         String userMsg = sanitizationResult.sanitizedText();
         boolean piiRedacted = sanitizationResult.piiDetected();
+
+        // Record User Turn into Session-Isolated Memory
+        chatSessionMemoryService.addUserMessage(sessionId, userMsg);
 
         String jurisdiction = (request.getJurisdiction() != null && !request.getJurisdiction().isEmpty())
                 ? request.getJurisdiction().toUpperCase()
@@ -84,6 +90,8 @@ public class ChatOrchestratorService {
             response.setCitationPills(dmraEval.getCitationPills());
             response.setJurisdiction(jurisdiction);
             response.setDisclaimer("Statutory Safe Abstention: Advertising or claiming cures for scheduled diseases violates the Drugs and Magic Remedies Act 1954.");
+
+            chatSessionMemoryService.addAiMessage(sessionId, response.getBotMessage());
 
             auditLogRepository.save(new AuditLog(
                     sessionId,
@@ -125,6 +133,8 @@ public class ChatOrchestratorService {
 
             response.setClarificationPrompt(prompt);
             response.setCitationPills(Arrays.asList("Patents Act, 1970 §3(p)", "TKDL Framework", "Drugs & Cosmetics Act First Schedule"));
+
+            chatSessionMemoryService.addAiMessage(sessionId, response.getBotMessage());
 
             auditLogRepository.save(new AuditLog(
                     sessionId,
@@ -169,6 +179,8 @@ public class ChatOrchestratorService {
 
             response.setClarificationPrompt(prompt);
             response.setCitationPills(Arrays.asList("Patents Act, 1970 §3(e)", "Rule 158-B(1)(B)", "CDSCO Rule 122-E"));
+
+            chatSessionMemoryService.addAiMessage(sessionId, response.getBotMessage());
 
             auditLogRepository.save(new AuditLog(
                     sessionId,
@@ -381,16 +393,20 @@ public class ChatOrchestratorService {
                 "7-15 days for formal filing receipt"
         ));
 
-        // 6. Construct Generative LLM Deliverables via Gemini Flash (with resilient fallback)
+        // 6. Retrieve Session-Isolated Conversation History (Last 5 dialogue turns)
+        String conversationHistory = chatSessionMemoryService.getFormattedHistory(sessionId, 5);
+
+        // 7. Construct Generative LLM Deliverables via Gemini Flash (with resilient fallback)
         ExecutiveLegalDeliverables deliverables = geminiGenerativeService.generateDeliverables(
                 plantKey,
                 classRes,
                 portals,
                 citations,
-                targetLang
+                targetLang,
+                conversationHistory
         );
 
-        // 7. Construct Final Response with Confidence Score
+        // 8. Construct Final Response with Confidence Score
         ChatMessageResponse response = new ChatMessageResponse(
                 sessionId,
                 ChatMessageResponse.DialogueStatus.ASSESSMENT_COMPLETE,
@@ -430,6 +446,9 @@ public class ChatOrchestratorService {
                 String.join(",", response.getCitationPills()),
                 piiRedacted
         ));
+
+        // Record AI response in Session Memory
+        chatSessionMemoryService.addAiMessage(sessionId, response.getBotMessage());
 
         return response;
     }

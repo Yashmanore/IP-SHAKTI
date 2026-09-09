@@ -12,6 +12,9 @@ public class ChatMessageRequest {
     private String message;
     private String jurisdiction = "INDIA"; // "INDIA" or "INTERNATIONAL"
     private String language = "AUTO";      // "AUTO", "EN", "HI", "MR"
+    private String productName;
+    private String mainIngredients;
+    private String intendedUse;
     private Map<String, String> clarificationAnswers = new HashMap<>();
 
     public ChatMessageRequest() {
@@ -55,6 +58,30 @@ public class ChatMessageRequest {
 
     public void setLanguage(String language) {
         this.language = language;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
+    public String getMainIngredients() {
+        return mainIngredients;
+    }
+
+    public void setMainIngredients(String mainIngredients) {
+        this.mainIngredients = mainIngredients;
+    }
+
+    public String getIntendedUse() {
+        return intendedUse;
+    }
+
+    public void setIntendedUse(String intendedUse) {
+        this.intendedUse = intendedUse;
     }
 
     public Map<String, String> getClarificationAnswers() {

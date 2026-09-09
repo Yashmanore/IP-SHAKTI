@@ -79,6 +79,13 @@
             <version>${langchain4j.version}</version>
         </dependency>
 
+        <!-- Apache POI for Microsoft Word (.docx) Document Parsing -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.5</version>
+        </dependency>
+
         <!-- Lombok (Optional boilerplate reduction) -->
         <dependency>
             <groupId>org.projectlombok</groupId>
