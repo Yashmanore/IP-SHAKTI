@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+@theme {
+  --color-forest-green: #174A3A;
+  --color-deep-teal: #1E5B57;
+  --color-warm-ivory: #F7F5EF;
+  --color-muted-gold: #B18A45;
+  --color-charcoal: #202A27;
+  --color-slate: #65736D;
+  --color-border-color: #DDE1DB;
+  --color-success: #287A55;
+  --color-warning: #B47A24;
+  --color-error: #A64B43;
+  --font-heading: "Source Serif 4", serif;
+  --font-sans: "IBM Plex Sans", sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-warm-ivory text-charcoal font-sans antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading text-forest-green;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-forest-green text-white px-4 py-2 rounded-md hover:bg-deep-teal transition-colors font-medium shadow-sm;
+  }
+  
+  .btn-secondary {
+    @apply bg-white text-forest-green border border-forest-green px-4 py-2 rounded-md hover:bg-slate-50 transition-colors font-medium shadow-sm;
+  }
+  
+  .card {
+    @apply bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-border-color overflow-hidden;
+  }
+}
