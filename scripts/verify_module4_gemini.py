@@ -48,7 +48,7 @@ def test_live_gemini_api(api_key):
 
     prompt = (
         "You are IP-SHAKTI Sahayak, Senior Patent Counsel in India. "
-        "In 2 sentences, explain why a crude Ashwagandha extract is barred from patent grant under Section 3(p) "
+         "In 2 sentences, from which section a crude Ashwagandha extract is barred from patent grant "
         "of the Indian Patents Act 1970, and how novel nano-carrier encapsulation overcomes this bar."
     )
 

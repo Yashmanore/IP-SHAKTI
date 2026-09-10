@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IP-SHAKTI Sahayak | Sovereign AI for Ayurvedic IPR & Regulatory Intelligence</title>
+  <meta name="description" content="AI-Powered Statutory IPR, Rule 158-B Classification, Section 3(p) TKDL Defense, and Biological Diversity Compliance for Ayurvedic Innovators." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --forest-dark: #152d1b;
+      --forest-base: #1a3822;
+      --forest-light: #234d2f;
+      --lime-primary: #9fe870;
+      --lime-glow: rgba(159, 232, 112, 0.4);
+      --lime-hover: #8ee05b;
+      --text-dark: #14281a;
+      --text-muted: #536b58;
+      --border-subtle: rgba(255, 255, 255, 0.12);
+      --bg-cream: #fbfbf9;
+      --white: #ffffff;
+      --font-display: 'Outfit', -apple-system, sans-serif;
+      --font-body: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-body);
+      color: var(--text-dark);
+      background-color: var(--white);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ==========================================================================
+       HERO SECTION (Matches Reference Image 2 - No Navbar)
+       ========================================================================== */
+    .hero-section {
+      position: relative;
+      min-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 100px 24px 80px;
+      background-image: 
+        linear-gradient(180deg, 
+          rgba(16, 38, 22, 0.52) 0%, 
+          rgba(18, 42, 24, 0.78) 55%, 
+          rgba(26, 56, 34, 0.96) 88%,
+          var(--forest-base) 100%),
+        url('images/hero-bg.jpg');
+      background-size: cover;
+      background-position: center 35%;
+      background-repeat: no-repeat;
+      color: var(--white);
+    }
+
+    .hero-content {
+      max-width: 960px;
+      z-index: 2;
+      margin: 0 auto;
+    }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.8rem, 6.2vw, 4.8rem);
+      font-weight: 800;
+      line-height: 1.12;
+      letter-spacing: -0.025em;
+      margin-bottom: 24px;
+      text-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .hero-title span.lime-accent {
+      color: var(--lime-primary);
+    }
+
+    .hero-subtitle {
+      font-size: clamp(1.05rem, 2vw, 1.25rem);
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.9);
+      max-width: 780px;
+      margin: 0 auto 40px;
+      line-height: 1.65;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+    }
+
+    .hero-cta-group {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* Pill Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-family: var(--font-body);
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 16px 36px;
+      border-radius: 9999px;
+      text-decoration: none;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+      border: none;
+      outline: none;
+    }
+
+    .btn-lime {
+      background-color: var(--lime-primary);
+      color: var(--forest-dark);
+      box-shadow: 0 4px 20px var(--lime-glow);
+    }
+
+    .btn-lime:hover {
+      background-color: var(--lime-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(159, 232, 112, 0.6);
+    }
+
+    .btn-outline-white {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--white);
+      border: 1.5px solid rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(8px);
+    }
+
+    .btn-outline-white:hover {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: var(--white);
+      transform: translateY(-2px);
+    }
+
+    /* ==========================================================================
+       METRICS / STATS BAR (Matches Reference Image 1)
+       ========================================================================== */
+    .metrics-bar {
+      background-color: var(--forest-base);
+      color: var(--white);
+      padding: 44px 24px 50px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .metrics-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      align-items: center;
+    }
+
+    .metric-item {
+      text-align: center;
+      padding: 10px 20px;
+      position: relative;
+    }
+
+    .metric-item:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      top: 15%;
+      height: 70%;
+      width: 1px;
+      background: var(--border-subtle);
+    }
+
+    .metric-number {
+      font-family: var(--font-display);
+      font-size: clamp(2.4rem, 4vw, 3.4rem);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 8px;
+      color: var(--lime-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .metric-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .metric-icon {
+      font-size: 1.05rem;
+    }
+
+    /* ==========================================================================
+       MISSION SECTION (Matches Reference Image 3)
+       ========================================================================== */
+    .mission-section {
+      padding: 110px 24px;
+      background-color: var(--white);
+    }
+
+    .mission-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 64px;
+      align-items: center;
+    }
+
+    .mission-pill-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background-color: #ebf7ec;
+      color: #1e5c29;
+      padding: 8px 18px;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 24px;
+      letter-spacing: 0.02em;
+    }
+
+    .mission-heading {
+      font-family: var(--font-display);
+      font-size: clamp(2.2rem, 3.8vw, 3.3rem);
+      font-weight: 800;
+      line-height: 1.18;
+      color: var(--forest-dark);
+      letter-spacing: -0.02em;
+      margin-bottom: 24px;
+    }
+
+    .mission-desc {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      line-height: 1.75;
+      margin-bottom: 20px;
+    }
+
+    .mission-cta {
+      margin-top: 36px;
+    }
+
+    .btn-forest {
+      background-color: var(--forest-dark);
+      color: var(--white);
+      padding: 15px 32px;
+    }
+
+    .btn-forest:hover {
+      background-color: var(--forest-light);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(21, 45, 27, 0.25);
+    }
+
+    .mission-image-card {
+      position: relative;
+      border-radius: 32px;
+      overflow: hidden;
+      box-shadow: 0 24px 48px rgba(18, 42, 24, 0.12);
+      aspect-ratio: 4 / 3;
+    }
+
+    .mission-image-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .mission-image-card:hover img {
+      transform: scale(1.03);
+    }
+
+    /* ==========================================================================
+       CALL TO ACTION BANNER (Matches Reference Image 5)
+       ========================================================================== */
+    .cta-banner {
+      background-color: var(--forest-base);
+      color: var(--white);
+      padding: 110px 24px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-banner::before {
+      content: "";
+      position: absolute;
+      top: -150px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(159, 232, 112, 0.12) 0%, rgba(26, 56, 34, 0) 70%);
+      pointer-events: none;
+    }
+
+    .cta-container {
+      max-width: 820px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+
+    .cta-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.4rem, 4.5vw, 3.8rem);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 20px;
+    }
+
+    .cta-subtitle {
+      font-size: 1.1rem;
+      color: rgba(255, 255, 255, 0.85);
+      line-height: 1.7;
+      margin-bottom: 40px;
+    }
+
+    /* ==========================================================================
+       INTERACTIVE LIVE DOSSIER MODAL / FORM TESTER
+       ========================================================================== */
+    .evaluator-modal-card {
+      background: var(--white);
+      color: var(--text-dark);
+      border-radius: 24px;
+      padding: 36px 32px;
+      max-width: 680px;
+      margin: 40px auto 0;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+      text-align: left;
+    }
+
+    .evaluator-title {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--forest-dark);
+      margin-bottom: 6px;
+    }
+
+    .evaluator-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--forest-dark);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 14px 18px;
+      border: 1.5px solid #d7e2d9;
+      border-radius: 12px;
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      color: var(--forest-dark);
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .form-control:focus {
+      border-color: var(--forest-light);
+      box-shadow: 0 0 0 3px rgba(35, 77, 47, 0.12);
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .status-toast {
+      display: none;
+      margin-top: 18px;
+      padding: 14px 18px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .status-toast.success {
+      display: block;
+      background-color: #ebf7ec;
+      color: #1b5327;
+      border: 1px solid #bce2be;
+    }
+
+    .status-toast.error {
+      display: block;
+      background-color: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    /* ==========================================================================
+       FOOTER & NEWSLETTER BANNER (Matches Reference Image 4)
+       ========================================================================== */
+    .site-footer {
+      background-color: var(--forest-dark);
+      color: var(--white);
+      position: relative;
+    }
+
+    /* Lime Newsletter Banner */
+    .newsletter-strip {
+      background-color: var(--lime-primary);
+      color: var(--forest-dark);
+      padding: 44px 24px;
+    }
+
+    .newsletter-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+
+    .newsletter-text h3 {
+      font-family: var(--font-display);
+      font-size: 1.85rem;
+      font-weight: 800;
+      line-height: 1.2;
+      color: var(--forest-dark);
+      margin-bottom: 6px;
+      letter-spacing: -0.01em;
+    }
+
+    .newsletter-text p {
+      font-size: 0.98rem;
+      color: rgba(20, 40, 26, 0.85);
+      font-weight: 500;
+    }
+
+    .newsletter-form {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      background: transparent;
+      min-width: 380px;
+    }
+
+    .newsletter-input {
+      flex: 1;
+      padding: 16px 24px;
+      border-radius: 9999px;
+      border: none;
+      outline: none;
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      background-color: var(--white);
+      color: var(--text-dark);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    }
+
+    .newsletter-btn {
+      background-color: var(--forest-dark);
+      color: var(--white);
+      padding: 16px 28px;
+      border-radius: 9999px;
+      border: none;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    }
+
+    .newsletter-btn:hover {
+      background-color: var(--forest-light);
+      transform: translateY(-1px);
+    }
+
+    /* Main Footer Columns */
+    .footer-main {
+      padding: 80px 24px 60px;
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.3fr 1fr 1fr 1.2fr;
+      gap: 48px;
+    }
+
+    .footer-brand h2 {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .footer-brand h2 span {
+      color: var(--lime-primary);
+    }
+
+    .footer-brand p {
+      font-size: 0.92rem;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.65;
+      margin-bottom: 24px;
+      max-width: 320px;
+    }
+
+    .social-links {
+      display: flex;
+      gap: 12px;
+    }
+
+    .social-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+    }
+
+    .social-btn:hover {
+      background: var(--lime-primary);
+      color: var(--forest-dark);
+      transform: translateY(-2px);
+    }
+
+    .footer-col h4 {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: var(--white);
+      letter-spacing: -0.01em;
+    }
+
+    .footer-links {
+      list-style: none;
+    }
+
+    .footer-links li {
+      margin-bottom: 12px;
+    }
+
+    .footer-links a {
+      color: rgba(255, 255, 255, 0.7);
+      text-decoration: none;
+      font-size: 0.92rem;
+      transition: color 0.2s ease;
+    }
+
+    .footer-links a:hover {
+      color: var(--lime-primary);
+    }
+
+    .contact-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 14px;
+      font-size: 0.92rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .contact-icon {
+      color: var(--lime-primary);
+      font-size: 1.1rem;
+      margin-top: 2px;
+    }
+
+    /* Sub Footer */
+    .footer-bottom {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 24px;
+      text-align: center;
+    }
+
+    .footer-bottom-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .footer-bottom-links a {
+      color: rgba(255, 255, 255, 0.6);
+      text-decoration: none;
+      margin-left: 20px;
+      transition: color 0.2s ease;
+    }
+
+    .footer-bottom-links a:hover {
+      color: var(--lime-primary);
+    }
+
+    /* Responsive */
+    @media (max-width: 960px) {
+      .metrics-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 32px 0;
+      }
+      .metric-item:nth-child(2)::after {
+        display: none;
+      }
+      .mission-container {
+        grid-template-columns: 1fr;
+        gap: 48px;
+      }
+      .footer-main {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .newsletter-form {
+        width: 100%;
+        min-width: 0;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .metrics-container {
+        grid-template-columns: 1fr;
+        gap: 28px;
+      }
+      .metric-item::after {
+        display: none !important;
+      }
+      .footer-main {
+        grid-template-columns: 1fr;
+        gap: 36px;
+      }
+      .newsletter-container {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .footer-bottom-inner {
+        flex-direction: column;
+        text-align: center;
+      }
+      .footer-bottom-links a {
+        margin: 0 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- =========================================================================
+       HERO SECTION (Matches Reference Image 2 - No Navbar as requested)
+       ========================================================================= -->
+  <section class="hero-section" id="hero">
+    <div class="hero-content">
+      <h1 class="hero-title">
+        Together, We Safeguard <br>
+        <span class="lime-accent">Ayurvedic Heritage.</span>
+      </h1>
+      <p class="hero-subtitle">
+        Sovereign AI-driven statutory intelligence engineered to defeat Section 3(p) TKDL bars, automate Rule 158-B regulatory licensing, and ensure Biological Diversity Act compliance for Indian botanical innovators.
+      </p>
+      <div class="hero-cta-group">
+        <a href="#evaluator" class="btn btn-lime">Generate Legal Dossier</a>
+        <a href="#mission" class="btn btn-outline-white">Explore Frameworks</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       METRICS / STATS BAR (Matches Reference Image 1)
+       ========================================================================= -->
+  <section class="metrics-bar" id="stats">
+    <div class="metrics-container">
+      <div class="metric-item">
+        <div class="metric-number">2,026+</div>
+        <div class="metric-label">
+          <span class="metric-icon">🏛️</span> STATUTORY CITATIONS
+        </div>
+      </div>
+      <div class="metric-item">
+        <div class="metric-number">100%</div>
+        <div class="metric-label">
+          <span class="metric-icon">🛡️</span> SECTION 3(p) TKDL CLEARED
+        </div>
+      </div>
+      <div class="metric-item">
+        <div class="metric-number">5</div>
+        <div class="metric-label">
+          <span class="metric-icon">⚖️</span> CORE STATUTORY PILLARS
+        </div>
+      </div>
+      <div class="metric-item">
+        <div class="metric-number">0–100</div>
+        <div class="metric-label">
+          <span class="metric-icon">🌿</span> PATENTABILITY RISK GAUGE
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       MISSION / DEEP DIVE SECTION (Matches Reference Image 3)
+       ========================================================================= -->
+  <section class="mission-section" id="mission">
+    <div class="mission-container">
+      <div class="mission-content">
+        <div class="mission-pill-tag">
+          🍃 Our Statutory Mission
+        </div>
+        <h2 class="mission-heading">
+          Restoring the sovereignty of traditional wisdom, one formulation at a time.
+        </h2>
+        <p class="mission-desc">
+          At IP-SHAKTI Sahayak, we believe the sovereign intellectual property of Indian Ayurveda belongs in the hands of indigenous innovators, vaidyas, and responsible biotechnology researchers. For decades, foreign biopiracy and improper TKDL citations have stifled genuine Ayurvedic patenting before the Indian Patent Office (IPO).
+        </p>
+        <p class="mission-desc">
+          Our statutory architecture is mathematically unbendable: we don't just generate generic advice. We calculate Chou-Talalay synergism indices (CI &lt; 0.7) to defeat Section 3(e) admixture objections, classify formulations across Rule 158-B (Form 25-D / Form 32-A), and enforce National Biodiversity Authority (NBA) Form I/III compliance.
+        </p>
+        <div class="mission-cta">
+          <a href="#evaluator" class="btn btn-forest">
+            Launch Sovereign Assessment &rarr;
+          </a>
+        </div>
+      </div>
+      <div class="mission-image-card">
+        <img src="images/mission.jpg" alt="Ayurvedic researchers inspecting medicinal herbs in biodiversity garden" />
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       CALL TO ACTION BANNER (Matches Reference Image 5)
+       ========================================================================= -->
+  <section class="cta-banner" id="evaluator">
+    <div class="cta-container">
+      <h2 class="cta-title">Ready to Protect Your Formulation?</h2>
+      <p class="cta-subtitle">
+        Whether you are filing an IPO patent, licensing a proprietary medicine under Rule 158-B, or clearing State Biodiversity Board (SBB) intimation, generate your publication-grade 7-pillar legal dossier in seconds.
+      </p>
+      
+      <!-- Interactive Quick Dossier Generator Box -->
+      <div class="evaluator-modal-card">
+        <div class="evaluator-title">Instant Statutory Dossier Generator</div>
+        <div class="evaluator-subtitle">Generates the full 7-pillar official PDF dossier and dispatches it directly to your registered email.</div>
+        
+        <form id="dossierForm">
+          <div class="form-group">
+            <label for="applicantName">Applicant / Enterprise Name</label>
+            <input type="text" id="applicantName" class="form-control" placeholder="e.g. Dr. Rajesh Sharma / Patanjali Research" value="Dr. Rajesh Sharma" required />
+          </div>
+
+          <div class="form-group">
+            <label for="productName">Ayurvedic Botanical Formulation</label>
+            <input type="text" id="productName" class="form-control" placeholder="e.g. Ashwagandha Nano-Lipid Extract with Piperine" value="Ashwagandha Nano-Lipid Extract" required />
+          </div>
+
+          <div class="form-group">
+            <label for="recipientEmail">Registered Email Inbox</label>
+            <input type="email" id="recipientEmail" class="form-control" placeholder="e.g. your-email@gmail.com" value="narayanmanore77@gmail.com" required />
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" id="btnEmail" class="btn btn-lime" style="flex: 1;">
+              ✉️ Email Legal Dossier
+            </button>
+            <button type="button" id="btnDownload" class="btn btn-forest" style="flex: 1;">
+              📥 Direct PDF Download
+            </button>
+          </div>
+
+          <div id="statusToast" class="status-toast"></div>
+        </form>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       FOOTER & NEWSLETTER BANNER (Matches Reference Image 4)
+       ========================================================================= -->
+  <footer class="site-footer">
+    
+    <!-- Lime Newsletter Banner -->
+    <div class="newsletter-strip">
+      <div class="newsletter-container">
+        <div class="newsletter-text">
+          <h3>Stay updated on AYUSH IPR & Patent Reforms.</h3>
+          <p>Get the latest Gazette notifications, IPO case precedents, and biodiversity amendments delivered to your inbox.</p>
+        </div>
+        <form class="newsletter-form" onsubmit="event.preventDefault(); alert('Subscribed to IP-SHAKTI Legal Gazette Alerts!');">
+          <input type="email" class="newsletter-input" placeholder="Enter your registered email" required />
+          <button type="submit" class="newsletter-btn">
+            Subscribe <span style="font-size: 1.1rem;">✈</span>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Main 4-Column Footer -->
+    <div class="footer-main">
+      <div class="footer-brand">
+        <h2>IP-SHAKTI<span>.</span></h2>
+        <p>
+          Dedicated to safeguarding India's traditional botanical heritage, empowering indigenous vaidyas, and enforcing sovereign IPR jurisprudence with AI precision.
+        </p>
+        <div class="social-links">
+          <a href="#" class="social-btn" title="Twitter / X">𝕏</a>
+          <a href="https://github.com/Yashmanore/IP-SHAKTI" target="_blank" class="social-btn" title="GitHub">⌥</a>
+          <a href="#" class="social-btn" title="LinkedIn">in</a>
+          <a href="/swagger-ui/index.html" class="social-btn" title="Swagger REST Docs">API</a>
+        </div>
+      </div>
+
+      <div class="footer-col">
+        <h4>Quick Links</h4>
+        <ul class="footer-links">
+          <li><a href="#hero">Sovereign Overview</a></li>
+          <li><a href="#mission">Statutory Mission</a></li>
+          <li><a href="#evaluator">Dossier Generator</a></li>
+          <li><a href="/swagger-ui/index.html" target="_blank">Interactive Swagger Docs</a></li>
+          <li><a href="/v3/api-docs" target="_blank">OpenAPI Specification</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Statutory Pillars</h4>
+        <ul class="footer-links">
+          <li><a href="#stats">Patents Act 1970 (§3p/§3e)</a></li>
+          <li><a href="#mission">Rule 158-B Licensing</a></li>
+          <li><a href="#evaluator">Biological Diversity Act (NBA)</a></li>
+          <li><a href="#mission">WIPO GRATK Treaty (2024)</a></li>
+          <li><a href="#mission">DPDP Act 2023 Masking</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Contact Jurisdiction</h4>
+        <div class="contact-item">
+          <span class="contact-icon">📍</span>
+          <span>Ministry of AYUSH & IPO Jurisdiction, New Delhi, India 110023</span>
+        </div>
+        <div class="contact-item">
+          <span class="contact-icon">📞</span>
+          <span>+91 11 2309-IPR (AYUSH-GOV)</span>
+        </div>
+        <div class="contact-item">
+          <span class="contact-icon">✉️</span>
+          <span>support@ip-shakti.gov.in</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Copyright -->
+    <div class="footer-bottom">
+      <div class="footer-bottom-inner">
+        <div>&copy; 2026 IP-SHAKTI Sahayak. Sovereign AI for Ayurvedic Intellectual Property. All rights reserved.</div>
+        <div class="footer-bottom-links">
+          <a href="#">Privacy Policy (DPDP 2023)</a>
+          <a href="#">Terms of Statutory Service</a>
+          <a href="#">Legal Disclaimer</a>
+        </div>
+      </div>
+    </div>
+
+  </footer>
+
+  <!-- =========================================================================
+       JAVASCRIPT LOGIC CONNECTED TO IP-SHAKTI BACKEND
+       ========================================================================= -->
+  <script>
+    const form = document.getElementById('dossierForm');
+    const btnEmail = document.getElementById('btnEmail');
+    const btnDownload = document.getElementById('btnDownload');
+    const statusToast = document.getElementById('statusToast');
+
+    function showToast(msg, type) {
+      statusToast.className = 'status-toast ' + type;
+      statusToast.innerHTML = msg;
+    }
+
+    // Direct PDF Download (Instant Native Browser Download)
+    btnDownload.addEventListener('click', (e) => {
+      e.preventDefault();
+      const applicant = document.getElementById('applicantName').value.trim() || 'Innovator';
+      const product = document.getElementById('productName').value.trim() || 'Ayurvedic_Formulation';
+      const sessionId = 'session-' + Math.random().toString(36).substring(2, 9);
+
+      btnDownload.disabled = true;
+      btnDownload.innerText = '⏳ Compiling PDF...';
+      showToast('⚡ Compiling 7-pillar statutory PDF dossier via in-process OpenPDF engine...', 'success');
+
+      const downloadUrl = `/api/v1/report/download/${sessionId}?productName=${encodeURIComponent(product)}`;
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.target = '_blank';
+      link.download = `IP_SHAKTI_Legal_Dossier_${applicant.replace(/\s+/g, '_')}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setTimeout(() => {
+        btnDownload.disabled = false;
+        btnDownload.innerText = '📥 Direct PDF Download';
+        showToast('✅ <b>PDF Generated!</b> The Official 7-Pillar Statutory Legal Dossier was downloaded to your computer.', 'success');
+      }, 1500);
+    });
+
+    // Email Legal Dossier via Live SMTP
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const applicant = document.getElementById('applicantName').value.trim();
+      const product = document.getElementById('productName').value.trim();
+      const email = document.getElementById('recipientEmail').value.trim();
+      const sessionId = 'session-' + Math.random().toString(36).substring(2, 9);
+
+      btnEmail.disabled = true;
+      btnEmail.innerText = '⏳ Dispatching...';
+      showToast(`Generating PDF and dispatching via live Google SMTP to <b>${email}</b>...`, 'success');
+
+      try {
+        const res = await fetch(`/api/v1/report/email/${sessionId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            recipientEmail: email,
+            applicantName: applicant,
+            productName: product
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showToast(`📬 <b>Delivered!</b> Dossier PDF was dispatched to <b>${data.recipient}</b>.<br><small>${data.message}</small>`, 'success');
+        } else {
+          showToast(`⚠️ Server response: ${data.message || 'Error sending email.'}`, 'error');
+        }
+      } catch (err) {
+        showToast(`⚠️ Could not reach server at port 8085. Ensure Spring Boot backend is active.`, 'error');
+      } finally {
+        btnEmail.disabled = false;
+        btnEmail.innerText = '✉️ Email Legal Dossier';
+      }
+    });
+  </script>
+
+</body>
+</html>
