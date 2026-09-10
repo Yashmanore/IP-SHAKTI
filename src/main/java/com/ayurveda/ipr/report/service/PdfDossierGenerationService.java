@@ -87,7 +87,7 @@ public class PdfDossierGenerationService {
             buildBiodiversitySection(document, chatResponse, profile);
 
             // 7. ⚖️ Synthesized Draft Patent Claims
-            buildDraftClaimsSection(document, chatResponse);
+            buildDraftClaimsSection(document, chatResponse, profile);
 
             // 8. 📜 Statutory Source Citations & Immediate Action Roadmap
             buildCitationsAndRoadmapSection(document, chatResponse);
@@ -155,17 +155,26 @@ public class PdfDossierGenerationService {
         String productName = "Ayurvedic Botanical Complex";
         String category = "PROPRIETARY_AYURVEDIC_MEDICINE";
 
+        if (chat != null && chat.getPillars() != null) {
+            if (chat.getPillars().getTkdlCheck() != null && chat.getPillars().getTkdlCheck().getSanskritName() != null && !chat.getPillars().getTkdlCheck().getSanskritName().isBlank()) {
+                productName = chat.getPillars().getTkdlCheck().getSanskritName();
+            }
+            if (chat.getPillars().getRegulatoryAnalysis() != null && chat.getPillars().getRegulatoryAnalysis().getProductCategory() != null && !chat.getPillars().getRegulatoryAnalysis().getProductCategory().isBlank()) {
+                category = chat.getPillars().getRegulatoryAnalysis().getProductCategory();
+            }
+        }
+
         if (profile != null) {
             if (profile.getApplicantCredentials() != null) {
-                if (profile.getApplicantCredentials().getApplicantName() != null) applicantName = profile.getApplicantCredentials().getApplicantName();
-                if (profile.getApplicantCredentials().getAadhaarNumber() != null) aadhaar = profile.getApplicantCredentials().getAadhaarNumber();
-                if (profile.getApplicantCredentials().getPanNumber() != null) pan = profile.getApplicantCredentials().getPanNumber();
-                if (profile.getApplicantCredentials().getPhoneNumber() != null) contact = profile.getApplicantCredentials().getPhoneNumber();
-                if (profile.getApplicantCredentials().getEmailAddress() != null) email = profile.getApplicantCredentials().getEmailAddress();
+                if (profile.getApplicantCredentials().getApplicantName() != null && !profile.getApplicantCredentials().getApplicantName().isBlank()) applicantName = profile.getApplicantCredentials().getApplicantName();
+                if (profile.getApplicantCredentials().getAadhaarNumber() != null && !profile.getApplicantCredentials().getAadhaarNumber().isBlank()) aadhaar = profile.getApplicantCredentials().getAadhaarNumber();
+                if (profile.getApplicantCredentials().getPanNumber() != null && !profile.getApplicantCredentials().getPanNumber().isBlank()) pan = profile.getApplicantCredentials().getPanNumber();
+                if (profile.getApplicantCredentials().getPhoneNumber() != null && !profile.getApplicantCredentials().getPhoneNumber().isBlank()) contact = profile.getApplicantCredentials().getPhoneNumber();
+                if (profile.getApplicantCredentials().getEmailAddress() != null && !profile.getApplicantCredentials().getEmailAddress().isBlank()) email = profile.getApplicantCredentials().getEmailAddress();
             }
             if (profile.getProductDetails() != null) {
-                if (profile.getProductDetails().getProductName() != null) productName = profile.getProductDetails().getProductName();
-                if (profile.getProductDetails().getRegulatoryCategory() != null) category = profile.getProductDetails().getRegulatoryCategory();
+                if (profile.getProductDetails().getProductName() != null && !profile.getProductDetails().getProductName().isBlank()) productName = profile.getProductDetails().getProductName();
+                if (profile.getProductDetails().getRegulatoryCategory() != null && !profile.getProductDetails().getRegulatoryCategory().isBlank()) category = profile.getProductDetails().getRegulatoryCategory();
             }
         }
 
@@ -287,19 +296,37 @@ public class PdfDossierGenerationService {
         table.setSpacingBefore(4);
         table.setSpacingAfter(10);
 
-        String botanicals = "Curcuma longa, Withania somnifera";
-        String tkdlRisk = "High prior art density indexed in TKDL. Raw extracts or traditional recipes face automatic rejection under Section 3(p).";
-        String defense = "The formulation overcomes Section 3(p) by demonstrating synergistic bio-enhancement (Combination Index < 0.7) and novel micro-encapsulation not disclosed in classical Samhitas.";
+        String plantName = "Formulation";
+        if (profile != null && profile.getProductDetails() != null && profile.getProductDetails().getProductName() != null && !profile.getProductDetails().getProductName().isBlank()) {
+            plantName = profile.getProductDetails().getProductName();
+        } else if (chat != null && chat.getPillars() != null && chat.getPillars().getTkdlCheck() != null && chat.getPillars().getTkdlCheck().getSanskritName() != null) {
+            plantName = chat.getPillars().getTkdlCheck().getSanskritName();
+        }
 
-        if (profile != null && profile.getProductDetails() != null && !profile.getProductDetails().getBotanicalBinomials().isEmpty()) {
+        String botanicals = "";
+        if (profile != null && profile.getProductDetails() != null && profile.getProductDetails().getBotanicalBinomials() != null && !profile.getProductDetails().getBotanicalBinomials().isEmpty()) {
             botanicals = String.join(", ", profile.getProductDetails().getBotanicalBinomials());
         }
-        if (chat.getPillars() != null && chat.getPillars().getTkdlCheck() != null) {
+        if (botanicals.isBlank() && chat != null && chat.getPillars() != null && chat.getPillars().getTkdlCheck() != null) {
+            if (chat.getPillars().getTkdlCheck().getBotanicalBinomial() != null && !chat.getPillars().getTkdlCheck().getBotanicalBinomial().isBlank()) {
+                botanicals = chat.getPillars().getTkdlCheck().getBotanicalBinomial();
+            }
+        }
+        if (botanicals.isBlank()) {
+            botanicals = plantName.equalsIgnoreCase("Triphala")
+                    ? "Terminalia chebula (Haritaki), Terminalia bellirica (Bibhitaki), Phyllanthus emblica (Amalaki)"
+                    : plantName;
+        }
+
+        String tkdlRisk = "High prior art density indexed in TKDL for " + plantName + ". Raw extracts or traditional recipes face automatic rejection under Section 3(p).";
+        String defense = "The formulation overcomes Section 3(p) by demonstrating synergistic bio-enhancement (Combination Index < 0.7) and novel micro-encapsulation not disclosed in classical Samhitas.";
+
+        if (chat != null && chat.getPillars() != null && chat.getPillars().getTkdlCheck() != null) {
             if (chat.getPillars().getTkdlCheck().getPriorArtRiskWarning() != null) {
                 tkdlRisk = chat.getPillars().getTkdlCheck().getPriorArtRiskWarning();
             }
         }
-        if (chat.getPillars() != null && chat.getPillars().getIpAnalysis() != null) {
+        if (chat != null && chat.getPillars() != null && chat.getPillars().getIpAnalysis() != null) {
             if (chat.getPillars().getIpAnalysis().getFilingStrategy() != null) {
                 defense = chat.getPillars().getIpAnalysis().getFilingStrategy();
             }
@@ -349,22 +376,49 @@ public class PdfDossierGenerationService {
         doc.add(table);
     }
 
-    private void buildDraftClaimsSection(Document doc, ChatMessageResponse chat) throws DocumentException {
+    private void buildDraftClaimsSection(Document doc, ChatMessageResponse chat, ExtractedDocumentProfile profile) throws DocumentException {
         addSectionHeader(doc, "5. ⚖️ Synthesized Draft Patent Claims (IPO Specification Format)");
 
+        String plantName = "Formulation";
+        String botanicalBinomial = "Ayurvedic Botanical Complex";
+
+        if (profile != null && profile.getProductDetails() != null) {
+            if (profile.getProductDetails().getProductName() != null && !profile.getProductDetails().getProductName().isBlank()) {
+                plantName = profile.getProductDetails().getProductName();
+            }
+            if (profile.getProductDetails().getBotanicalBinomials() != null && !profile.getProductDetails().getBotanicalBinomials().isEmpty()) {
+                botanicalBinomial = String.join(", ", profile.getProductDetails().getBotanicalBinomials());
+            }
+        }
+        if (chat != null && chat.getPillars() != null && chat.getPillars().getTkdlCheck() != null) {
+            if (chat.getPillars().getTkdlCheck().getSanskritName() != null && !chat.getPillars().getTkdlCheck().getSanskritName().isBlank()) {
+                plantName = chat.getPillars().getTkdlCheck().getSanskritName();
+            }
+            if (chat.getPillars().getTkdlCheck().getBotanicalBinomial() != null && !chat.getPillars().getTkdlCheck().getBotanicalBinomial().isBlank()) {
+                botanicalBinomial = chat.getPillars().getTkdlCheck().getBotanicalBinomial();
+            }
+        }
+        if (botanicalBinomial.equals("Ayurvedic Botanical Complex") && plantName.equalsIgnoreCase("Triphala")) {
+            botanicalBinomial = "Terminalia chebula, Terminalia bellirica, Phyllanthus emblica";
+        }
+
         String claim1 = "Claim 1 (Independent Product Claim):\n" +
-                "A synergistic topical or oral botanical composition comprising active fractions of Curcuma longa and Withania somnifera " +
-                "formulated in a synergistic ratio exhibiting a Combination Index (CI) < 0.7, encapsulated within sub-micron lipid nano-vesicles (110-140 nm).";
+                "A synergistic topical or oral pharmaceutical delivery composition comprising standardized active fractions of " + botanicalBinomial + " (" + plantName + ") " +
+                "formulated in a synergistic weight ratio exhibiting a Combination Index (CI) < 0.7, encapsulated within sub-micron lipid nano-vesicles (110-140 nm).";
 
         String claim2 = "Claim 2 (Dependent Process Claim):\n" +
                 "A process for preparing the synergistic botanical composition of Claim 1, comprising rotary thin-film hydration, " +
                 "high-pressure microfluidization at 800 bar, and stabilization with plant-derived phospholipids, devoid of synthetic chemical surfactants.";
 
-        if (chat.getLlmDeliverables() != null && chat.getLlmDeliverables().getDraftPatentClaims() != null) {
+        if (chat != null && chat.getLlmDeliverables() != null && chat.getLlmDeliverables().getDraftPatentClaims() != null) {
             List<PatentClaimItem> items = chat.getLlmDeliverables().getDraftPatentClaims().getClaims();
             if (items != null && !items.isEmpty()) {
-                if (items.size() > 0) claim1 = "Claim 1 (" + items.get(0).getType() + "):\n" + items.get(0).getClaimText();
-                if (items.size() > 1) claim2 = "Claim 2 (" + items.get(1).getType() + "):\n" + items.get(1).getClaimText();
+                if (items.size() > 0 && items.get(0).getClaimText() != null && !items.get(0).getClaimText().isBlank()) {
+                    claim1 = "Claim 1 (" + items.get(0).getType() + "):\n" + items.get(0).getClaimText();
+                }
+                if (items.size() > 1 && items.get(1).getClaimText() != null && !items.get(1).getClaimText().isBlank()) {
+                    claim2 = "Claim 2 (" + items.get(1).getType() + "):\n" + items.get(1).getClaimText();
+                }
             }
         }
 

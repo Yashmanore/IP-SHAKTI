@@ -4,6 +4,7 @@ import com.ayurveda.ipr.chat.model.ChatMessageRequest;
 import com.ayurveda.ipr.chat.model.ChatMessageResponse;
 import com.ayurveda.ipr.chat.service.ChatOrchestratorService;
 import com.ayurveda.ipr.document.model.DocumentAnalysisResponse;
+import com.ayurveda.ipr.document.model.ExtractedDocumentProfile;
 import com.ayurveda.ipr.report.service.EmailDispatchService;
 import com.ayurveda.ipr.report.service.PdfDossierGenerationService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,7 +18,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -52,13 +55,21 @@ public class ReportExportController {
     @ApiResponse(responseCode = "200", description = "PDF stream returned successfully")
     public ResponseEntity<byte[]> downloadDossierPdf(
             @Parameter(description = "Session UUID") @PathVariable("sessionId") String sessionId,
-            @Parameter(description = "Optional product name") @RequestParam(value = "productName", required = false) String productName) {
+            @Parameter(description = "Optional product name") @RequestParam(value = "productName", required = false) String productName,
+            @Parameter(description = "Optional applicant name") @RequestParam(value = "applicantName", required = false) String applicantName,
+            @Parameter(description = "Optional recipient email") @RequestParam(value = "recipientEmail", required = false) String recipientEmail) {
 
-        log.info("Request to generate & download PDF Dossier for Session '{}'", sessionId);
-        ChatMessageResponse response = buildOrFetchAssessment(sessionId, productName);
-        byte[] pdfBytes = pdfDossierGenerationService.generateDossierPdf(response);
+        String targetProduct = (productName != null && !productName.isBlank()) ? productName.trim() : "Triphala";
+        String targetApplicant = (applicantName != null && !applicantName.isBlank()) ? applicantName.trim() : "Registered Ayurvedic Innovator";
+        String targetEmail = (recipientEmail != null && !recipientEmail.isBlank()) ? recipientEmail.trim() : "registered.user@domain.in";
 
-        String filename = "IP_SHAKTI_Legal_Dossier_" + sessionId.substring(0, Math.min(8, sessionId.length())) + ".pdf";
+        log.info("Request to generate & download PDF Dossier for Session '{}', Product '{}', Applicant '{}'", sessionId, targetProduct, targetApplicant);
+        ChatMessageResponse response = buildOrFetchAssessment(sessionId, targetProduct);
+
+        ExtractedDocumentProfile profile = buildSyntheticProfile(targetApplicant, targetEmail, targetProduct, response);
+        byte[] pdfBytes = pdfDossierGenerationService.generateDossierPdf(response, profile);
+
+        String filename = "IP_SHAKTI_Legal_Dossier_" + targetProduct.replaceAll("[^a-zA-Z0-9_-]", "_") + ".pdf";
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
@@ -78,12 +89,16 @@ public class ReportExportController {
             @Parameter(description = "Session UUID") @PathVariable("sessionId") String sessionId,
             @RequestBody(required = false) EmailDossierRequest request) {
 
-        String email = (request != null && request.recipientEmail() != null) ? request.recipientEmail() : "innovator@registered.ayush.gov.in";
-        String applicant = (request != null && request.applicantName() != null) ? request.applicantName() : "Registered Ayurvedic Innovator";
-        String product = (request != null && request.productName() != null) ? request.productName() : "Ayurvedic Botanical Complex";
+        String email = (request != null && request.recipientEmail() != null && !request.recipientEmail().isBlank())
+                ? request.recipientEmail().trim() : "innovator@registered.ayush.gov.in";
+        String applicant = (request != null && request.applicantName() != null && !request.applicantName().isBlank())
+                ? request.applicantName().trim() : "Registered Ayurvedic Innovator";
+        String product = (request != null && request.productName() != null && !request.productName().isBlank())
+                ? request.productName().trim() : "Triphala";
 
         ChatMessageResponse response = buildOrFetchAssessment(sessionId, product);
-        byte[] pdfBytes = pdfDossierGenerationService.generateDossierPdf(response);
+        ExtractedDocumentProfile profile = buildSyntheticProfile(applicant, email, product, response);
+        byte[] pdfBytes = pdfDossierGenerationService.generateDossierPdf(response, profile);
 
         EmailDispatchService.EmailDispatchResult result = emailDispatchService.sendDossierEmail(
                 email, applicant, product, sessionId, pdfBytes);
@@ -151,7 +166,7 @@ public class ReportExportController {
     }
 
     private ChatMessageResponse buildOrFetchAssessment(String sessionId, String productName) {
-        String targetProduct = (productName != null && !productName.isBlank()) ? productName : "Ashwagandha (Withania somnifera)";
+        String targetProduct = (productName != null && !productName.isBlank()) ? productName.trim() : "Triphala";
         ChatMessageRequest request = new ChatMessageRequest();
         request.setSessionId(sessionId);
         request.setMessage("Provide comprehensive 5-Pillar statutory advisory report for " + targetProduct);
@@ -159,10 +174,55 @@ public class ReportExportController {
         request.setJurisdiction("INDIA");
 
         Map<String, String> answers = new HashMap<>();
-        answers.put("isClassical", "NO");
+        String lower = targetProduct.toLowerCase();
+        boolean isClassicalText = lower.contains("triphala") || lower.contains("chyawanprash") || lower.contains("trikatu") || lower.contains("sitopaladi");
+        answers.put("isClassical", isClassicalText ? "YES" : "NO");
         answers.put("technicalNovelty", "NANO_EXTRACT");
         request.setClarificationAnswers(answers);
 
         return chatOrchestratorService.processMessage(request);
+    }
+
+    private ExtractedDocumentProfile buildSyntheticProfile(String applicant, String email, String product, ChatMessageResponse chatResponse) {
+        ExtractedDocumentProfile profile = new ExtractedDocumentProfile();
+        ExtractedDocumentProfile.ApplicantCredentials creds = new ExtractedDocumentProfile.ApplicantCredentials();
+        creds.setApplicantName(applicant);
+        creds.setAadhaarNumber("[VERIFIED_AADHAAR]");
+        creds.setPanNumber("[VERIFIED_PAN]");
+        creds.setPhoneNumber("+91 98765 43210");
+        creds.setEmailAddress(email);
+        profile.setApplicantCredentials(creds);
+
+        List<String> botanicals = new ArrayList<>();
+        if (chatResponse != null && chatResponse.getPillars() != null && chatResponse.getPillars().getTkdlCheck() != null) {
+            String bBinomial = chatResponse.getPillars().getTkdlCheck().getBotanicalBinomial();
+            if (bBinomial != null && !bBinomial.isBlank()) {
+                botanicals.add(bBinomial);
+            }
+        }
+        if (botanicals.isEmpty()) {
+            String lower = product.toLowerCase();
+            if (lower.contains("triphala")) {
+                botanicals.add("Terminalia chebula");
+                botanicals.add("Terminalia bellirica");
+                botanicals.add("Phyllanthus emblica (Emblica officinalis)");
+            } else {
+                botanicals.add(product);
+            }
+        }
+
+        String regCategory = (chatResponse != null && chatResponse.getPillars() != null && chatResponse.getPillars().getRegulatoryAnalysis() != null && chatResponse.getPillars().getRegulatoryAnalysis().getProductCategory() != null)
+                ? chatResponse.getPillars().getRegulatoryAnalysis().getProductCategory()
+                : "PROPRIETARY_AYURVEDIC_MEDICINE";
+
+        ExtractedDocumentProfile.ProductDetails details = new ExtractedDocumentProfile.ProductDetails();
+        details.setProductName(product);
+        details.setBotanicalBinomials(botanicals);
+        details.setRegulatoryCategory(regCategory);
+        details.setDocumentTitle("Classical Ayurvedic Scripture / Ayurvedic Formulary of India (AFI)");
+        details.setGoverningActAndRules("Drugs and Cosmetics Rules 1945, Rule 158-B");
+        details.setLicensingAuthority("State AYUSH Licensing Authority");
+        profile.setProductDetails(details);
+        return profile;
     }
 }

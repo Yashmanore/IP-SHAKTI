@@ -371,6 +371,19 @@ public class GeminiGenerativeService {
                     "2. A process for preparing the composition of claim 1, comprising controlled ultrasonic-assisted extraction followed by micro-encapsulation at an operating temperature not exceeding 40°C.",
                     "Novel manufacturing process qualifying under Section 2(1)(j) of Patents Act 1970."
             ));
+        } else {
+            claimsList.add(new PatentClaimItem(
+                    1,
+                    "DEFENSIVE_PROCESS_CLAIM",
+                    "1. A green ultrasound-assisted process for manufacturing a stabilized nano-extract of " + botanical + " comprising hydro-ethanolic extraction at 35°C and vacuum freeze-drying, yielding a phytochemically standardized marker profile devoid of chemical degradation.",
+                    "Process claims are eligible under Patents Act Section 2(1)(j) even when composition per se is barred under Section 3(p)."
+            ));
+            claimsList.add(new PatentClaimItem(
+                    2,
+                    "DEPENDENT_FORMULATION_CLAIM",
+                    "2. A proprietary gastro-resistant enteric-coated dosage form comprising the standardized extract of claim 1 with plant-derived phospholipids, exhibiting targeted release in the lower GI tract.",
+                    "Novel delivery kinetics overcome the traditional knowledge anticipation bar."
+            ));
         }
 
         ExecutiveLegalDeliverables.DraftClaimsPackage claimsPackage = new ExecutiveLegalDeliverables.DraftClaimsPackage(

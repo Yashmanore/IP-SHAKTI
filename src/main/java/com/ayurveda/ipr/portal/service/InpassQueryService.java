@@ -33,7 +33,12 @@ public class InpassQueryService {
         BOTANICAL_IPC_MAP.put("brahmi", new BotanicalIpcMapping("Bacopa monnieri", "A61K 36/68", "Water Hyssop"));
         BOTANICAL_IPC_MAP.put("amla", new BotanicalIpcMapping("Phyllanthus emblica", "A61K 36/47", "Amalaki"));
         BOTANICAL_IPC_MAP.put("arjuna", new BotanicalIpcMapping("Terminalia arjuna", "A61K 36/185", "Arjun"));
-        BOTANICAL_IPC_MAP.put("triphala", new BotanicalIpcMapping("Phyllanthus emblica", "A61K 36/185", "Triphala"));
+        BOTANICAL_IPC_MAP.put("triphala", new BotanicalIpcMapping("Terminalia chebula, Terminalia bellirica, Phyllanthus emblica", "A61K 36/185", "Triphala (Haritaki, Bibhitaki, Amalaki)"));
+        BOTANICAL_IPC_MAP.put("haritaki", new BotanicalIpcMapping("Terminalia chebula", "A61K 36/185", "Haritaki"));
+        BOTANICAL_IPC_MAP.put("bibhitaki", new BotanicalIpcMapping("Terminalia bellirica", "A61K 36/185", "Bibhitaki (Baheda)"));
+        BOTANICAL_IPC_MAP.put("chyawanprash", new BotanicalIpcMapping("Phyllanthus emblica Complex", "A61K 36/47", "Chyawanprash Formulation"));
+        BOTANICAL_IPC_MAP.put("trikatu", new BotanicalIpcMapping("Piper nigrum, Piper longum, Zingiber officinale", "A61K 36/67", "Trikatu (Sunthi, Maricha, Pippali)"));
+        BOTANICAL_IPC_MAP.put("sitopaladi", new BotanicalIpcMapping("Bambusa bambos, Piper longum, Elettaria cardamomum, Cinnamomum verum", "A61K 36/899", "Sitopaladi Churna"));
         BOTANICAL_IPC_MAP.put("shilajit", new BotanicalIpcMapping("Asphaltum punjabianum", "A61K 35/02", "Mineral Pitch"));
         BOTANICAL_IPC_MAP.put("kalmegh", new BotanicalIpcMapping("Andrographis paniculata", "A61K 36/19", "Chiretta"));
         BOTANICAL_IPC_MAP.put("kutki", new BotanicalIpcMapping("Picrorhiza kurroa", "A61K 36/68", "Katuka"));

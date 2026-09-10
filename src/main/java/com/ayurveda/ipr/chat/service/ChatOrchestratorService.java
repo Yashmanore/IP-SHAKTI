@@ -198,22 +198,35 @@ public class ChatOrchestratorService {
         // =========================================================================
         // DIALOGUE STEP 3: Clarifications Complete -> Synthesize 5-Pillars Response!
         // =========================================================================
-        ChatMessageResponse response = synthesizeAssessment(sessionId, userMsg, jurisdiction, answers, targetLang, piiRedacted);
+        ChatMessageResponse response = synthesizeAssessment(sessionId, userMsg, jurisdiction, answers, targetLang, piiRedacted, request.getProductName());
         return multilingualService.localizeResponse(response, targetLang);
     }
 
-    private ChatMessageResponse synthesizeAssessment(String sessionId, String userMsg, String jurisdiction, Map<String, String> answers, Language targetLang, boolean piiRedacted) {
+    private ChatMessageResponse synthesizeAssessment(String sessionId, String userMsg, String jurisdiction, Map<String, String> answers, Language targetLang, boolean piiRedacted, String requestedProductName) {
         String isClassical = answers.getOrDefault("isClassical", "NO");
         String technicalNovelty = answers.getOrDefault("technicalNovelty", "CRUDE_MIXTURE");
 
+        String plantKey = (requestedProductName != null && !requestedProductName.isBlank())
+                ? requestedProductName.trim()
+                : extractPlantOrProductName(userMsg);
+
         // 1. Run Deterministic Rule 158-B Classification Engine
         ClassificationRequest classReq = new ClassificationRequest();
-        classReq.setProductName(extractPlantOrProductName(userMsg));
-        classReq.setMatchesScheduleIBook("YES".equalsIgnoreCase(isClassical));
+        classReq.setProductName(plantKey);
+        String lowerPlant = plantKey.toLowerCase();
+        boolean isClassicalText = "YES".equalsIgnoreCase(isClassical)
+                || lowerPlant.contains("triphala")
+                || lowerPlant.contains("chyawanprash")
+                || lowerPlant.contains("trikatu")
+                || lowerPlant.contains("sitopaladi");
+        classReq.setMatchesScheduleIBook(isClassicalText);
+        if (isClassicalText) {
+            classReq.setScheduleIBookName("Ayurvedic Formulary of India (AFI) / Charaka Samhita");
+        }
         classReq.setFormulaOrRatioModified(!"YES".equalsIgnoreCase(isClassical));
         classReq.setNewIndicationOrDosageRoute("NANO_EXTRACT".equalsIgnoreCase(technicalNovelty));
         classReq.setPurifiedPhytochemicalExtract("PHYTOCHEMICAL".equalsIgnoreCase(technicalNovelty));
-        classReq.setSynergisticDataAvailable("SYNERGISTIC_RATIO".equalsIgnoreCase(technicalNovelty));
+        classReq.setSynergisticDataAvailable("SYNERGISTIC_RATIO".equalsIgnoreCase(technicalNovelty) || "NANO_EXTRACT".equalsIgnoreCase(technicalNovelty));
         classReq.setIntendedUse(ClassificationRequest.IntendedUse.THERAPEUTIC_TREATMENT);
         classReq.setApplicantType(ClassificationRequest.EntityType.INDIAN_COMPANY);
         classReq.setCommercialUtilization(true);
@@ -221,12 +234,15 @@ public class ChatOrchestratorService {
         ClassificationResult classRes = classificationEngine.evaluate(classReq);
 
         // 2. Run Live External Portals (CBD ABSCH, InPASS, WIPO, USPTO, AYUSH)
-        String plantKey = extractPlantOrProductName(userMsg);
         ExternalPortalsPayload portals = externalPortalService.resolveAllPortals(plantKey);
 
         // 3. Run Native PostgreSQL Hybrid RRF Search with ±5 Window Context Expansion
-        String searchNormalizedQuery = multilingualService.normalizeQueryToEnglish(userMsg, targetLang);
-        List<Map<String, Object>> rawHits = legalSearchService.searchHybridWithWindow(searchNormalizedQuery, jurisdiction, 4, 5);
+        String queryForSearch = plantKey + " Patents Act Section 3(p) Section 3(e) Rule 158-B Traditional Knowledge";
+        List<Map<String, Object>> rawHits = legalSearchService.searchHybridWithWindow(queryForSearch, jurisdiction, 4, 5);
+        if (rawHits == null || rawHits.isEmpty()) {
+            String searchNormalizedQuery = multilingualService.normalizeQueryToEnglish(userMsg, targetLang);
+            rawHits = legalSearchService.searchHybridWithWindow(searchNormalizedQuery, jurisdiction, 4, 5);
+        }
 
         List<StatutorySourceCitation> citations = new ArrayList<>();
         for (Map<String, Object> hit : rawHits) {
@@ -454,8 +470,14 @@ public class ChatOrchestratorService {
     }
 
     private String extractPlantOrProductName(String query) {
-        if (query == null) return "Ashwagandha";
-        String q = query.toLowerCase();
+        if (query == null || query.isBlank()) return "Ashwagandha";
+        String q = query.toLowerCase().trim();
+        if (q.contains("triphala") || q.contains("त्रिफळा") || q.contains("त्रिफला")) return "Triphala";
+        if (q.contains("haritaki") || q.contains("हरीतकी") || q.contains("chebula")) return "Haritaki";
+        if (q.contains("bibhitaki") || q.contains("बिभीतक") || q.contains("बहेड़ा") || q.contains("bellirica")) return "Bibhitaki";
+        if (q.contains("chyawanprash") || q.contains("च्यवनप्राश")) return "Chyawanprash";
+        if (q.contains("trikatu") || q.contains("त्रिकटु")) return "Trikatu";
+        if (q.contains("sitopaladi") || q.contains("सितोपलादि")) return "Sitopaladi";
         if (q.contains("ashwagandha") || q.contains("withania") || q.contains("अश्वगंधा")) return "Ashwagandha";
         if (q.contains("turmeric") || q.contains("haldi") || q.contains("curcuma") || q.contains("हळद") || q.contains("हल्दी") || q.contains("हरिद्रा")) return "Haridra (Turmeric)";
         if (q.contains("tulsi") || q.contains("ocimum") || q.contains("तुळस") || q.contains("तुलसी")) return "Tulsi";
@@ -469,6 +491,18 @@ public class ChatOrchestratorService {
         if (q.contains("ginger") || q.contains("zingiber") || q.contains("सुंठ") || q.contains("सोंठ")) return "Shunthi (Dry Ginger)";
         if (q.contains("licorice") || q.contains("glycyrrhiza") || q.contains("ज्येष्ठमध") || q.contains("मुलेठी") || q.contains("यष्टिमधु")) return "Yashtimadhu";
         if (q.contains("aloe") || q.contains("कोरफड") || q.contains("घृतकुमारी") || q.contains("कुमारी")) return "Kumari (Aloe Vera)";
+        if (q.contains("shilajit") || q.contains("शिलाजीत")) return "Shilajit";
+        if (q.contains("kalmegh") || q.contains("कालमेघ")) return "Kalmegh";
+        if (q.contains("kutki") || q.contains("कुटकी")) return "Kutki";
+        if (q.contains("pippali") || q.contains("पिप्पली")) return "Pippali";
+        if (q.contains("bhringraj") || q.contains("भृंगराज")) return "Bhringraj";
+
+        // If the query is a clean formulation name, preserve it rather than discarding
+        String cleaned = query.replaceAll("(?i)(provide|comprehensive|5-pillar|statutory|advisory|report|for|evaluation|the|a|an)", "").trim();
+        if (!cleaned.isBlank() && cleaned.length() < 60 && cleaned.split("\\s+").length <= 4) {
+            return cleaned;
+        }
+
         return "Ayurvedic Formulation";
     }
 }

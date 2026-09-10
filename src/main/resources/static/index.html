@@ -925,18 +925,19 @@
     btnDownload.addEventListener('click', (e) => {
       e.preventDefault();
       const applicant = document.getElementById('applicantName').value.trim() || 'Innovator';
-      const product = document.getElementById('productName').value.trim() || 'Ayurvedic_Formulation';
+      const product = document.getElementById('productName').value.trim() || 'Triphala';
+      const email = document.getElementById('recipientEmail').value.trim() || 'innovator@domain.in';
       const sessionId = 'session-' + Math.random().toString(36).substring(2, 9);
 
       btnDownload.disabled = true;
       btnDownload.innerText = '⏳ Compiling PDF...';
       showToast('⚡ Compiling 7-pillar statutory PDF dossier via in-process OpenPDF engine...', 'success');
 
-      const downloadUrl = `/api/v1/report/download/${sessionId}?productName=${encodeURIComponent(product)}`;
+      const downloadUrl = `/api/v1/report/download/${sessionId}?productName=${encodeURIComponent(product)}&applicantName=${encodeURIComponent(applicant)}&recipientEmail=${encodeURIComponent(email)}`;
       const link = document.createElement('a');
       link.href = downloadUrl;
       link.target = '_blank';
-      link.download = `IP_SHAKTI_Legal_Dossier_${applicant.replace(/\s+/g, '_')}.pdf`;
+      link.download = `IP_SHAKTI_Legal_Dossier_${product.replace(/\s+/g, '_')}.pdf`;
       document.body.appendChild(link);
       link.click();
       link.remove();
