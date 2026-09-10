@@ -92,7 +92,13 @@ const LegalDossier = () => {
     setDownloadSuccess(false);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/report/download/${sessionId}`);
+      const params = new URLSearchParams();
+      if (assessmentContext?.productName) params.set('productName', assessmentContext.productName);
+      if (assessmentContext?.applicantName) params.set('applicantName', assessmentContext.applicantName);
+      if (emailAddress?.trim()) params.set('recipientEmail', emailAddress.trim());
+      const paramStr = params.toString() ? `?${params.toString()}` : '';
+
+      const response = await fetch(`${API_BASE_URL}/api/v1/report/download/${sessionId}${paramStr}`);
       if (!response.ok) {
         throw new Error(response.status === 404 ? 'Report export endpoint is not connected yet.' : `HTTP Error: ${response.status}`);
       }
@@ -149,7 +155,11 @@ const LegalDossier = () => {
       const response = await fetch(`${API_BASE_URL}/api/v1/report/email/${sessionId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: emailAddress }),
+        body: JSON.stringify({
+          recipientEmail: emailAddress.trim(),
+          applicantName: assessmentContext?.applicantName || 'Ayurvedic Innovator',
+          productName: assessmentContext?.productName || '',
+        }),
       });
 
       if (!response.ok) {

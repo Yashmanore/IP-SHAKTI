@@ -4,17 +4,41 @@
  * No mock/fake data is returned here.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8085';
 
 /**
- * Submit an IP-SAKTI question for analysis.
- * Backend endpoint: POST /api/v1/query/analyze
+ * Submit an IP-SAKTI question for analysis via the conversational orchestrator.
+ * Backend endpoint: POST /api/v1/chat/message (ChatController)
+ *
+ * Request shape (ChatMessageRequest):
+ *   sessionId: string | null       — conversation session UUID
+ *   message: string                — the user's question (maps from `question` field in form)
+ *   productName: string | null
+ *   mainIngredients: string | null
+ *   intendedUse: string | null
+ *   jurisdiction: 'INDIA' | 'INTERNATIONAL'
+ *   language: 'AUTO' | 'EN' | 'HI' | 'MR'
+ *   clarificationAnswers: Record<string, string>
+ *
+ * Response shape (ChatMessageResponse): pillars, sessionId, clarifications, etc.
  */
 export async function submitAssessment(payload) {
-  const response = await fetch(`${API_BASE_URL}/api/v1/query/analyze`, {
+  // Flatten payload: map `question` → `message`, unwrap `productContext` nested object
+  const chatRequest = {
+    sessionId: payload.sessionId || null,
+    message: payload.question || payload.message || '',
+    productName: payload.productContext?.productName || payload.productName || null,
+    mainIngredients: payload.productContext?.mainIngredients || payload.mainIngredients || null,
+    intendedUse: payload.productContext?.intendedUse || payload.intendedUse || null,
+    jurisdiction: payload.jurisdiction || 'INDIA',
+    language: payload.language || 'AUTO',
+    clarificationAnswers: payload.clarificationAnswers || {},
+  };
+
+  const response = await fetch(`${API_BASE_URL}/api/v1/chat/message`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(chatRequest),
   });
   if (!response.ok) {
     const errorBody = await response.text();

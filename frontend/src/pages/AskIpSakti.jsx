@@ -157,7 +157,7 @@ const AskIpSakti = () => {
 
     try {
       const result = await submitAssessment(payload);
-      // Navigate to Product Classification with the full context as router state
+      // ChatMessageResponse returns: sessionId, responseType, pillars, clarifyingChips, etc.
       navigate('/product-classification', {
         state: {
           question: question.trim(),
@@ -166,9 +166,11 @@ const AskIpSakti = () => {
           intendedUse: intendedUse.trim() || null,
           jurisdiction,
           destinationMarket: jurisdiction === 'INTERNATIONAL' ? destinationMarket.trim() || null : null,
-          assessmentId: result?.id || null,
+          assessmentId: result?.sessionId || result?.id || null,
+          chatResponse: result || null,
         },
       });
+
     } catch (err) {
       // Check if service is simply not running yet vs. a real error
       if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
