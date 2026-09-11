@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ChevronRight } from 'lucide-react';
 
 export const ASSESSMENT_STEPS = [
@@ -16,6 +17,7 @@ export const ASSESSMENT_STEPS = [
  * @param {string} activeKey - The key of the active step.
  */
 const AssessmentStepper = ({ activeKey }) => {
+  const { t } = useTranslation();
   const activeIdx = ASSESSMENT_STEPS.findIndex((s) => s.key === activeKey);
 
   return (
@@ -46,7 +48,7 @@ const AssessmentStepper = ({ activeKey }) => {
               >
                 {isPast ? '✓' : idx + 1}
               </span>
-              {step.label}
+              {t(`stepper.${step.key}`, step.label)}
             </div>
             {idx < ASSESSMENT_STEPS.length - 1 && (
               <ChevronRight size={14} className="text-border-color shrink-0" />

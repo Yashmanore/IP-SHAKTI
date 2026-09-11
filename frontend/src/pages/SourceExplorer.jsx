@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Search,
   X,
@@ -16,21 +17,22 @@ import {
   Filter,
 } from 'lucide-react';
 import Breadcrumb from '../components/Breadcrumb';
+import { useJurisdiction } from '../context/JurisdictionContext';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8085';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants — structural only, not fake data
 // ─────────────────────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
-  { key: 'all', label: 'All' },
-  { key: 'ip', label: 'IP' },
-  { key: 'regulatory', label: 'Regulatory' },
-  { key: 'biodiversity', label: 'Biodiversity' },
-  { key: 'abs', label: 'ABS' },
-  { key: 'traditional_knowledge', label: 'Traditional Knowledge' },
-  { key: 'international', label: 'International' },
+  { key: 'all', labelKey: 'sourceExplorer.tabs.all', label: 'All' },
+  { key: 'ip', labelKey: 'sourceExplorer.tabs.ip', label: 'IP' },
+  { key: 'regulatory', labelKey: 'sourceExplorer.tabs.regulatory', label: 'Regulatory' },
+  { key: 'biodiversity', labelKey: 'sourceExplorer.tabs.biodiversity', label: 'Biodiversity' },
+  { key: 'abs', labelKey: 'sourceExplorer.tabs.abs', label: 'ABS' },
+  { key: 'traditional_knowledge', labelKey: 'sourceExplorer.tabs.traditional_knowledge', label: 'Traditional Knowledge' },
+  { key: 'international', labelKey: 'sourceExplorer.tabs.international', label: 'International' },
 ];
 
 // Category → search query mapping (used when a category tab is clicked)
@@ -81,29 +83,41 @@ function classifyError(err) {
 /** Derive a display title from a RAG result's metadata */
 function deriveTitle(result) {
   const meta = result.metadata || {};
-  return meta.title || meta.file_name?.replace(/\.pdf$/i, '').replace(/[-_]/g, ' ') || 'Untitled Source';
+  return meta.doc_title || meta.title || meta.file_name?.replace(/\.pdf$/i, '').replace(/[-_]/g, ' ') || meta.file_path?.split(/[\\/]/).pop()?.replace(/\.pdf$/i, '').replace(/[-_]/g, ' ') || 'Authoritative Legal Document';
 }
 
 /** Derive source type label */
-function deriveTypeLabel(result) {
+function deriveTypeLabel(result, t) {
   const meta = result.metadata || {};
-  const raw = meta.authority_type || meta.source_type || '';
-  return SOURCE_TYPE_LABELS[raw] || raw || 'Source';
+  const raw = (meta.category || meta.authority_type || meta.source_type || '').toUpperCase();
+  if (!raw) return t ? t('sourceExplorer.source', 'Source') : 'Source';
+  if (raw === 'STATUTES' || raw === 'STATUTE') return t ? t('sourceExplorer.sourceTypes.STATUTE', 'Statute / Act') : 'Statute / Act';
+  if (raw === 'RULES' || raw === 'RULE') return t ? t('sourceExplorer.sourceTypes.RULE', 'Rule / Gazette') : 'Rule / Gazette';
+  if (raw === 'REGULATIONS' || raw === 'REGULATION') return t ? t('sourceExplorer.sourceTypes.REGULATION', 'Regulation') : 'Regulation';
+  if (raw === 'TREATIES' || raw === 'TREATY') return t ? t('sourceExplorer.sourceTypes.TREATY', 'International Treaty') : 'International Treaty';
+  if (raw === 'GUIDELINES') return 'Guidelines / Policy';
+  return t ? t(`sourceExplorer.sourceTypes.${raw}`, SOURCE_TYPE_LABELS[raw] || raw) : (SOURCE_TYPE_LABELS[raw] || raw);
 }
 
 /** Derive jurisdiction label */
-function deriveJurisdiction(result) {
+function deriveJurisdiction(result, t) {
   const j = result.metadata?.jurisdiction || '';
-  return JURISDICTION_LABELS[j] || j || 'Unknown';
+  if (j === 'INDIA') return t ? t('common.india', 'India') : 'India';
+  if (j === 'INTERNATIONAL') return t ? t('common.international', 'International') : 'International';
+  return j || (t ? t('common.notProvided', 'Unknown') : 'Unknown');
 }
 
 /** Source type badge color */
 function typeBadgeStyle(result) {
-  const t = result.metadata?.authority_type;
+  const t = (result.metadata?.category || result.metadata?.authority_type || '').toUpperCase();
   switch (t) {
+    case 'STATUTES':
     case 'STATUTE': return 'bg-forest-green/10 text-forest-green border-forest-green/20';
+    case 'RULES':
     case 'RULE': return 'bg-deep-teal/10 text-deep-teal border-deep-teal/20';
+    case 'REGULATIONS':
     case 'REGULATION': return 'bg-muted-gold/10 text-muted-gold border-muted-gold/30';
+    case 'TREATIES':
     case 'TREATY': return 'bg-success/10 text-success border-success/30';
     case 'STATUTORY_FORM': return 'bg-slate/10 text-slate border-slate/20';
     default: return 'bg-warm-ivory text-slate border-border-color';
@@ -140,9 +154,10 @@ const SkeletonCard = () => (
 
 /** Individual source card in the list */
 const SourceCard = ({ result, onClick }) => {
+  const { t } = useTranslation();
   const title = deriveTitle(result);
-  const typeLabel = deriveTypeLabel(result);
-  const jurisdiction = deriveJurisdiction(result);
+  const typeLabel = deriveTypeLabel(result, t);
+  const jurisdiction = deriveJurisdiction(result, t);
   const score = typeof result.score === 'number' ? result.score.toFixed(3) : null;
   const meta = result.metadata || {};
   const hasUrl = !!(meta.url || meta.sourceUrl);
@@ -189,7 +204,7 @@ const SourceCard = ({ result, onClick }) => {
       {/* Open source indicator */}
       {hasUrl && (
         <p className="text-xs text-forest-green mt-2 flex items-center gap-1">
-          <ExternalLink size={11} /> View original source
+          <ExternalLink size={11} /> {t('sourceExplorer.detail.viewOriginal', 'View original source')}
         </p>
       )}
     </button>
@@ -198,10 +213,11 @@ const SourceCard = ({ result, onClick }) => {
 
 /** Source detail modal/drawer */
 const SourceDetailPanel = ({ result, onClose }) => {
+  const { t } = useTranslation();
   if (!result) return null;
   const title = deriveTitle(result);
-  const typeLabel = deriveTypeLabel(result);
-  const jurisdiction = deriveJurisdiction(result);
+  const typeLabel = deriveTypeLabel(result, t);
+  const jurisdiction = deriveJurisdiction(result, t);
   const meta = result.metadata || {};
   const sourceUrl = meta.url || meta.sourceUrl || null;
 
@@ -235,7 +251,7 @@ const SourceDetailPanel = ({ result, onClose }) => {
           </div>
           <button
             onClick={onClose}
-            aria-label="Close source detail"
+            aria-label={t('common.close', 'Close')}
             className="text-slate hover:text-charcoal transition-colors focus:outline-none focus:ring-2 focus:ring-forest-green/50 rounded-full p-1 shrink-0"
           >
             <X size={18} />
@@ -246,33 +262,57 @@ const SourceDetailPanel = ({ result, onClose }) => {
         <div className="px-6 py-5 space-y-5">
           {/* Metadata fields */}
           <dl className="divide-y divide-border-color">
-            {meta.authority_type && (
+            <div className="py-3">
+              <dt className="text-xs font-semibold text-slate uppercase tracking-wide mb-1">
+                {t('sourceExplorer.detail.sourceType', 'Source Type')}
+              </dt>
+              <dd className="text-sm text-charcoal">{typeLabel}</dd>
+            </div>
+            {meta.section_ref && (
               <div className="py-3">
-                <dt className="text-xs font-semibold text-slate uppercase tracking-wide mb-1">Source Type</dt>
-                <dd className="text-sm text-charcoal">{typeLabel}</dd>
+                <dt className="text-xs font-semibold text-slate uppercase tracking-wide mb-1">
+                  Section / Ref
+                </dt>
+                <dd className="text-sm font-semibold text-forest-green">{meta.section_ref}</dd>
+              </div>
+            )}
+            {meta.page_number && (
+              <div className="py-3">
+                <dt className="text-xs font-semibold text-slate uppercase tracking-wide mb-1">
+                  Gazette / Act Page
+                </dt>
+                <dd className="text-sm text-charcoal">Page {meta.page_number}</dd>
               </div>
             )}
             <div className="py-3">
-              <dt className="text-xs font-semibold text-slate uppercase tracking-wide mb-1">Jurisdiction</dt>
+              <dt className="text-xs font-semibold text-slate uppercase tracking-wide mb-1">
+                {t('sourceExplorer.detail.jurisdiction', 'Jurisdiction')}
+              </dt>
               <dd className="text-sm text-charcoal">{jurisdiction}</dd>
             </div>
-            {meta.file_name && (
+            {(meta.file_name || meta.file_path) && (
               <div className="py-3">
-                <dt className="text-xs font-semibold text-slate uppercase tracking-wide mb-1">File / Identifier</dt>
-                <dd className="text-sm text-charcoal font-mono">{meta.file_name}</dd>
+                <dt className="text-xs font-semibold text-slate uppercase tracking-wide mb-1">
+                  {t('sourceExplorer.detail.fileIdentifier', 'File / Identifier')}
+                </dt>
+                <dd className="text-sm text-charcoal font-mono">{meta.file_name || meta.file_path?.split(/[\\/]/).pop()}</dd>
               </div>
             )}
             {typeof result.score === 'number' && (
               <div className="py-3">
-                <dt className="text-xs font-semibold text-slate uppercase tracking-wide mb-1">Relevance Score</dt>
-                <dd className="text-sm text-charcoal font-mono">{result.score.toFixed(4)}</dd>
+                <dt className="text-xs font-semibold text-slate uppercase tracking-wide mb-1">
+                  {t('sourceExplorer.detail.relevanceScore', 'Relevance Score')}
+                </dt>
+                <dd className="text-sm text-charcoal font-mono">{(result.score * 100).toFixed(1)}% ({result.score.toFixed(4)})</dd>
               </div>
             )}
           </dl>
 
           {/* Text content */}
           <div>
-            <h3 className="text-sm font-semibold text-charcoal mb-2">Relevant Extract</h3>
+            <h3 className="text-sm font-semibold text-charcoal mb-2">
+              {t('sourceExplorer.detail.relevantExtract', 'Relevant Extract')}
+            </h3>
             <p className="text-sm text-slate leading-relaxed bg-warm-ivory p-3 rounded-lg border border-border-color whitespace-pre-wrap">
               {result.text}
             </p>
@@ -280,13 +320,15 @@ const SourceDetailPanel = ({ result, onClose }) => {
 
           {/* Relevance to IP-SAKTI */}
           <div className="p-3 bg-forest-green/5 border border-forest-green/20 rounded-lg text-sm text-slate leading-relaxed">
-            <p className="font-medium text-forest-green text-xs uppercase tracking-wide mb-1">Relevance to IP-SAKTI</p>
-            This source record was returned by the IP-SAKTI source repository based on its semantic relevance to the search query. Source records support guidance provided by the system.
+            <p className="font-medium text-forest-green text-xs uppercase tracking-wide mb-1">
+              {t('sourceExplorer.detail.relevanceToIpSakti', 'Relevance to IP-SAKTI')}
+            </p>
+            {t('sourceExplorer.detail.relevanceDesc', 'This source record was returned by the IP-SAKTI source repository based on its semantic relevance to the search query. Source records support guidance provided by the system.')}
           </div>
 
           {/* Disclaimer */}
           <p className="text-xs text-slate border-t border-border-color pt-4 leading-relaxed">
-            This source record is provided for information and reference. It does not constitute legal advice.
+            {t('sourceExplorer.detail.disclaimer', 'This source record is provided for information and reference. It does not constitute legal advice.')}
           </p>
         </div>
 
@@ -299,7 +341,7 @@ const SourceDetailPanel = ({ result, onClose }) => {
               rel="noopener noreferrer"
               className="flex items-center gap-2 bg-forest-green text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-deep-teal transition-colors focus:outline-none focus:ring-2 focus:ring-forest-green/50 w-fit"
             >
-              <ExternalLink size={15} /> Open Original Source
+              <ExternalLink size={15} /> {t('sourceExplorer.detail.viewOriginal', 'Open Original Source')}
             </a>
           ) : (
             <button
@@ -308,7 +350,7 @@ const SourceDetailPanel = ({ result, onClose }) => {
               className="flex items-center gap-2 bg-border-color text-slate px-5 py-2.5 rounded-lg text-sm font-medium cursor-not-allowed"
               aria-disabled="true"
             >
-              <ExternalLink size={15} /> Original source link unavailable
+              <ExternalLink size={15} /> {t('sourceExplorer.detail.viewOriginal', 'Original source link unavailable')}
             </button>
           )}
         </div>
@@ -321,12 +363,15 @@ const SourceDetailPanel = ({ result, onClose }) => {
 // Main Page
 // ─────────────────────────────────────────────────────────────────────────────
 const SourceExplorer = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
+
+  const { jurisdiction: globalJurisdiction } = useJurisdiction();
 
   // ── Search & filter state ──
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
-  const [jurisdictionFilter, setJurisdictionFilter] = useState('All');
+  const [jurisdictionFilter, setJurisdictionFilter] = useState(globalJurisdiction || 'All');
   const [sourceTypeFilter, setSourceTypeFilter] = useState('All');
   const [showFilters, setShowFilters] = useState(false);
 
@@ -341,13 +386,6 @@ const SourceExplorer = () => {
 
   const searchInputRef = useRef(null);
 
-  // Compute which jurisdiction param to pass to the RAG API
-  const getJurisdictionParam = () => {
-    if (jurisdictionFilter === 'INDIA') return 'INDIA';
-    if (jurisdictionFilter === 'INTERNATIONAL') return 'INTERNATIONAL';
-    return 'INDIA'; // RAG requires a single jurisdiction — default to INDIA; we run both when "All" is selected
-  };
-
   // Run the RAG search with a given query + jurisdiction
   const runRagSearch = useCallback(async (query, jurisdiction) => {
     const res = await fetch(
@@ -357,7 +395,7 @@ const SourceExplorer = () => {
     return res.json();
   }, []);
 
-  const executeSearch = useCallback(async (query) => {
+  const executeSearchWith = useCallback(async (query, jFilter, stFilter) => {
     if (!query.trim()) return;
     setLoading(true);
     setError(null);
@@ -366,7 +404,7 @@ const SourceExplorer = () => {
 
     try {
       let data;
-      if (jurisdictionFilter === 'All') {
+      if (jFilter === 'All') {
         // Run both jurisdictions and merge, deduplicating by text
         const [india, international] = await Promise.all([
           runRagSearch(query, 'INDIA'),
@@ -382,13 +420,13 @@ const SourceExplorer = () => {
         // Sort by score descending
         data.sort((a, b) => (b.score || 0) - (a.score || 0));
       } else {
-        data = await runRagSearch(query, getJurisdictionParam());
+        data = await runRagSearch(query, jFilter);
       }
 
       // Apply source type filter on the frontend (RAG has no type filter param)
-      const filtered = sourceTypeFilter === 'All'
+      const filtered = stFilter === 'All'
         ? data
-        : data.filter((r) => r.metadata?.authority_type === sourceTypeFilter);
+        : data.filter((r) => r.metadata?.authority_type === stFilter);
 
       setResults(filtered);
     } catch (err) {
@@ -396,14 +434,42 @@ const SourceExplorer = () => {
     } finally {
       setLoading(false);
     }
-  }, [jurisdictionFilter, sourceTypeFilter, runRagSearch]);
+  }, [runRagSearch]);
+
+  const executeSearch = useCallback((query) => {
+    return executeSearchWith(query, jurisdictionFilter, sourceTypeFilter);
+  }, [executeSearchWith, jurisdictionFilter, sourceTypeFilter]);
+
+  const handleJurisdictionFilterChange = (newJ) => {
+    setJurisdictionFilter(newJ);
+    if (searchQuery.trim()) {
+      executeSearchWith(searchQuery, newJ, sourceTypeFilter);
+    }
+  };
+
+  const handleSourceTypeFilterChange = (newSt) => {
+    setSourceTypeFilter(newSt);
+    if (searchQuery.trim()) {
+      executeSearchWith(searchQuery, jurisdictionFilter, newSt);
+    }
+  };
+
+  // Sync with global header jurisdiction
+  useEffect(() => {
+    if (globalJurisdiction && (globalJurisdiction === 'INDIA' || globalJurisdiction === 'INTERNATIONAL')) {
+      setJurisdictionFilter(globalJurisdiction);
+      if (searchQuery.trim()) {
+        executeSearchWith(searchQuery, globalJurisdiction, sourceTypeFilter);
+      }
+    }
+  }, [globalJurisdiction, executeSearchWith, sourceTypeFilter]);
 
   // Category tab click — use category query
   const handleCategoryClick = (catKey) => {
     setActiveCategory(catKey);
     const q = CATEGORY_QUERIES[catKey] || catKey;
     setSearchQuery(q);
-    executeSearch(q);
+    executeSearchWith(q, jurisdictionFilter, sourceTypeFilter);
   };
 
   const handleSearch = (e) => {
@@ -439,16 +505,18 @@ const SourceExplorer = () => {
 
       {/* Page Title */}
       <div className="mb-8">
-        <h1 className="text-3xl font-heading font-bold text-forest-green mb-2">Source Explorer</h1>
+        <h1 className="text-3xl font-heading font-bold text-forest-green mb-2">
+          {t('sourceExplorer.title', 'Source Explorer')}
+        </h1>
         <p className="text-slate text-base leading-relaxed">
-          Explore the authoritative sources behind IP-SAKTI guidance.
+          {t('sourceExplorer.subtitle', 'Explore the authoritative sources behind IP-SAKTI guidance.')}
         </p>
       </div>
 
       {/* ── SEARCH BAR ──────────────────────────────────────────────── */}
       <form onSubmit={handleSearch} className="mb-6">
         <label htmlFor="source-search" className="block text-sm font-medium text-charcoal mb-2">
-          Search Sources
+          {t('sourceExplorer.searchLabel', 'Search Sources')}
         </label>
         <div className="flex gap-3">
           <div className="relative flex-1">
@@ -459,7 +527,7 @@ const SourceExplorer = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search authoritative sources by keyword or topic"
+              placeholder={t('sourceExplorer.searchPlaceholder', 'Search authoritative sources by keyword or topic')}
               className="w-full rounded-lg border border-border-color pl-10 pr-4 py-3 text-sm text-charcoal placeholder:text-slate/50 bg-white focus:outline-none focus:ring-2 focus:ring-forest-green/40 shadow-sm transition-shadow"
             />
             {searchQuery && (
@@ -480,7 +548,7 @@ const SourceExplorer = () => {
             className="flex items-center gap-2 bg-forest-green text-white px-5 py-3 rounded-lg text-sm font-medium hover:bg-deep-teal transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-forest-green/50 shrink-0"
           >
             {loading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
-            Search
+            {t('sourceExplorer.searchButton', 'Search')}
           </button>
         </div>
       </form>
@@ -499,7 +567,7 @@ const SourceExplorer = () => {
                 : 'text-slate hover:text-charcoal hover:bg-warm-ivory'
               }`}
           >
-            {cat.label}
+            {t(cat.labelKey, cat.label)}
           </button>
         ))}
       </div>
@@ -512,7 +580,7 @@ const SourceExplorer = () => {
           aria-expanded={showFilters}
           className="flex items-center gap-2 text-sm font-medium text-slate hover:text-charcoal transition-colors focus:outline-none focus:ring-2 focus:ring-forest-green/50 rounded-lg px-3 py-2 border border-border-color bg-white"
         >
-          <SlidersHorizontal size={15} /> Filters
+          <SlidersHorizontal size={15} /> {t('sourceExplorer.filters', 'Filters')}
           {(jurisdictionFilter !== 'All' || sourceTypeFilter !== 'All') && (
             <span className="w-2 h-2 rounded-full bg-forest-green ml-1" aria-label="Filters active" />
           )}
@@ -524,14 +592,14 @@ const SourceExplorer = () => {
             {/* Jurisdiction */}
             <div>
               <label htmlFor="filter-jurisdiction" className="block text-xs font-semibold text-slate uppercase tracking-wide mb-2">
-                Jurisdiction
+                {t('sourceExplorer.jurisdiction', 'Jurisdiction')}
               </label>
               <div className="flex flex-wrap gap-2">
                 {JURISDICTION_OPTIONS.map((j) => (
                   <button
                     key={j}
                     type="button"
-                    onClick={() => setJurisdictionFilter(j)}
+                    onClick={() => handleJurisdictionFilterChange(j)}
                     aria-pressed={jurisdictionFilter === j}
                     className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors focus:outline-none focus:ring-2 focus:ring-forest-green/50
                       ${jurisdictionFilter === j
@@ -539,7 +607,7 @@ const SourceExplorer = () => {
                         : 'bg-white text-charcoal border-border-color hover:border-deep-teal'
                       }`}
                   >
-                    {j === 'All' ? 'All' : JURISDICTION_LABELS[j]}
+                    {j === 'All' ? t('common.all', 'All') : (j === 'INDIA' ? t('common.india', 'India') : t('common.international', 'International'))}
                   </button>
                 ))}
               </div>
@@ -548,22 +616,22 @@ const SourceExplorer = () => {
             {/* Source Type */}
             <div>
               <label className="block text-xs font-semibold text-slate uppercase tracking-wide mb-2">
-                Source Type
+                {t('sourceExplorer.sourceType', 'Source Type')}
               </label>
               <div className="flex flex-wrap gap-2">
-                {SOURCE_TYPE_OPTIONS.map((t) => (
+                {SOURCE_TYPE_OPTIONS.map((st) => (
                   <button
-                    key={t}
+                    key={st}
                     type="button"
-                    onClick={() => setSourceTypeFilter(t)}
-                    aria-pressed={sourceTypeFilter === t}
+                    onClick={() => handleSourceTypeFilterChange(st)}
+                    aria-pressed={sourceTypeFilter === st}
                     className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors focus:outline-none focus:ring-2 focus:ring-forest-green/50
-                      ${sourceTypeFilter === t
+                      ${sourceTypeFilter === st
                         ? 'bg-forest-green text-white border-forest-green'
                         : 'bg-white text-charcoal border-border-color hover:border-deep-teal'
                       }`}
                   >
-                    {t === 'All' ? 'All' : (SOURCE_TYPE_LABELS[t] || t)}
+                    {st === 'All' ? t('common.all', 'All') : t(`sourceExplorer.sourceTypes.${st}`, SOURCE_TYPE_LABELS[st] || st)}
                   </button>
                 ))}
               </div>
@@ -575,7 +643,7 @@ const SourceExplorer = () => {
                 onClick={handleClearFilters}
                 className="text-xs font-medium text-forest-green hover:underline focus:outline-none focus:ring-2 focus:ring-forest-green/50 rounded"
               >
-                Clear all filters
+                {t('sourceExplorer.clearFilters', 'Clear all filters')}
               </button>
             </div>
           </div>
@@ -585,20 +653,22 @@ const SourceExplorer = () => {
       {/* ── RESULTS AREA ────────────────────────────────────────────── */}
       <section aria-label="Source results">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-heading font-semibold text-charcoal">Sources</h2>
+          <h2 className="text-xl font-heading font-semibold text-charcoal">
+            {t('sourceExplorer.sourcesHeading', 'Authoritative Sources')}
+          </h2>
           {results && (
             <div className="flex items-center gap-3 text-xs text-slate">
               {jurisdictionFilter === 'All' && (
                 <>
                   <span className="flex items-center gap-1">
-                    <MapPin size={11} className="text-orange-600" /> India: {indiaCount}
+                    <MapPin size={11} className="text-orange-600" /> {t('common.india', 'India')}: {indiaCount}
                   </span>
                   <span className="flex items-center gap-1">
-                    <Globe size={11} className="text-blue-600" /> International: {intlCount}
+                    <Globe size={11} className="text-blue-600" /> {t('common.international', 'International')}: {intlCount}
                   </span>
                 </>
               )}
-              <span>{results.length} record{results.length !== 1 ? 's' : ''}</span>
+              <span>{results.length} {t('sourceExplorer.records', 'records')}</span>
             </div>
           )}
         </div>
@@ -607,7 +677,7 @@ const SourceExplorer = () => {
         {loading && (
           <div className="space-y-4">
             <p className="text-sm text-slate flex items-center gap-2">
-              <Loader2 size={15} className="animate-spin" /> Loading authoritative sources…
+              <Loader2 size={15} className="animate-spin" /> {t('sourceExplorer.loading', 'Loading authoritative sources…')}
             </p>
             {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
           </div>
@@ -618,8 +688,8 @@ const SourceExplorer = () => {
           <div className="flex items-start gap-3 p-5 bg-amber-50 border border-amber-200 rounded-xl text-sm">
             <AlertCircle size={18} className="text-warning shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="font-semibold text-charcoal mb-1">Authoritative sources could not be loaded.</p>
-              <p className="text-slate">The source repository service is not reachable. Source records will appear when the backend is running.</p>
+              <p className="font-semibold text-charcoal mb-1">{t('sourceExplorer.serviceUnavailable', 'Authoritative sources could not be loaded.')}</p>
+              <p className="text-slate">{t('sourceExplorer.serviceUnavailableDesc', 'The source repository service is not reachable. Source records will appear when the backend is running.')}</p>
             </div>
             <button
               type="button"
@@ -627,7 +697,7 @@ const SourceExplorer = () => {
               disabled={!searchQuery.trim() && activeCategory === 'all'}
               className="text-sm font-medium text-forest-green hover:underline whitespace-nowrap focus:outline-none disabled:opacity-40"
             >
-              <RefreshCw size={14} className="inline mr-1" />Retry
+              <RefreshCw size={14} className="inline mr-1" />{t('common.retry', 'Retry')}
             </button>
           </div>
         )}
@@ -637,7 +707,7 @@ const SourceExplorer = () => {
           <div className="flex items-start gap-3 p-5 bg-red-50 border border-error/30 rounded-xl text-sm">
             <AlertCircle size={18} className="text-error shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="font-semibold text-charcoal mb-1">Authoritative sources could not be loaded.</p>
+              <p className="font-semibold text-charcoal mb-1">{t('sourceExplorer.errorLoading', 'Authoritative sources could not be loaded.')}</p>
               <p className="text-slate">{error}</p>
             </div>
             <button
@@ -645,7 +715,7 @@ const SourceExplorer = () => {
               onClick={() => executeSearch(searchQuery)}
               className="text-sm font-medium text-forest-green hover:underline whitespace-nowrap focus:outline-none"
             >
-              Retry
+              {t('common.retry', 'Retry')}
             </button>
           </div>
         )}
@@ -656,9 +726,11 @@ const SourceExplorer = () => {
             <div className="w-14 h-14 rounded-full bg-warm-ivory flex items-center justify-center mb-4 border border-border-color">
               <BookOpen size={24} className="text-muted-gold" />
             </div>
-            <h3 className="text-base font-semibold text-charcoal mb-2">No authoritative sources are available yet.</h3>
+            <h3 className="text-base font-semibold text-charcoal mb-2">
+              {t('sourceExplorer.noSources', 'No authoritative sources are available yet.')}
+            </h3>
             <p className="text-sm text-slate max-w-sm leading-relaxed mb-6">
-              Connect the authoritative source repository to explore the sources used by IP-SAKTI guidance. Use the search bar or select a category above to begin.
+              {t('sourceExplorer.noSourcesDesc', 'Connect the authoritative source repository to explore the sources used by IP-SAKTI guidance. Use the search bar or select a category above to begin.')}
             </p>
             <div className="flex flex-wrap gap-3 justify-center">
               {CATEGORIES.filter((c) => c.key !== 'all').map((cat) => (
@@ -668,7 +740,7 @@ const SourceExplorer = () => {
                   onClick={() => handleCategoryClick(cat.key)}
                   className="text-xs font-medium text-forest-green border border-forest-green/40 px-4 py-2 rounded-lg hover:bg-forest-green hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-forest-green/50"
                 >
-                  {cat.label}
+                  {t(cat.labelKey, cat.label)}
                 </button>
               ))}
             </div>
@@ -681,16 +753,18 @@ const SourceExplorer = () => {
             <div className="w-12 h-12 rounded-full bg-warm-ivory flex items-center justify-center mb-3 border border-border-color">
               <Search size={20} className="text-slate" />
             </div>
-            <p className="text-base font-semibold text-charcoal mb-1">No sources matched your search.</p>
+            <p className="text-base font-semibold text-charcoal mb-1">
+              {t('sourceExplorer.noMatch', 'No sources matched your search.')}
+            </p>
             <p className="text-sm text-slate mb-4">
-              Try different keywords, or check whether the source repository is connected.
+              {t('sourceExplorer.noMatchDesc', 'Try different keywords, or check whether the source repository is connected.')}
             </p>
             <button
               type="button"
               onClick={handleClearFilters}
               className="text-sm font-medium text-forest-green border border-forest-green/40 px-4 py-2 rounded-lg hover:bg-forest-green hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-forest-green/50"
             >
-              Clear filters
+              {t('sourceExplorer.clearFilters', 'Clear all filters')}
             </button>
           </div>
         )}
@@ -712,10 +786,10 @@ const SourceExplorer = () => {
       {/* ── SOURCE TRACEABILITY ───────────────────────────────────────── */}
       <aside className="mt-12 p-6 bg-warm-ivory border border-border-color rounded-xl">
         <h2 className="text-base font-heading font-semibold text-charcoal mb-2">
-          Why source traceability matters
+          {t('sourceExplorer.whyTraceability', 'Why source traceability matters')}
         </h2>
         <p className="text-sm text-slate leading-relaxed">
-          IP-SAKTI is designed to provide source-grounded guidance. Source Explorer helps users inspect the authoritative material behind the information presented by the system. When the source repository is connected, results reference actual legal, regulatory, biodiversity, and traditional-knowledge documents.
+          {t('sourceExplorer.whyTraceabilityDesc', 'IP-SAKTI is designed to provide source-grounded guidance. Source Explorer helps users inspect the authoritative material behind the information presented by the system. When the source repository is connected, results reference actual legal, regulatory, biodiversity, and traditional-knowledge documents.')}
         </p>
       </aside>
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   PackageSearch,
   AlertCircle,
@@ -17,6 +18,7 @@ import {
 import Breadcrumb from '../components/Breadcrumb';
 import AssessmentStepper from '../components/AssessmentStepper';
 import { classifyProduct } from '../services/api';
+import { useJurisdiction } from '../context/JurisdictionContext';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants derived from backend enums (ClassificationRequest)
@@ -24,30 +26,38 @@ import { classifyProduct } from '../services/api';
 const INTENDED_USE_OPTIONS = [
   {
     value: 'THERAPEUTIC_TREATMENT',
-    label: 'Therapeutic treatment or disease mitigation',
-    description: 'Products used to treat, mitigate, or prevent a disease or condition.',
+    labelKey: 'productClassification.intendedUseOptions.therapeutic.label',
+    defaultLabel: 'Therapeutic treatment or disease mitigation',
+    descKey: 'productClassification.intendedUseOptions.therapeutic.description',
+    defaultDescription: 'Products used to treat, mitigate, or prevent a disease or condition.',
   },
   {
     value: 'DIETARY_NUTRITION',
-    label: 'Food, dietary, or nutritional support',
-    description: 'Products intended as food supplements or nutritional support without therapeutic claims.',
+    labelKey: 'productClassification.intendedUseOptions.dietary.label',
+    defaultLabel: 'Food, dietary, or nutritional support',
+    descKey: 'productClassification.intendedUseOptions.dietary.description',
+    defaultDescription: 'Products intended as food supplements or nutritional support without therapeutic claims.',
   },
   {
     value: 'COSMETIC_BEAUTY',
-    label: 'Cleansing, beautifying, skin, or hair application',
-    description: 'Cosmetic products for skin/hair care that do not claim therapeutic effects.',
+    labelKey: 'productClassification.intendedUseOptions.cosmetic.label',
+    defaultLabel: 'Cleansing, beautifying, skin, or hair application',
+    descKey: 'productClassification.intendedUseOptions.cosmetic.description',
+    defaultDescription: 'Cosmetic products for skin/hair care that do not claim therapeutic effects.',
   },
   {
     value: 'OTHER',
-    label: 'Other',
-    description: 'A different intended use not listed above.',
+    labelKey: 'productClassification.intendedUseOptions.other.label',
+    defaultLabel: 'Other',
+    descKey: 'productClassification.intendedUseOptions.other.description',
+    defaultDescription: 'A different intended use not listed above.',
   },
 ];
 
 const APPLICANT_TYPE_OPTIONS = [
-  { value: 'INDIAN_INDIVIDUAL', label: 'Indian individual / sole proprietor' },
-  { value: 'INDIAN_COMPANY', label: 'Indian company / partnership / LLP' },
-  { value: 'FOREIGN_ENTITY_OR_NRI', label: 'Foreign entity or NRI' },
+  { value: 'INDIAN_INDIVIDUAL', labelKey: 'productClassification.applicantTypeOptions.indianIndividual', defaultLabel: 'Indian individual / sole proprietor' },
+  { value: 'INDIAN_COMPANY', labelKey: 'productClassification.applicantTypeOptions.indianCompany', defaultLabel: 'Indian company / partnership / LLP' },
+  { value: 'FOREIGN_ENTITY_OR_NRI', labelKey: 'productClassification.applicantTypeOptions.foreignEntity', defaultLabel: 'Foreign entity or NRI' },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -86,10 +96,11 @@ const RadioCard = ({ id, name, value, checked, onChange, label, description }) =
 
 /** Three-option Yes/No/Not-sure control */
 const TriStateRadio = ({ name, value, onChange, label, helpText, required }) => {
+  const { t } = useTranslation();
   const options = [
-    { value: 'true', label: 'Yes' },
-    { value: 'false', label: 'No' },
-    { value: 'unsure', label: 'Not sure' },
+    { value: 'true', label: t('common.yes', 'Yes') },
+    { value: 'false', label: t('common.no', 'No') },
+    { value: 'unsure', label: t('common.notSure', 'Not sure') },
   ];
   return (
     <div>
@@ -126,6 +137,7 @@ const TriStateRadio = ({ name, value, onChange, label, helpText, required }) => 
 
 /** Result field row — shows "Not available" when value is absent */
 const ResultField = ({ label, value, mono }) => {
+  const { t } = useTranslation();
   const isEmpty = value === null || value === undefined || value === '' ||
     (Array.isArray(value) && value.length === 0);
   return (
@@ -133,7 +145,7 @@ const ResultField = ({ label, value, mono }) => {
       <dt className="text-xs font-semibold text-slate uppercase tracking-wide mb-1">{label}</dt>
       <dd className={`text-sm ${isEmpty ? 'text-slate italic' : 'text-charcoal'} ${mono ? 'font-mono' : ''}`}>
         {isEmpty
-          ? 'Not available'
+          ? t('productClassification.result.notAvailable', 'Not available')
           : Array.isArray(value)
             ? (
               <ul className="space-y-1">
@@ -148,20 +160,29 @@ const ResultField = ({ label, value, mono }) => {
 
 /** Context banner shown when coming from Ask IP-SAKTI */
 const AssessmentContextBanner = ({ context, onGoToAsk }) => {
+  const { t } = useTranslation();
+  const { jurisdiction: globalJurisdiction } = useJurisdiction();
+  const effectiveJurisdiction = context?.jurisdiction || globalJurisdiction || 'INDIA';
   const hasContext = context?.productName || context?.question || context?.jurisdiction;
 
   if (!hasContext) {
     return (
       <div className="flex items-start gap-3 p-4 bg-warm-ivory border border-border-color rounded-lg mb-6 text-sm">
         <AlertCircle size={16} className="text-slate shrink-0 mt-0.5" />
-        <div>
-          <p className="text-charcoal font-medium">No assessment context available yet.</p>
+        <div className="flex-1">
+          <p className="text-charcoal font-medium">
+            {t('productClassification.assessmentContextBanner.noContext', 'No assessment context available yet.')}
+          </p>
+          <p className="text-xs text-slate mt-1">
+            <span className="font-medium text-charcoal">{t('productClassification.assessmentContextBanner.jurisdiction', 'Jurisdiction:')}</span>{' '}
+            <span className="text-forest-green font-medium">{effectiveJurisdiction === 'INDIA' ? t('common.india', 'India') : t('common.international', 'International')}</span>
+          </p>
           <button
             type="button"
             onClick={onGoToAsk}
-            className="text-forest-green hover:underline mt-1 text-sm font-medium"
+            className="text-forest-green hover:underline mt-1.5 text-sm font-medium block"
           >
-            Start from Ask IP-SAKTI →
+            {t('productClassification.assessmentContextBanner.startFromAsk', 'Start from Ask IP-SAKTI →')}
           </button>
         </div>
       </div>
@@ -170,15 +191,15 @@ const AssessmentContextBanner = ({ context, onGoToAsk }) => {
 
   return (
     <div className="p-4 bg-forest-green/5 border border-forest-green/20 rounded-lg mb-6 text-sm space-y-1.5">
-      <p className="text-xs font-semibold text-forest-green uppercase tracking-wide mb-2">Assessment Context</p>
+      <p className="text-xs font-semibold text-forest-green uppercase tracking-wide mb-2">
+        {t('productClassification.assessmentContextBanner.title', 'Assessment Context')}
+      </p>
       {context.productName && (
-        <p><span className="font-medium text-charcoal">Product:</span> <span className="text-charcoal">{context.productName}</span></p>
+        <p><span className="font-medium text-charcoal">{t('productClassification.assessmentContextBanner.product', 'Product:')}</span> <span className="text-charcoal">{context.productName}</span></p>
       )}
-      {context.jurisdiction && (
-        <p><span className="font-medium text-charcoal">Jurisdiction:</span> <span className="text-charcoal">{context.jurisdiction === 'INDIA' ? 'India' : 'International'}</span></p>
-      )}
+      <p><span className="font-medium text-charcoal">{t('productClassification.assessmentContextBanner.jurisdiction', 'Jurisdiction:')}</span> <span className="text-charcoal">{effectiveJurisdiction === 'INDIA' ? t('common.india', 'India') : t('common.international', 'International')}</span></p>
       {context.question && (
-        <p><span className="font-medium text-charcoal">Question:</span> <span className="text-slate italic">"{context.question}"</span></p>
+        <p><span className="font-medium text-charcoal">{t('productClassification.assessmentContextBanner.question', 'Question:')}</span> <span className="text-slate italic">"{context.question}"</span></p>
       )}
     </div>
   );
@@ -194,14 +215,17 @@ const CATEGORY_COLORS = {
   NEW_BOTANICAL_OR_PHYTOPHARMACEUTICAL: 'bg-muted-gold/10 text-muted-gold border-muted-gold/30',
   AYURVEDA_AAHAR: 'bg-forest-green/10 text-forest-green border-forest-green/30',
   AYURVEDIC_COSMETIC: 'bg-slate/10 text-slate border-slate/30',
+  OUT_OF_SCOPE: 'bg-amber-100 text-amber-800 border-amber-300',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Main ProductClassification Page
 // ─────────────────────────────────────────────────────────────────────────────
 const ProductClassification = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
+  const { jurisdiction: globalJurisdiction } = useJurisdiction();
   // Receive context passed via navigation state from Ask IP-SAKTI
   const assessmentContext = location.state || null;
 
@@ -233,19 +257,19 @@ const ProductClassification = () => {
   // ── Validation ──
   const validate = () => {
     if (!productName.trim()) {
-      setValidationError('Please enter a product name.');
+      setValidationError(t('productClassification.validation.productNameRequired', 'Please enter a product name.'));
       return false;
     }
     if (!intendedUse) {
-      setValidationError('Please select the primary intended use.');
+      setValidationError(t('productClassification.validation.intendedUseRequired', 'Please select the primary intended use.'));
       return false;
     }
     if (!matchesClassicalText) {
-      setValidationError('Please indicate whether the formulation is from a classical Ayurvedic text.');
+      setValidationError(t('productClassification.validation.classicalRequired', 'Please indicate whether the formulation is from a classical Ayurvedic text.'));
       return false;
     }
     if (!commercialUse) {
-      setValidationError('Please indicate whether the product is intended for commercial use.');
+      setValidationError(t('productClassification.validation.commercialRequired', 'Please indicate whether the product is intended for commercial use.'));
       return false;
     }
     return true;
@@ -296,7 +320,7 @@ const ProductClassification = () => {
       const request = buildRequest();
       const data = await classifyProduct(request);
       if (!data || !data.category) {
-        setSubmitError('No classification result was returned.');
+        setSubmitError(t('productClassification.classificationError', 'No classification result was returned.'));
       } else {
         setResult(data);
         // Scroll to result
@@ -308,7 +332,7 @@ const ProductClassification = () => {
       if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError') || err.message.includes('net::ERR')) {
         setServiceUnavailable(true);
       } else {
-        setSubmitError(err.message || 'Unable to interpret the classification response.');
+        setSubmitError(err.message || t('productClassification.classificationError', 'Unable to interpret the classification response.'));
       }
     } finally {
       setIsSubmitting(false);
@@ -320,6 +344,7 @@ const ProductClassification = () => {
       state: {
         ...assessmentContext,
         productName,
+        jurisdiction: assessmentContext?.jurisdiction || globalJurisdiction || 'INDIA',
         classificationResult: result,
       },
     });
@@ -329,18 +354,18 @@ const ProductClassification = () => {
     <div className="max-w-5xl mx-auto pb-16">
       <Breadcrumb
         items={[
-          { label: 'Ask IP-SAKTI', path: '/ask-ip-sakti' },
-          { label: 'Product Classification', path: '/product-classification' },
+          { labelKey: 'nav.askIpSakti', label: 'Ask IP-SAKTI', path: '/ask-ip-sakti' },
+          { labelKey: 'nav.productClassification', label: 'Product Classification', path: '/product-classification' },
         ]}
       />
 
       {/* Page Title */}
       <div className="mb-8">
         <h1 className="text-3xl font-heading font-bold text-forest-green mb-2">
-          Product Classification
+          {t('productClassification.title')}
         </h1>
         <p className="text-slate text-base leading-relaxed">
-          Identify the relevant Ayurveda product category before assessing intellectual property and regulatory requirements.
+          {t('productClassification.subtitle')}
         </p>
       </div>
 
@@ -363,23 +388,25 @@ const ProductClassification = () => {
             <section className="card p-6">
               <div className="flex items-center gap-2 mb-1">
                 <PackageSearch size={18} className="text-muted-gold" />
-                <h2 className="text-lg font-heading font-semibold text-charcoal">Product Information</h2>
+                <h2 className="text-lg font-heading font-semibold text-charcoal">
+                  {t('productClassification.infoTitle')}
+                </h2>
               </div>
               <p className="text-sm text-slate mb-5">
-                Provide the details needed to determine the appropriate Ayurveda product category under Indian law.
+                {t('productClassification.infoSubtitle')}
               </p>
 
               {/* Product name */}
               <div className="mb-5">
                 <label htmlFor="productName" className="block text-sm font-medium text-charcoal mb-1.5">
-                  Product name <span className="text-error" aria-hidden="true">*</span>
+                  {t('productClassification.productName')} <span className="text-error" aria-hidden="true">*</span>
                 </label>
                 <input
                   id="productName"
                   type="text"
                   value={productName}
                   onChange={(e) => { setProductName(e.target.value); setValidationError(''); }}
-                  placeholder="Enter product name"
+                  placeholder={t('productClassification.productNamePlaceholder')}
                   aria-required="true"
                   className="w-full rounded-lg border border-border-color px-4 py-2.5 text-sm text-charcoal placeholder:text-slate/50 bg-white focus:outline-none focus:ring-2 focus:ring-forest-green/40 transition-shadow"
                 />
@@ -388,24 +415,26 @@ const ProductClassification = () => {
               {/* Ingredients */}
               <div className="mb-5">
                 <label htmlFor="ingredients" className="block text-sm font-medium text-charcoal mb-1.5">
-                  Ingredients / formulation details
+                  {t('productClassification.ingredientsLabel', 'Ingredients / formulation details')}
                 </label>
                 <textarea
                   id="ingredients"
                   value={ingredientsRaw}
                   onChange={(e) => setIngredientsRaw(e.target.value)}
-                  placeholder="Describe the main ingredients, formulation, preparation, or composition."
+                  placeholder={t('productClassification.ingredientsPlaceholder', 'Describe the main ingredients, formulation, preparation, or composition.')}
                   rows={4}
                   className="w-full rounded-lg border border-border-color px-4 py-3 text-sm text-charcoal placeholder:text-slate/50 bg-white resize-y focus:outline-none focus:ring-2 focus:ring-forest-green/40 transition-shadow"
                 />
-                <p className="mt-1.5 text-xs text-slate">Separate multiple ingredients with commas or new lines.</p>
+                <p className="mt-1.5 text-xs text-slate">
+                  {t('productClassification.ingredientsHelper', 'Separate multiple ingredients with commas or new lines.')}
+                </p>
               </div>
 
               {/* Primary intended use */}
               <div className="mb-5">
                 <fieldset>
                   <legend className="block text-sm font-medium text-charcoal mb-3">
-                    Primary intended use <span className="text-error" aria-hidden="true">*</span>
+                    {t('productClassification.intendedUseLegend', 'Primary intended use')} <span className="text-error" aria-hidden="true">*</span>
                   </legend>
                   <div className="space-y-3">
                     {INTENDED_USE_OPTIONS.map((opt) => (
@@ -416,8 +445,8 @@ const ProductClassification = () => {
                         value={opt.value}
                         checked={intendedUse === opt.value}
                         onChange={() => { setIntendedUse(opt.value); setValidationError(''); }}
-                        label={opt.label}
-                        description={opt.description}
+                        label={opt.labelKey ? t(opt.labelKey, opt.defaultLabel) : opt.label}
+                        description={opt.descKey ? t(opt.descKey, opt.defaultDescription) : opt.description}
                       />
                     ))}
                   </div>
@@ -425,14 +454,14 @@ const ProductClassification = () => {
                 {intendedUse === 'OTHER' && (
                   <div className="mt-3">
                     <label htmlFor="otherIntendedUse" className="block text-sm font-medium text-charcoal mb-1.5">
-                      Please describe the intended use
+                      {t('productClassification.otherIntendedUseLabel', 'Please describe the intended use')}
                     </label>
                     <input
                       id="otherIntendedUse"
                       type="text"
                       value={otherIntendedUse}
                       onChange={(e) => setOtherIntendedUse(e.target.value)}
-                      placeholder="Describe the intended use"
+                      placeholder={t('productClassification.otherIntendedUsePlaceholder', 'Describe the intended use')}
                       className="w-full rounded-lg border border-border-color px-4 py-2.5 text-sm text-charcoal placeholder:text-slate/50 bg-white focus:outline-none focus:ring-2 focus:ring-forest-green/40 transition-shadow"
                     />
                   </div>
@@ -445,21 +474,21 @@ const ProductClassification = () => {
                   name="matchesClassicalText"
                   value={matchesClassicalText}
                   onChange={(v) => { setMatchesClassicalText(v); setValidationError(''); }}
-                  label="Is the formulation found in an authoritative classical Ayurvedic text?"
-                  helpText="For example, Charaka Samhita, Sushruta Samhita, Sharangadhara Samhita, or other First Schedule books."
+                  label={t('productClassification.classicalTextLabel', 'Is the formulation found in an authoritative classical Ayurvedic text?')}
+                  helpText={t('productClassification.classicalTextHelp', 'For example, Charaka Samhita, Sushruta Samhita, Sharangadhara Samhita, or other First Schedule books.')}
                   required
                 />
                 {matchesClassicalText === 'true' && (
                   <div className="mt-3">
                     <label htmlFor="classicalTextName" className="block text-sm font-medium text-charcoal mb-1.5">
-                      Name of the classical text (optional)
+                      {t('productClassification.classicalTextNameLabel', 'Name of the classical text (optional)')}
                     </label>
                     <input
                       id="classicalTextName"
                       type="text"
                       value={classicalTextName}
                       onChange={(e) => setClassicalTextName(e.target.value)}
-                      placeholder="e.g. Charaka Samhita"
+                      placeholder={t('productClassification.classicalTextNamePlaceholder', 'e.g. Charaka Samhita')}
                       className="w-full rounded-lg border border-border-color px-4 py-2.5 text-sm text-charcoal placeholder:text-slate/50 bg-white focus:outline-none focus:ring-2 focus:ring-forest-green/40 transition-shadow"
                     />
                   </div>
@@ -470,7 +499,7 @@ const ProductClassification = () => {
                       name="formulaModified"
                       value={formulaModified}
                       onChange={setFormulaModified}
-                      label="Was the formula, ratio, or excipients modified from the classical text?"
+                      label={t('productClassification.formulaModifiedLabel', 'Was the formula, ratio, or excipients modified from the classical text?')}
                     />
                   </div>
                 )}
@@ -482,7 +511,7 @@ const ProductClassification = () => {
                   name="commercialUse"
                   value={commercialUse}
                   onChange={(v) => { setCommercialUse(v); setValidationError(''); }}
-                  label="Intended for commercial use?"
+                  label={t('productClassification.commercialUseLabel', 'Intended for commercial use?')}
                   required
                 />
               </div>
@@ -490,9 +519,11 @@ const ProductClassification = () => {
 
             {/* SECTION 2: Applicant Type */}
             <section className="card p-6">
-              <h2 className="text-lg font-heading font-semibold text-charcoal mb-1">Applicant / Manufacturer Type</h2>
+              <h2 className="text-lg font-heading font-semibold text-charcoal mb-1">
+                {t('productClassification.applicantTypeTitle', 'Applicant / Manufacturer Type')}
+              </h2>
               <p className="text-sm text-slate mb-4">
-                Optional — helps determine NBA/ABS obligations and patent eligibility. If unsure, leave blank.
+                {t('productClassification.applicantTypeDesc', 'Optional — helps determine NBA/ABS obligations and patent eligibility. If unsure, leave blank.')}
               </p>
               <div className="space-y-2">
                 {APPLICANT_TYPE_OPTIONS.map((opt) => (
@@ -512,7 +543,7 @@ const ProductClassification = () => {
                       onChange={() => setApplicantType(opt.value)}
                       className="accent-forest-green"
                     />
-                    {opt.label}
+                    {opt.labelKey ? t(opt.labelKey, opt.defaultLabel) : opt.label}
                   </label>
                 ))}
               </div>
@@ -527,8 +558,12 @@ const ProductClassification = () => {
                 aria-expanded={showAdvanced}
               >
                 <div>
-                  <h2 className="text-lg font-heading font-semibold text-charcoal">Innovation & Extraction Details</h2>
-                  <p className="text-sm text-slate mt-0.5">Optional — affects phytopharmaceutical and patent classification</p>
+                  <h2 className="text-lg font-heading font-semibold text-charcoal">
+                    {t('productClassification.advancedTitle', 'Innovation & Extraction Details')}
+                  </h2>
+                  <p className="text-sm text-slate mt-0.5">
+                    {t('productClassification.advancedSubtitle', 'Optional — affects phytopharmaceutical and patent classification')}
+                  </p>
                 </div>
                 {showAdvanced ? <ChevronUp size={18} className="text-slate" /> : <ChevronDown size={18} className="text-slate" />}
               </button>
@@ -536,14 +571,14 @@ const ProductClassification = () => {
                 <div className="px-6 pb-6 space-y-5 border-t border-border-color pt-5">
                   <div>
                     <label htmlFor="claimedIndication" className="block text-sm font-medium text-charcoal mb-1.5">
-                      Claimed indication (optional)
+                      {t('productClassification.claimedIndicationLabel', 'Claimed indication (optional)')}
                     </label>
                     <input
                       id="claimedIndication"
                       type="text"
                       value={claimedIndication}
                       onChange={(e) => setClaimedIndication(e.target.value)}
-                      placeholder="e.g. Arthritis relief, Hair growth"
+                      placeholder={t('productClassification.claimedIndicationPlaceholder', 'e.g. Arthritis relief, Hair growth')}
                       className="w-full rounded-lg border border-border-color px-4 py-2.5 text-sm text-charcoal placeholder:text-slate/50 bg-white focus:outline-none focus:ring-2 focus:ring-forest-green/40 transition-shadow"
                     />
                   </div>
@@ -551,22 +586,22 @@ const ProductClassification = () => {
                     name="newIndicationOrRoute"
                     value={newIndicationOrRoute}
                     onChange={setNewIndicationOrRoute}
-                    label="Does the product involve a new indication or a novel dosage route?"
-                    helpText="e.g. converting a classical churna into a sublingual nano-spray delivery."
+                    label={t('productClassification.newIndicationLabel', 'Does the product involve a new indication or a novel dosage route?')}
+                    helpText={t('productClassification.newIndicationHelp', 'e.g. converting a classical churna into a sublingual nano-spray delivery.')}
                   />
                   <TriStateRadio
                     name="purifiedExtract"
                     value={purifiedExtract}
                     onChange={setPurifiedExtract}
-                    label="Is this a purified phytochemical or standardized botanical extract?"
-                    helpText="A single isolated bioactive compound or a highly standardized fraction vs. a whole plant extract."
+                    label={t('productClassification.purifiedExtractLabel', 'Is this a purified phytochemical or standardized botanical extract?')}
+                    helpText={t('productClassification.purifiedExtractHelp', 'A single isolated bioactive compound or a highly standardized fraction vs. a whole plant extract.')}
                   />
                   <TriStateRadio
                     name="synergisticData"
                     value={synergisticData}
                     onChange={setSynergisticData}
-                    label="Is synergistic laboratory data available?"
-                    helpText="Lab data demonstrating non-additive synergy between ingredients, relevant to patent eligibility."
+                    label={t('productClassification.synergisticDataLabel', 'Is synergistic laboratory data available?')}
+                    helpText={t('productClassification.synergisticDataHelp', 'Lab data demonstrating non-additive synergy between ingredients, relevant to patent eligibility.')}
                   />
                 </div>
               )}
@@ -589,9 +624,9 @@ const ProductClassification = () => {
                 className="flex items-center gap-2 bg-forest-green text-white px-6 py-3 rounded-lg font-medium hover:bg-deep-teal transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-forest-green/50"
               >
                 {isSubmitting ? (
-                  <><Loader2 size={18} className="animate-spin" /> Determining product category…</>
+                  <><Loader2 size={18} className="animate-spin" /> {t('productClassification.evaluating')}</>
                 ) : (
-                  <><PackageSearch size={18} /> Determine Product Category</>
+                  <><PackageSearch size={18} /> {t('productClassification.evaluateButton')}</>
                 )}
               </button>
               <button
@@ -599,7 +634,7 @@ const ProductClassification = () => {
                 onClick={() => navigate('/ask-ip-sakti', { state: assessmentContext })}
                 className="flex items-center gap-2 text-sm text-forest-green font-medium hover:underline focus:outline-none focus:ring-2 focus:ring-forest-green/50 rounded py-3"
               >
-                <ArrowLeft size={15} /> Back to Ask IP-SAKTI
+                <ArrowLeft size={15} /> {t('productClassification.backToAsk', 'Back to Ask IP-SAKTI')}
               </button>
             </div>
 
@@ -608,8 +643,12 @@ const ProductClassification = () => {
               <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm">
                 <AlertCircle size={16} className="text-warning mt-0.5 shrink-0" />
                 <div>
-                  <p className="font-medium text-charcoal">Classification service is currently unavailable.</p>
-                  <p className="text-slate mt-0.5">The classification engine could not be reached. Please try again when the backend is running.</p>
+                  <p className="font-medium text-charcoal">
+                    {t('productClassification.serviceUnavailableTitle', 'Classification service is currently unavailable.')}
+                  </p>
+                  <p className="text-slate mt-0.5">
+                    {t('productClassification.serviceUnavailableDesc', 'The classification engine could not be reached. Please try again when the backend is running.')}
+                  </p>
                 </div>
               </div>
             )}
@@ -619,7 +658,9 @@ const ProductClassification = () => {
               <div className="flex items-start gap-3 p-4 bg-red-50 border border-error/30 rounded-lg text-sm">
                 <AlertCircle size={16} className="text-error mt-0.5 shrink-0" />
                 <div className="flex-1">
-                  <p className="font-medium text-charcoal">Classification error</p>
+                  <p className="font-medium text-charcoal">
+                    {t('productClassification.classificationError', 'Classification error')}
+                  </p>
                   <p className="text-slate mt-0.5">{submitError}</p>
                 </div>
                 <button
@@ -627,7 +668,7 @@ const ProductClassification = () => {
                   onClick={() => setSubmitError(null)}
                   className="text-xs font-medium text-forest-green hover:underline whitespace-nowrap"
                 >
-                  Dismiss
+                  {t('productClassification.dismiss', 'Dismiss')}
                 </button>
               </div>
             )}
@@ -642,7 +683,9 @@ const ProductClassification = () => {
                 <div className="flex items-start justify-between gap-4 mb-5">
                   <div className="flex items-center gap-3">
                     <CheckCircle2 size={22} className="text-success shrink-0" />
-                    <h2 className="text-xl font-heading font-semibold text-charcoal">Classification Result</h2>
+                    <h2 className="text-xl font-heading font-semibold text-charcoal">
+                      {t('productClassification.result.title', 'Classification Result')}
+                    </h2>
                   </div>
                   <span
                     className={`text-xs font-semibold px-3 py-1 rounded-full border ${CATEGORY_COLORS[result.category] || 'bg-slate/10 text-slate border-slate/30'}`}
@@ -652,43 +695,43 @@ const ProductClassification = () => {
                 </div>
 
                 <dl className="divide-y divide-border-color">
-                  <ResultField label="Product Category" value={result.categoryDisplayName} />
-                  <ResultField label="Governing Act / Regulation" value={result.governingAct} />
-                  <ResultField label="Licensing Authority" value={result.licensingAuthority} />
-                  <ResultField label="Licensing Procedure" value={result.licensingProcedure} />
-                  <ResultField label="Clinical Trial Requirement" value={result.clinicalTrialRequirement} />
-                  <ResultField label="Mandatory Label Disclaimers" value={result.mandatoryLabelDisclaimers} />
+                  <ResultField label={t('productClassification.result.productCategory', 'Product Category')} value={result.categoryDisplayName} />
+                  <ResultField label={t('productClassification.result.governingAct', 'Governing Act / Regulation')} value={result.governingAct} />
+                  <ResultField label={t('productClassification.result.licensingAuthority', 'Licensing Authority')} value={result.licensingAuthority} />
+                  <ResultField label={t('productClassification.result.licensingProcedure', 'Licensing Procedure')} value={result.licensingProcedure} />
+                  <ResultField label={t('productClassification.result.clinicalTrial', 'Clinical Trial Requirement')} value={result.clinicalTrialRequirement} />
+                  <ResultField label={t('productClassification.result.mandatoryLabel', 'Mandatory Label Disclaimers')} value={result.mandatoryLabelDisclaimers} />
                 </dl>
 
                 <div className="mt-6 pt-5 border-t border-border-color space-y-1">
                   <h3 className="text-sm font-semibold text-charcoal flex items-center gap-2 mb-3">
-                    <Scale size={16} className="text-muted-gold" /> IP &amp; Patentability Guidance
+                    <Scale size={16} className="text-muted-gold" /> {t('productClassification.result.ipGuidance', 'IP & Patentability Guidance')}
                   </h3>
                   <dl className="divide-y divide-border-color">
                     <ResultField
-                      label="Formulation Patentable in India?"
-                      value={result.formulationPatentableInIndia === true ? 'Yes' : result.formulationPatentableInIndia === false ? 'No' : null}
+                      label={t('productClassification.result.formulationPatentable', 'Formulation Patentable in India?')}
+                      value={result.formulationPatentableInIndia === true ? t('common.yes', 'Yes') : result.formulationPatentableInIndia === false ? t('common.no', 'No') : null}
                     />
-                    <ResultField label="Patentability Verdict" value={result.patentabilityVerdict} />
-                    <ResultField label="Relevant Patent Act Sections" value={result.relevantPatentSections} />
-                    <ResultField label="Recommended IP Strategy" value={result.recommendedIprStrategy} />
+                    <ResultField label={t('productClassification.result.patentabilityVerdict', 'Patentability Verdict')} value={result.patentabilityVerdict} />
+                    <ResultField label={t('productClassification.result.relevantSections', 'Relevant Patent Act Sections')} value={result.relevantPatentSections} />
+                    <ResultField label={t('productClassification.result.recommendedStrategy', 'Recommended IP Strategy')} value={result.recommendedIprStrategy} />
                   </dl>
                 </div>
 
                 <div className="mt-6 pt-5 border-t border-border-color">
                   <h3 className="text-sm font-semibold text-charcoal flex items-center gap-2 mb-3">
-                    <Leaf size={16} className="text-success" /> Biodiversity &amp; NBA Compliance
+                    <Leaf size={16} className="text-success" /> {t('productClassification.result.biodiversityHeading', 'Biodiversity & NBA Compliance')}
                   </h3>
                   <dl className="divide-y divide-border-color">
-                    <ResultField label="NBA Compliance Status" value={result.nbaComplianceStatus} />
-                    <ResultField label="Required NBA Form" value={result.requiredNbaForm} />
+                    <ResultField label={t('productClassification.result.nbaStatus', 'NBA Compliance Status')} value={result.nbaComplianceStatus} />
+                    <ResultField label={t('productClassification.result.requiredNbaForm', 'Required NBA Form')} value={result.requiredNbaForm} />
                   </dl>
                 </div>
 
                 {result.decisionTrace?.length > 0 && (
                   <div className="mt-6 pt-5 border-t border-border-color">
                     <h3 className="text-sm font-semibold text-charcoal flex items-center gap-2 mb-3">
-                      <FileText size={16} className="text-slate" /> Classification Decision Trace
+                      <FileText size={16} className="text-slate" /> {t('productClassification.result.decisionTrace', 'Classification Decision Trace')}
                     </h3>
                     <ol className="space-y-1.5">
                       {result.decisionTrace.map((step, i) => (
@@ -708,10 +751,10 @@ const ProductClassification = () => {
                     onClick={handleContinue}
                     className="flex items-center gap-2 bg-forest-green text-white px-6 py-3 rounded-lg font-medium hover:bg-deep-teal transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-forest-green/50"
                   >
-                    Continue to IP Protection <ArrowRight size={18} />
+                    {t('productClassification.result.continueButton', 'Continue to IP Protection')} <ArrowRight size={18} />
                   </button>
                   <p className="text-xs text-slate self-center">
-                    This classification result reflects guidance from the backend engine only. It is not a legal determination.
+                    {t('productClassification.result.guidanceDisclaimer', 'This classification result reflects guidance from the backend engine only. It is not a legal determination.')}
                   </p>
                 </div>
               </section>
@@ -719,8 +762,7 @@ const ProductClassification = () => {
 
             {/* Disclaimer */}
             <p className="text-xs text-slate border-t border-border-color pt-5 leading-relaxed">
-              <strong>Disclaimer:</strong> IP-SAKTI provides information and guidance based on available sources.
-              It is not a substitute for legal advice, regulatory approval, licensing, certification, or professional consultation.
+              <strong>{t('common.disclaimer', 'Disclaimer:')}</strong> {t('common.disclaimerText', 'IP-SAKTI provides information and guidance based on available sources. It is not a substitute for legal advice, regulatory approval, licensing, certification, or professional consultation.')}
             </p>
           </div>
 
@@ -733,14 +775,14 @@ const ProductClassification = () => {
                 <BookOpen size={18} className="text-muted-gold shrink-0 mt-0.5" />
                 <div>
                   <h2 className="text-base font-heading font-semibold text-charcoal mb-2">
-                    Source-Grounded Classification
+                    {t('productClassification.sidebar.sourceGroundedTitle', 'Source-Grounded Classification')}
                   </h2>
                   <p className="text-sm text-slate leading-relaxed">
-                    Classification results are intended to be supported by the project's authoritative legal and regulatory knowledge sources.
+                    {t('productClassification.sidebar.sourceGroundedDesc', "Classification results are intended to be supported by the project's authoritative legal and regulatory knowledge sources.")}
                   </p>
                   <div className="mt-3 p-3 bg-warm-ivory rounded-lg">
                     <p className="text-xs text-slate italic">
-                      No source record is available for this classification yet.
+                      {t('productClassification.sidebar.noSourceRecord', 'No source record is available for this classification yet.')}
                     </p>
                   </div>
                 </div>
@@ -749,20 +791,24 @@ const ProductClassification = () => {
 
             {/* What categories are possible? */}
             <aside className="card p-5">
-              <h2 className="text-base font-heading font-semibold text-charcoal mb-3">Possible Categories</h2>
-              <p className="text-xs text-slate mb-3">The backend engine may return any of these legally-defined categories:</p>
+              <h2 className="text-base font-heading font-semibold text-charcoal mb-3">
+                {t('productClassification.sidebar.possibleCategoriesTitle', 'Possible Categories')}
+              </h2>
+              <p className="text-xs text-slate mb-3">
+                {t('productClassification.sidebar.possibleCategoriesDesc', 'The backend engine may return any of these legally-defined categories:')}
+              </p>
               <ul className="space-y-2 text-sm text-charcoal">
                 {[
-                  'Classical Ayurvedic Formulation',
-                  'Proprietary Ayurvedic Medicine — Category A',
-                  'Proprietary Ayurvedic Medicine — Category B',
-                  'Phytopharmaceutical Drug',
-                  'Ayurveda Aahar (Food / Dietary Supplement)',
-                  'Ayurvedic Cosmetic',
-                ].map((cat) => (
-                  <li key={cat} className="flex items-start gap-2">
+                  { key: 'classical', def: 'Classical Ayurvedic Formulation' },
+                  { key: 'catA', def: 'Proprietary Ayurvedic Medicine — Category A' },
+                  { key: 'catB', def: 'Proprietary Ayurvedic Medicine — Category B' },
+                  { key: 'phytopharm', def: 'Phytopharmaceutical Drug' },
+                  { key: 'aahar', def: 'Ayurveda Aahar (Food / Dietary Supplement)' },
+                  { key: 'cosmetic', def: 'Ayurvedic Cosmetic' },
+                ].map((item) => (
+                  <li key={item.key} className="flex items-start gap-2">
                     <span className="text-muted-gold mt-0.5 shrink-0">•</span>
-                    {cat}
+                    {t(`productClassification.sidebar.categories.${item.key}`, item.def)}
                   </li>
                 ))}
               </ul>

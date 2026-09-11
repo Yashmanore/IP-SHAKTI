@@ -244,6 +244,16 @@ public class MultilingualTranslationService {
             if (prompt != null) {
                 localizeClarificationPrompt(prompt, isMarathi);
             }
+        } else if (response.getStatus() == ChatMessageResponse.DialogueStatus.OUT_OF_SCOPE
+                || response.getStatus() == ChatMessageResponse.DialogueStatus.SAFE_ABSTENTION) {
+            // Preserve the specific domain relevance or safe abstention advisory message
+            if (response.getStatus() == ChatMessageResponse.DialogueStatus.OUT_OF_SCOPE) {
+                response.setDisclaimer(isMarathi
+                        ? "कार्यक्षेत्र मर्यादा: IP-SHAKTI केवळ आयुष, आयुर्वेदिक घटक आणि भारतीय जैवविविधता कायद्याशी संबंधित बाबींचे विश्लेषण करते. कार्यक्षेत्राबाहेरील किंवा गैर-औषधी घटकांसाठी कायदेशीर शोध घेतला जात नाही."
+                        : "डोमेन सीमा: IP-SHAKTI विशेष रूप से आयुष, वानस्पतिक फॉर्मूलेशन और जैविक विविधता अधिनियम के लिए समर्पित है। कार्यक्षेत्र से बाहर के इनपुट के लिए विनियामक डेटा निष्पादित नहीं किया जाता।"
+                );
+            }
+            return response;
         } else {
             response.setBotMessage(isMarathi
                     ? "मूल्यांकन पूर्ण झाले! भारतीय पेटंट कायदा, औषध व प्रसाधने नियम आणि जैविक विविधता कायद्यांतर्गत आपल्या फॉर्म्युलेशनचे 5-स्तंभ (5 Pillars) कायदेशीर विश्लेषण खालीलप्रमाणे आहे:"

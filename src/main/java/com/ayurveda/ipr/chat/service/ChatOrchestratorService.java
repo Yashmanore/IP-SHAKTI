@@ -5,6 +5,7 @@ import com.ayurveda.ipr.classifier.Rule158BClassificationEngine;
 import com.ayurveda.ipr.classifier.model.ClassificationRequest;
 import com.ayurveda.ipr.classifier.model.ClassificationResult;
 import com.ayurveda.ipr.llm.GeminiGenerativeService;
+import com.ayurveda.ipr.llm.model.RelevanceEvaluation;
 import com.ayurveda.ipr.portal.model.ExternalPortalsPayload;
 import com.ayurveda.ipr.portal.service.ExternalPortalService;
 import com.ayurveda.ipr.rag.LegalSearchService;
@@ -105,6 +106,70 @@ public class ChatOrchestratorService {
 
             return multilingualService.localizeResponse(response, targetLang);
         }
+
+        // =========================================================================
+        // GEMINI DOMAIN RELEVANCE GATEKEEPER: Context-Aware — skip if mid-clarification
+        // =========================================================================
+        String prodName = request.getProductName() != null ? request.getProductName().trim() : "";
+        String ingredients = request.getMainIngredients() != null ? request.getMainIngredients().trim() : "";
+        String intendedUse = request.getIntendedUse() != null ? request.getIntendedUse().trim() : "";
+
+        // If session is already active (user is answering clarification questions), skip the gatekeeper.
+        // A single-word answer like "NO" or "YES" would otherwise be misidentified as out-of-scope.
+        boolean isActiveClarificationSession = chatSessionMemoryService.hasActiveSession(sessionId) && !answers.isEmpty();
+
+        RelevanceEvaluation relevance;
+        if (isActiveClarificationSession) {
+            // Mid-conversation: treat as in-scope, build a permissive relevance stub
+            relevance = new RelevanceEvaluation(true, 0.95, "AYUSH_HERBAL_MEDICINE",
+                    "Continuing active IP-SHAKTI clarification session.", "Proceed with evaluation.");
+        } else {
+            // Fresh session: run full relevance check, inject recent conversation history for context
+            String conversationHistory = chatSessionMemoryService.getFormattedHistory(sessionId, 5);
+            relevance = geminiGenerativeService.checkDomainRelevance(
+                    userMsg,
+                    prodName,
+                    ingredients,
+                    intendedUse,
+                    conversationHistory,
+                    targetLang
+            );
+        }
+
+        if (!relevance.isRelevant()) {
+            ChatMessageResponse response = new ChatMessageResponse(
+                    sessionId,
+                    ChatMessageResponse.DialogueStatus.OUT_OF_SCOPE,
+                    relevance.getReason()
+            );
+            response.setJurisdiction(jurisdiction);
+            response.setRelevanceEvaluation(relevance);
+            List<String> pills = new ArrayList<>();
+            pills.add("Out of Scope");
+            if (relevance.getDetectedDomain() != null) {
+                pills.add(relevance.getDetectedDomain());
+            }
+            if (!relevance.getFlaggedKeywords().isEmpty()) {
+                pills.add("Flagged: " + String.join(", ", relevance.getFlaggedKeywords()));
+            }
+            response.setCitationPills(pills);
+            response.setDisclaimer("Domain Boundary Enforcement: IP-SHAKTI exclusively provides statutory and IPR analysis for AYUSH, herbal formulations, and Biological Diversity Act compliance. Irrelevant or non-botanical inputs are not processed.");
+
+            chatSessionMemoryService.addAiMessage(sessionId, response.getBotMessage());
+
+            auditLogRepository.save(new AuditLog(
+                    sessionId,
+                    userMsg,
+                    jurisdiction,
+                    "OUT_OF_SCOPE_REJECTED",
+                    0.0,
+                    relevance.getDetectedDomain(),
+                    piiRedacted
+            ));
+
+            return multilingualService.localizeResponse(response, targetLang);
+        }
+
 
         // =========================================================================
         // DIALOGUE STEP 1: Check if "isClassical" parameter is answered
@@ -237,11 +302,14 @@ public class ChatOrchestratorService {
         ExternalPortalsPayload portals = externalPortalService.resolveAllPortals(plantKey);
 
         // 3. Run Native PostgreSQL Hybrid RRF Search with ±5 Window Context Expansion
-        String queryForSearch = plantKey + " Patents Act Section 3(p) Section 3(e) Rule 158-B Traditional Knowledge";
+        String searchNormalizedQuery = multilingualService.normalizeQueryToEnglish(userMsg, targetLang);
+        String queryForSearch = (!plantKey.equalsIgnoreCase("Ayurvedic Formulation") && !searchNormalizedQuery.contains(plantKey))
+                ? plantKey + " " + searchNormalizedQuery
+                : searchNormalizedQuery;
+
         List<Map<String, Object>> rawHits = legalSearchService.searchHybridWithWindow(queryForSearch, jurisdiction, 4, 5);
         if (rawHits == null || rawHits.isEmpty()) {
-            String searchNormalizedQuery = multilingualService.normalizeQueryToEnglish(userMsg, targetLang);
-            rawHits = legalSearchService.searchHybridWithWindow(searchNormalizedQuery, jurisdiction, 4, 5);
+            rawHits = legalSearchService.searchHybridWithWindow(plantKey, jurisdiction, 4, 5);
         }
 
         List<StatutorySourceCitation> citations = new ArrayList<>();
@@ -472,34 +540,39 @@ public class ChatOrchestratorService {
     private String extractPlantOrProductName(String query) {
         if (query == null || query.isBlank()) return "Ashwagandha";
         String q = query.toLowerCase().trim();
-        if (q.contains("triphala") || q.contains("त्रिफळा") || q.contains("त्रिफला")) return "Triphala";
-        if (q.contains("haritaki") || q.contains("हरीतकी") || q.contains("chebula")) return "Haritaki";
-        if (q.contains("bibhitaki") || q.contains("बिभीतक") || q.contains("बहेड़ा") || q.contains("bellirica")) return "Bibhitaki";
-        if (q.contains("chyawanprash") || q.contains("च्यवनप्राश")) return "Chyawanprash";
-        if (q.contains("trikatu") || q.contains("त्रिकटु")) return "Trikatu";
-        if (q.contains("sitopaladi") || q.contains("सितोपलादि")) return "Sitopaladi";
-        if (q.contains("ashwagandha") || q.contains("withania") || q.contains("अश्वगंधा")) return "Ashwagandha";
-        if (q.contains("turmeric") || q.contains("haldi") || q.contains("curcuma") || q.contains("हळद") || q.contains("हल्दी") || q.contains("हरिद्रा")) return "Haridra (Turmeric)";
-        if (q.contains("tulsi") || q.contains("ocimum") || q.contains("तुळस") || q.contains("तुलसी")) return "Tulsi";
-        if (q.contains("neem") || q.contains("azadirachta") || q.contains("कडुनिंब") || q.contains("नीम") || q.contains("निम्ब")) return "Neem";
-        if (q.contains("guggul") || q.contains("commiphora") || q.contains("गुग्गुळ") || q.contains("गुग्गुल") || q.contains("गुग्गुलु")) return "Guggulu";
-        if (q.contains("giloy") || q.contains("tinospora") || q.contains("गुळवेल") || q.contains("गिलोय") || q.contains("गुडूची")) return "Guduchi (Giloy)";
-        if (q.contains("shatavari") || q.contains("शतावरी")) return "Shatavari";
-        if (q.contains("brahmi") || q.contains("ब्राह्मी")) return "Brahmi";
-        if (q.contains("amla") || q.contains("amalaki") || q.contains("आवळा") || q.contains("आंवला") || q.contains("आमलकी")) return "Amalaki";
-        if (q.contains("arjuna") || q.contains("अर्जुन")) return "Arjuna";
-        if (q.contains("ginger") || q.contains("zingiber") || q.contains("सुंठ") || q.contains("सोंठ")) return "Shunthi (Dry Ginger)";
-        if (q.contains("licorice") || q.contains("glycyrrhiza") || q.contains("ज्येष्ठमध") || q.contains("मुलेठी") || q.contains("यष्टिमधु")) return "Yashtimadhu";
-        if (q.contains("aloe") || q.contains("कोरफड") || q.contains("घृतकुमारी") || q.contains("कुमारी")) return "Kumari (Aloe Vera)";
-        if (q.contains("shilajit") || q.contains("शिलाजीत")) return "Shilajit";
-        if (q.contains("kalmegh") || q.contains("कालमेघ")) return "Kalmegh";
-        if (q.contains("kutki") || q.contains("कुटकी")) return "Kutki";
-        if (q.contains("pippali") || q.contains("पिप्पली")) return "Pippali";
-        if (q.contains("bhringraj") || q.contains("भृंगराज")) return "Bhringraj";
 
-        // If the query is a clean formulation name, preserve it rather than discarding
-        String cleaned = query.replaceAll("(?i)(provide|comprehensive|5-pillar|statutory|advisory|report|for|evaluation|the|a|an)", "").trim();
+        // If the query contains coined names or technical indicators, preserve the actual name
+        String cleaned = query.replaceAll("(?i)(can I patent|how to protect|evaluate|provide|comprehensive|5-pillar|statutory|advisory|report|for|evaluation|the|a|an|in india|under indian law|under rule 158-b)", "").trim();
         if (!cleaned.isBlank() && cleaned.length() < 60 && cleaned.split("\\s+").length <= 4) {
+            return cleaned;
+        }
+
+        if (q.matches(".*\\b(triphala|त्रिफळा|त्रिफला)\\b.*")) return "Triphala";
+        if (q.matches(".*\\b(haritaki|हरीतकी|chebula)\\b.*")) return "Haritaki";
+        if (q.matches(".*\\b(bibhitaki|बिभीतक|बहेड़ा|bellirica)\\b.*")) return "Bibhitaki";
+        if (q.matches(".*\\b(chyawanprash|च्यवनप्राश)\\b.*") && !q.contains("cyber")) return "Chyawanprash";
+        if (q.matches(".*\\b(trikatu|त्रिकटु)\\b.*")) return "Trikatu";
+        if (q.matches(".*\\b(sitopaladi|सितोपलादि)\\b.*")) return "Sitopaladi";
+        if (q.matches(".*\\b(ashwagandha|withania|अश्वगंधा)\\b.*")) return "Ashwagandha";
+        if (q.matches(".*\\b(turmeric|haldi|curcuma|हळद|हल्दी|हरिद्रा)\\b.*")) return "Haridra (Turmeric)";
+        if (q.matches(".*\\b(tulsi|ocimum|तुळस|तुलसी)\\b.*")) return "Tulsi";
+        if (q.matches(".*\\b(neem|azadirachta|कडुनिंब|नीम|निम्ब)\\b.*")) return "Neem";
+        if (q.matches(".*\\b(guggul|commiphora|गुग्गुळ|गुग्गुल|गुग्गुलु)\\b.*")) return "Guggulu";
+        if (q.matches(".*\\b(giloy|tinospora|गुळवेल|गिलोय|गुडूची)\\b.*")) return "Guduchi (Giloy)";
+        if (q.matches(".*\\b(shatavari|शतावरी)\\b.*")) return "Shatavari";
+        if (q.matches(".*\\b(brahmi|ब्राह्मी)\\b.*")) return "Brahmi";
+        if (q.matches(".*\\b(amla|amalaki|आवळा|आंवला|आमलकी)\\b.*")) return "Amalaki";
+        if (q.matches(".*\\b(arjuna|अर्जुन)\\b.*")) return "Arjuna";
+        if (q.matches(".*\\b(ginger|zingiber|सुंठ|सोंठ)\\b.*")) return "Shunthi (Dry Ginger)";
+        if (q.matches(".*\\b(licorice|glycyrrhiza|ज्येष्ठमध|मुलेठी|यष्टिमधु)\\b.*")) return "Yashtimadhu";
+        if (q.matches(".*\\b(aloe|कोरफड|घृतकुमारी|कुमारी)\\b.*")) return "Kumari (Aloe Vera)";
+        if (q.matches(".*\\b(shilajit|जीत)\\b.*")) return "Shilajit";
+        if (q.matches(".*\\b(kalmegh|कालमेघ)\\b.*")) return "Kalmegh";
+        if (q.matches(".*\\b(kutki|कुटकी)\\b.*")) return "Kutki";
+        if (q.matches(".*\\b(pippali|पिप्पली)\\b.*")) return "Pippali";
+        if (q.matches(".*\\b(bhringraj|भृंगराज)\\b.*")) return "Bhringraj";
+
+        if (!cleaned.isBlank() && cleaned.length() < 80) {
             return cleaned;
         }
 

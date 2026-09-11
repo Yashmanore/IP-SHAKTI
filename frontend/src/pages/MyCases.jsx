@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Plus,
   Search,
@@ -94,8 +95,9 @@ const SkeletonRow = () => (
 
 /** Status badge */
 const StatusBadge = ({ status }) => {
+  const { t } = useTranslation();
   const style = STATUS_STYLES[status] || 'bg-slate/10 text-slate border-slate/20';
-  const label = STATUS_LABELS[status] || status || 'Unknown';
+  const label = t(`myCases.statusLabels.${status}`, STATUS_LABELS[status] || status || 'Unknown');
   return (
     <span className={`inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-full border ${style}`}>
       {label}
@@ -104,21 +106,25 @@ const StatusBadge = ({ status }) => {
 };
 
 /** Jurisdiction badge */
-const JurBadge = ({ jurisdiction }) => (
-  <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border
-    ${jurisdiction === 'INDIA'
-      ? 'bg-orange-50 text-orange-700 border-orange-200'
-      : jurisdiction === 'INTERNATIONAL'
-        ? 'bg-blue-50 text-blue-700 border-blue-200'
-        : 'bg-warm-ivory text-slate border-border-color'
-    }`}>
-    {jurisdiction === 'INDIA' ? <MapPin size={10} /> : <Globe size={10} />}
-    {JURISDICTION_LABELS[jurisdiction] || jurisdiction || 'Unknown'}
-  </span>
-);
+const JurBadge = ({ jurisdiction }) => {
+  const { t } = useTranslation();
+  return (
+    <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border
+      ${jurisdiction === 'INDIA'
+        ? 'bg-orange-50 text-orange-700 border-orange-200'
+        : jurisdiction === 'INTERNATIONAL'
+          ? 'bg-blue-50 text-blue-700 border-blue-200'
+          : 'bg-warm-ivory text-slate border-border-color'
+      }`}>
+      {jurisdiction === 'INDIA' ? <MapPin size={10} /> : <Globe size={10} />}
+      {jurisdiction === 'INDIA' ? t('common.india', 'India') : jurisdiction === 'INTERNATIONAL' ? t('common.international', 'International') : jurisdiction || 'Unknown'}
+    </span>
+  );
+};
 
 /** Individual case card */
 const CaseCard = ({ caseItem, onOpen }) => {
+  const { t } = useTranslation();
   const updatedLabel = formatDate(caseItem.lastUpdated || caseItem.updatedAt);
   const createdLabel = formatDate(caseItem.createdAt);
 
@@ -145,7 +151,7 @@ const CaseCard = ({ caseItem, onOpen }) => {
             {caseItem.status && <StatusBadge status={caseItem.status} />}
             {caseItem.currentStage && (
               <span className="text-xs text-slate bg-warm-ivory border border-border-color px-2 py-0.5 rounded-full">
-                Stage: {caseItem.currentStage}
+                {t('common.stage', 'Stage')}: {caseItem.currentStage}
               </span>
             )}
           </div>
@@ -153,12 +159,12 @@ const CaseCard = ({ caseItem, onOpen }) => {
           {(updatedLabel || createdLabel) && (
             <p className="text-xs text-slate/70 mt-2 flex items-center gap-1">
               <Clock size={10} />
-              {updatedLabel ? `Updated ${updatedLabel}` : `Created ${createdLabel}`}
+              {updatedLabel ? `${t('common.updated', 'Updated')} ${updatedLabel}` : `${t('common.created', 'Created')} ${createdLabel}`}
             </p>
           )}
 
           {caseItem.id && (
-            <p className="text-xs text-slate/50 mt-1 font-mono">ID: {caseItem.id}</p>
+            <p className="text-xs text-slate/50 mt-1 font-mono">{t('common.caseId', 'ID')}: {caseItem.id}</p>
           )}
         </div>
 
@@ -170,7 +176,7 @@ const CaseCard = ({ caseItem, onOpen }) => {
             aria-label={`Open assessment: ${caseItem.productName || caseItem.id}`}
             className="flex items-center gap-2 bg-forest-green text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-deep-teal transition-colors focus:outline-none focus:ring-2 focus:ring-forest-green/50 whitespace-nowrap"
           >
-            Open <ChevronRight size={14} />
+            {t('common.open', 'Open')} <ChevronRight size={14} />
           </button>
         </div>
       </div>
@@ -291,6 +297,7 @@ const CaseDetailPanel = ({ caseItem, onClose, onOpen }) => {
           {caseItem.guidanceAvailable && (
             <button
               type="button"
+              onClick={() => { onClose(); onOpen(caseItem); }}
               className="flex items-center gap-2 border border-forest-green/40 text-forest-green text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-forest-green hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-forest-green/50"
             >
               View Guidance
@@ -306,6 +313,7 @@ const CaseDetailPanel = ({ caseItem, onClose, onOpen }) => {
 // Main Page
 // ─────────────────────────────────────────────────────────────────────────────
 const MyCases = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   // Search / filter
@@ -314,8 +322,15 @@ const MyCases = () => {
   const [jurisdictionFilter, setJurisdictionFilter] = useState('All');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Data — no backend cases endpoint exists; correct empty state shown
-  const [cases] = useState(null);       // null = not yet loaded / not connected
+  // Data — loads from localStorage if saved, or null for empty state
+  const [cases, setCases] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ip_sakti_cases');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [loading] = useState(false);
   const [error] = useState(null);
 
@@ -361,25 +376,27 @@ const MyCases = () => {
       {/* Page title + primary action */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-heading font-bold text-forest-green mb-2">My Cases</h1>
+          <h1 className="text-3xl font-heading font-bold text-forest-green mb-2">
+            {t('myCases.title', 'My Cases')}
+          </h1>
           <p className="text-slate text-base leading-relaxed">
-            View and continue assessments saved in IP-SAKTI.
+            {t('myCases.subtitle', 'View and continue assessments saved in IP-SAKTI.')}
           </p>
         </div>
         <button
           type="button"
           onClick={() => navigate('/ask-ip-sakti')}
-          aria-label="Start a new assessment"
+          aria-label={t('myCases.newAssessment', 'New Assessment')}
           className="flex items-center gap-2 bg-forest-green text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-deep-teal transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-forest-green/50 shrink-0 self-start"
         >
-          <Plus size={16} /> New Assessment
+          <Plus size={16} /> {t('myCases.newAssessment', 'New Assessment')}
         </button>
       </div>
 
       {/* ── SEARCH BAR ──────────────────────────────────────────────── */}
       <div className="mb-5">
         <label htmlFor="case-search" className="block text-sm font-medium text-charcoal mb-2">
-          Search Cases
+          {t('myCases.searchLabel', 'Search Cases')}
         </label>
         <div className="flex gap-3">
           <div className="relative flex-1">
@@ -390,11 +407,11 @@ const MyCases = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by product or assessment"
+              placeholder={t('myCases.searchPlaceholder', 'Search by product or assessment')}
               className="w-full rounded-lg border border-border-color pl-10 pr-4 py-3 text-sm text-charcoal placeholder:text-slate/50 bg-white focus:outline-none focus:ring-2 focus:ring-forest-green/40 shadow-sm transition-shadow"
             />
             {searchQuery && (
-              <button type="button" onClick={handleClearSearch} aria-label="Clear search" className="absolute right-3 top-1/2 -translate-y-1/2 text-slate hover:text-charcoal transition-colors focus:outline-none">
+              <button type="button" onClick={handleClearSearch} aria-label={t('common.clearSearch', 'Clear search')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate hover:text-charcoal transition-colors focus:outline-none">
                 <X size={15} />
               </button>
             )}
@@ -403,9 +420,8 @@ const MyCases = () => {
             type="button"
             disabled
             className="flex items-center gap-2 bg-forest-green text-white px-5 py-3 rounded-lg text-sm font-medium shadow-sm opacity-50 cursor-not-allowed focus:outline-none shrink-0"
-            title="Search will be available when the cases backend is connected"
           >
-            <Search size={16} /> Search
+            <Search size={16} /> {t('sourceExplorer.searchButton', 'Search')}
           </button>
         </div>
       </div>
@@ -418,7 +434,7 @@ const MyCases = () => {
           aria-expanded={showFilters}
           className="flex items-center gap-2 text-sm font-medium text-slate hover:text-charcoal transition-colors focus:outline-none focus:ring-2 focus:ring-forest-green/50 rounded-lg px-3 py-2 border border-border-color bg-white"
         >
-          <SlidersHorizontal size={15} /> Filters
+          <SlidersHorizontal size={15} /> {t('myCases.filters', 'Filters')}
           {hasActiveFilters && <span className="w-2 h-2 rounded-full bg-forest-green" aria-label="Filters active" />}
         </button>
 
@@ -426,7 +442,9 @@ const MyCases = () => {
           <div className="mt-3 p-4 bg-warm-ivory border border-border-color rounded-xl grid grid-cols-1 sm:grid-cols-2 gap-5">
             {/* Status */}
             <div>
-              <p className="text-xs font-semibold text-slate uppercase tracking-wide mb-2">Status</p>
+              <p className="text-xs font-semibold text-slate uppercase tracking-wide mb-2">
+                {t('myCases.statusFilter', 'Status')}
+              </p>
               <div className="flex flex-wrap gap-2">
                 {FILTER_STATUSES.map((s) => (
                   <button
@@ -440,7 +458,7 @@ const MyCases = () => {
                         : 'bg-white text-charcoal border-border-color hover:border-deep-teal'
                       }`}
                   >
-                    {s === 'All' ? 'All' : STATUS_LABELS[s]}
+                    {s === 'All' ? t('common.all', 'All') : t(`myCases.statusLabels.${s}`, STATUS_LABELS[s] || s)}
                   </button>
                 ))}
               </div>
@@ -448,7 +466,9 @@ const MyCases = () => {
 
             {/* Jurisdiction */}
             <div>
-              <p className="text-xs font-semibold text-slate uppercase tracking-wide mb-2">Jurisdiction</p>
+              <p className="text-xs font-semibold text-slate uppercase tracking-wide mb-2">
+                {t('myCases.jurisdictionFilter', 'Jurisdiction')}
+              </p>
               <div className="flex flex-wrap gap-2">
                 {JURISDICTION_OPTIONS.map((j) => (
                   <button
@@ -462,7 +482,7 @@ const MyCases = () => {
                         : 'bg-white text-charcoal border-border-color hover:border-deep-teal'
                       }`}
                   >
-                    {j === 'All' ? 'All' : JURISDICTION_LABELS[j]}
+                    {j === 'All' ? t('common.all', 'All') : (j === 'INDIA' ? t('common.india', 'India') : t('common.international', 'International'))}
                   </button>
                 ))}
               </div>
@@ -475,7 +495,7 @@ const MyCases = () => {
                   onClick={handleClearFilters}
                   className="text-xs font-medium text-forest-green hover:underline focus:outline-none focus:ring-2 focus:ring-forest-green/50 rounded"
                 >
-                  Clear all filters
+                  {t('myCases.clearFilters', 'Clear all filters')}
                 </button>
               </div>
             )}
@@ -485,13 +505,15 @@ const MyCases = () => {
 
       {/* ── RESULTS AREA ────────────────────────────────────────────── */}
       <section aria-label="Saved assessments">
-        <h2 className="text-xl font-heading font-semibold text-charcoal mb-5">Saved Assessments</h2>
+        <h2 className="text-xl font-heading font-semibold text-charcoal mb-5">
+          {t('myCases.title', 'Saved Assessments')}
+        </h2>
 
         {/* Loading */}
         {loading && (
           <div className="space-y-4">
             <p className="text-sm text-slate flex items-center gap-2">
-              <Loader2 size={15} className="animate-spin" /> Loading saved assessments…
+              <Loader2 size={15} className="animate-spin" /> {t('common.loading', 'Loading saved assessments…')}
             </p>
             {[1, 2, 3].map((i) => <SkeletonRow key={i} />)}
           </div>
@@ -502,11 +524,11 @@ const MyCases = () => {
           <div className="flex items-start gap-3 p-5 bg-red-50 border border-error/30 rounded-xl text-sm">
             <AlertCircle size={18} className="text-error shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="font-semibold text-charcoal mb-1">Saved assessments could not be loaded.</p>
+              <p className="font-semibold text-charcoal mb-1">{t('myCases.errorLoading', 'Saved assessments could not be loaded.')}</p>
               <p className="text-slate">{error}</p>
             </div>
             <button type="button" className="text-sm font-medium text-forest-green hover:underline whitespace-nowrap focus:outline-none">
-              <RefreshCw size={14} className="inline mr-1" />Retry
+              <RefreshCw size={14} className="inline mr-1" />{t('common.retry', 'Retry')}
             </button>
           </div>
         )}
@@ -518,17 +540,17 @@ const MyCases = () => {
               <Folder size={28} className="text-muted-gold" />
             </div>
             <h3 className="text-lg font-heading font-semibold text-charcoal mb-2">
-              No saved assessments yet
+              {t('myCases.noCases', 'No saved assessments yet')}
             </h3>
             <p className="text-sm text-slate max-w-sm leading-relaxed mb-6">
-              Your saved assessments will appear here once you save an assessment. Assessment persistence will be available when the cases backend is connected.
+              {t('myCases.noCasesDesc', 'Start an assessment with Ask IP-SAKTI or Product Classification and save your progress to track your cases here.')}
             </p>
             <button
               type="button"
               onClick={() => navigate('/ask-ip-sakti')}
               className="flex items-center gap-2 bg-forest-green text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-deep-teal transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-forest-green/50"
             >
-              <Plus size={16} /> Start New Assessment
+              <Plus size={16} /> {t('myCases.newAssessment', 'Start New Assessment')}
             </button>
           </div>
         )}
@@ -537,14 +559,18 @@ const MyCases = () => {
         {!loading && !error && cases !== null && cases.length === 0 && (
           <div className="flex flex-col items-center py-16 text-center">
             <Folder size={28} className="text-muted-gold mb-3" />
-            <p className="text-base font-semibold text-charcoal mb-1">No saved assessments yet</p>
-            <p className="text-sm text-slate mb-5">Your saved assessments will appear here once you save one.</p>
+            <p className="text-base font-semibold text-charcoal mb-1">
+              {t('myCases.noCases', 'No saved assessments yet')}
+            </p>
+            <p className="text-sm text-slate mb-5">
+              {t('myCases.noCasesDesc', 'Start an assessment with Ask IP-SAKTI or Product Classification and save your progress to track your cases here.')}
+            </p>
             <button
               type="button"
               onClick={() => navigate('/ask-ip-sakti')}
               className="flex items-center gap-2 bg-forest-green text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-deep-teal transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-forest-green/50"
             >
-              <Plus size={16} /> Start New Assessment
+              <Plus size={16} /> {t('myCases.newAssessment', 'Start New Assessment')}
             </button>
           </div>
         )}
@@ -554,16 +580,14 @@ const MyCases = () => {
           <div className="flex flex-col items-center py-12 text-center">
             <Filter size={24} className="text-slate mb-3" />
             <p className="text-base font-semibold text-charcoal mb-1">
-              {searchQuery
-                ? 'No assessments matched your search.'
-                : 'No assessments match the selected filters.'}
+              {t('myCases.noMatch', 'No cases matched your search criteria.')}
             </p>
             <button
               type="button"
               onClick={handleClearFilters}
               className="mt-3 text-sm font-medium text-forest-green border border-forest-green/40 px-4 py-2 rounded-lg hover:bg-forest-green hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-forest-green/50"
             >
-              {searchQuery ? 'Clear Search' : 'Clear Filters'}
+              {t('myCases.clearFilters', 'Clear all filters')}
             </button>
           </div>
         )}
@@ -587,10 +611,10 @@ const MyCases = () => {
         <button
           type="button"
           onClick={() => navigate('/')}
-          aria-label="Back to Dashboard"
+          aria-label={t('common.backToDashboard', 'Back to Dashboard')}
           className="flex items-center gap-2 text-sm font-medium text-slate hover:text-charcoal transition-colors focus:outline-none focus:ring-2 focus:ring-forest-green/50 rounded-lg"
         >
-          <ArrowLeft size={16} /> Back to Dashboard
+          <ArrowLeft size={16} /> {t('common.backToDashboard', 'Back to Dashboard')}
         </button>
       </div>
 

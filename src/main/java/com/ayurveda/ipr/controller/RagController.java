@@ -2,20 +2,21 @@ package com.ayurveda.ipr.controller;
 
 import com.ayurveda.ipr.rag.CorpusIngestionService;
 import com.ayurveda.ipr.rag.LegalSearchService;
+import com.ayurveda.ipr.llm.GeminiGenerativeService;
+import com.ayurveda.ipr.llm.model.RelevanceEvaluation;
+import com.ayurveda.ipr.multilingual.model.Language;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/rag")
@@ -23,12 +24,18 @@ import java.util.Map;
 @Tag(name = "RAG Legal Search & Ingestion", description = "Endpoints for dense vector similarity search across the 2,026 legal chunks in Neon pgvector and corpus ingestion management")
 public class RagController {
 
+    private static final Logger log = LoggerFactory.getLogger(RagController.class);
+
     private final CorpusIngestionService ingestionService;
     private final LegalSearchService searchService;
+    private final GeminiGenerativeService geminiGenerativeService;
 
-    public RagController(CorpusIngestionService ingestionService, LegalSearchService searchService) {
+    public RagController(CorpusIngestionService ingestionService,
+                         LegalSearchService searchService,
+                         GeminiGenerativeService geminiGenerativeService) {
         this.ingestionService = ingestionService;
         this.searchService = searchService;
+        this.geminiGenerativeService = geminiGenerativeService;
     }
 
     /**
@@ -61,6 +68,13 @@ public class RagController {
             @RequestParam(value = "expandWindow", defaultValue = "true") boolean expandWindow,
             @Parameter(description = "Number of previous and next chunks to stitch (default: 5)", example = "5")
             @RequestParam(value = "windowSize", defaultValue = "5") int windowSize) {
+        if (query != null && !query.isBlank() && geminiGenerativeService != null) {
+            RelevanceEvaluation eval = geminiGenerativeService.checkDomainRelevance(query, "", "", "", Language.ENGLISH);
+            if (eval != null && !eval.isRelevant()) {
+                log.info("RAG hybrid-search query blocked by Gemini gatekeeper: '{}' (domain: {})", query, eval.getDetectedDomain());
+                return ResponseEntity.ok(Collections.emptyList());
+            }
+        }
         List<Map<String, Object>> matches = expandWindow
                 ? searchService.searchHybridWithWindow(query, jurisdiction, maxResults, windowSize)
                 : searchService.searchHybrid(query, jurisdiction, maxResults);
@@ -84,6 +98,13 @@ public class RagController {
             @RequestParam(value = "maxResults", defaultValue = "5") int maxResults,
             @Parameter(description = "Minimum cosine similarity score threshold", example = "0.65")
             @RequestParam(value = "minScore", defaultValue = "0.65") double minScore) {
+        if (query != null && !query.isBlank() && geminiGenerativeService != null) {
+            RelevanceEvaluation eval = geminiGenerativeService.checkDomainRelevance(query, "", "", "", Language.ENGLISH);
+            if (eval != null && !eval.isRelevant()) {
+                log.info("RAG dense-search query blocked by Gemini gatekeeper: '{}' (domain: {})", query, eval.getDetectedDomain());
+                return ResponseEntity.ok(Collections.emptyList());
+            }
+        }
         List<Map<String, Object>> matches = searchService.searchLegalCorpus(query, jurisdiction, maxResults, minScore);
         return ResponseEntity.ok(matches);
     }

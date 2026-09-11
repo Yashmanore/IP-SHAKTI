@@ -1,11 +1,14 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Sidebar from '../components/Sidebar';
 import TopHeader from '../components/TopHeader';
 
 const MainLayout = () => {
+  const { i18n } = useTranslation();
+
   return (
-    <div className="flex h-screen bg-warm-ivory text-charcoal font-sans overflow-hidden">
+    <div key={i18n.language} className="flex h-screen bg-warm-ivory text-charcoal font-sans overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <TopHeader />

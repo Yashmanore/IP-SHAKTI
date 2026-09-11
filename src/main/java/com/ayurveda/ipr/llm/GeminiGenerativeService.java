@@ -4,6 +4,7 @@ import com.ayurveda.ipr.chat.model.ExecutiveLegalDeliverables;
 import com.ayurveda.ipr.chat.model.PatentClaimItem;
 import com.ayurveda.ipr.chat.model.StatutorySourceCitation;
 import com.ayurveda.ipr.classifier.model.ClassificationResult;
+import com.ayurveda.ipr.llm.model.RelevanceEvaluation;
 import com.ayurveda.ipr.multilingual.model.Language;
 import com.ayurveda.ipr.portal.model.ExternalPortalsPayload;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -395,5 +396,209 @@ public class GeminiGenerativeService {
         );
 
         return new ExecutiveLegalDeliverables(execSummary, plainSummary, claimsPackage);
+    }
+
+    /**
+     * Authoritative Domain Relevance Gatekeeper using Google Gemini Flash.
+     * Evaluates whether the user's input/product belongs strictly to Ayurveda, AYUSH traditional
+     * medicine, botanical/herbal formulations, or biological resources (NBA).
+     * Eliminates false positive legal retrieval on irrelevant, sci-fi, nuclear, or commodity inputs.
+     */
+    public RelevanceEvaluation checkDomainRelevance(
+            String userInput,
+            String productName,
+            String ingredients,
+            String intendedUse,
+            Language targetLang) {
+
+        String cleanUser = userInput != null ? userInput.trim() : "";
+        String cleanProd = productName != null ? productName.trim() : "";
+        String cleanIngr = ingredients != null ? ingredients.trim() : "";
+        String cleanUse = intendedUse != null ? intendedUse.trim() : "";
+
+        List<String> flaggedBlacklist = scanIrrelevantKeywords(cleanUser + " " + cleanProd + " " + cleanIngr);
+
+        if (geminiModel != null) {
+            try {
+                String prompt = buildRelevancePrompt(cleanUser, cleanProd, cleanIngr, cleanUse, targetLang, flaggedBlacklist);
+                log.info("Evaluating domain relevance via Google Gemini model: '{}'...", modelName);
+                String rawResp = geminiModel.generate(prompt);
+                log.debug("Received raw relevance response from Gemini: {}", rawResp);
+                RelevanceEvaluation eval = parseRelevanceResponse(rawResp, targetLang);
+                if (eval != null) {
+                    if (!flaggedBlacklist.isEmpty()) {
+                        eval.getFlaggedKeywords().addAll(flaggedBlacklist);
+                    }
+                    return eval;
+                }
+            } catch (Exception e) {
+                log.warn("Gemini relevance check error: {}. Executing deterministic relevance engine.", e.getMessage());
+            }
+        }
+
+        // Deterministic Fallback Engine
+        return evaluateDeterministicRelevance(cleanUser, cleanProd, cleanIngr, targetLang, flaggedBlacklist);
+    }
+
+    private String buildRelevancePrompt(
+            String userInput,
+            String productName,
+            String ingredients,
+            String intendedUse,
+            Language targetLang,
+            List<String> flaggedKeywords) {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("You are the authoritative Domain Relevance Gatekeeper for IP-SHAKTI, a statutory IPR and regulatory guidance system for AYUSH, Ayurveda, and Indian Biological Resources.\n\n");
+        sb.append("EXCLUSIVE PERMITTED DOMAIN SCOPE:\n");
+        sb.append("1. Traditional Indian Medicine: Ayurveda, Siddha, Unani, Sowa-Rigpa, and Homeopathy (AYUSH).\n");
+        sb.append("2. Medicinal plants, botanical herbs, phytochemicals, classical formulations (e.g. Samhitas, AFI), herbal cosmetics, and Ayurveda Aahar food supplements.\n");
+        sb.append("3. Biological resources, biodiversity access (NBA/SBB under Biological Diversity Act 2002), TKDL, and patents on botanical inventions.\n\n");
+
+        sb.append("STRICT NEGATIVE BAR (MUST REJECT AS OUT_OF_SCOPE):\n");
+        sb.append("- Nuclear physics, radioactive elements, reactors (e.g., Uranium, Plutonium, Thorium, atomic fission).\n");
+        sb.append("- Information technology, software, algorithms, artificial intelligence, blockchain, cryptocurrencies, NFTs, cybernetics.\n");
+        sb.append("- Heavy machinery, aerospace, Martian/space colonies, automotive parts, missiles, weapons.\n");
+        sb.append("- Fictional, nonsensical, or parody mashups (e.g., 'Cyber-Chyawanprash-3000 with microchips', 'Radioactive Herbal Cream', 'AI Quantum Triphala').\n");
+        sb.append("- General non-herbal commodities (e.g., rubber tires, synthetic plastics, textiles, electronic gadgets).\n\n");
+
+        sb.append("INPUT UNDER EVALUATION:\n");
+        sb.append("- User Query/Message: \"").append(userInput).append("\"\n");
+        sb.append("- Stated Product Name: \"").append(productName).append("\"\n");
+        sb.append("- Stated Ingredients: \"").append(ingredients).append("\"\n");
+        sb.append("- Intended Use: \"").append(intendedUse).append("\"\n");
+        if (!flaggedKeywords.isEmpty()) {
+            sb.append("- Potential Out-of-Scope Keywords Flagged: ").append(flaggedKeywords).append("\n");
+        }
+        sb.append("\n");
+
+        sb.append("INSTRUCTIONS:\n");
+        sb.append("1. Decide if this input is RELEVANT (isRelevant: true) or OUT OF SCOPE (isRelevant: false).\n");
+        sb.append("2. If the user combines an Ayurvedic word with science fiction or technology (e.g. 'Cyber-Chyawanprash' or 'Uranium Chyawanprash'), it is strictly OUT OF SCOPE (isRelevant: false).\n");
+        sb.append("3. Provide the explanation ('reason') and recommendation ('suggestedAction') in language '").append(targetLang.getCode()).append("' (");
+        if (targetLang == Language.MARATHI) sb.append("Pure Devanagari Marathi");
+        else if (targetLang == Language.HINDI) sb.append("Pure Devanagari Hindi");
+        else sb.append("English");
+        sb.append(").\n");
+        sb.append("4. Return ONLY valid JSON matching this schema:\n");
+        sb.append("{\n");
+        sb.append("  \"isRelevant\": true,\n");
+        sb.append("  \"confidence\": 0.98,\n");
+        sb.append("  \"detectedDomain\": \"AYUSH_HERBAL_MEDICINE | OUT_OF_SCOPE_NUCLEAR | OUT_OF_SCOPE_CYBERNETICS | OUT_OF_SCOPE_COMMODITY | OUT_OF_SCOPE_FICTION\",\n");
+        sb.append("  \"reason\": \"Detailed explanation of why it is in-scope or rejected as out of scope\",\n");
+        sb.append("  \"suggestedAction\": \"Guidance to user\"\n");
+        sb.append("}\n");
+
+        return sb.toString();
+    }
+
+    private RelevanceEvaluation parseRelevanceResponse(String rawJson, Language targetLang) {
+        try {
+            String cleanJson = rawJson.trim();
+            if (cleanJson.startsWith("```json")) {
+                cleanJson = cleanJson.substring(7);
+            }
+            if (cleanJson.startsWith("```")) {
+                cleanJson = cleanJson.substring(3);
+            }
+            if (cleanJson.endsWith("```")) {
+                cleanJson = cleanJson.substring(0, cleanJson.length() - 3);
+            }
+            cleanJson = cleanJson.trim();
+
+            JsonNode root = objectMapper.readTree(cleanJson);
+            boolean isRelevant = root.path("isRelevant").asBoolean(true);
+            double confidence = root.path("confidence").asDouble(0.95);
+            String domain = root.path("detectedDomain").asText(isRelevant ? "AYUSH_HERBAL_MEDICINE" : "OUT_OF_SCOPE");
+            String reason = root.path("reason").asText();
+            String action = root.path("suggestedAction").asText();
+
+            RelevanceEvaluation eval = new RelevanceEvaluation(isRelevant, confidence, domain, reason, action);
+            return eval;
+        } catch (Exception e) {
+            log.warn("Failed to parse Gemini relevance response JSON: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    private List<String> scanIrrelevantKeywords(String fullText) {
+        List<String> flagged = new ArrayList<>();
+        if (fullText == null || fullText.isBlank()) return flagged;
+
+        String lower = fullText.toLowerCase();
+
+        // Nuclear / Radioactive
+        String[] nuclearKeys = {"uranium", "plutonium", "thorium", "nuclear", "reactor", "radioactive", "radiation", "fission", "atomic bomb", "enrichment"};
+        for (String k : nuclearKeys) {
+            if (lower.contains(k)) flagged.add(k);
+        }
+
+        // Cyber / IT / Crypto / AI
+        String[] cyberKeys = {"blockchain", "cryptocurrency", "bitcoin", "ethereum", "crypto", "nft", "tokenomics", "cyber", "microchip", "semiconductor", "quantum computer", "quantum computing", "algorithm", "firmware", "cpu", "gpu", "neural network"};
+        for (String k : cyberKeys) {
+            if (lower.contains(k)) flagged.add(k);
+        }
+
+        // Sci-fi / Aerospace / Military
+        String[] sciFiKeys = {"mars colony", "spacecraft", "spaceship", "rocket engine", "missile", "warhead", "alien", "time travel", "laser weapon", "cyborg", "android robot"};
+        for (String k : sciFiKeys) {
+            if (lower.contains(k)) flagged.add(k);
+        }
+
+        // Heavy industrial / Non-herbal commodities
+        String[] industrialKeys = {"diesel engine", "combustion engine", "gasoline", "petroleum refining", "rubber tire", "sneaker"};
+        for (String k : industrialKeys) {
+            if (lower.contains(k)) flagged.add(k);
+        }
+
+        return flagged;
+    }
+
+    private RelevanceEvaluation evaluateDeterministicRelevance(
+            String userInput,
+            String productName,
+            String ingredients,
+            Language targetLang,
+            List<String> flaggedBlacklist) {
+
+        boolean isMarathi = (targetLang == Language.MARATHI);
+        boolean isHindi = (targetLang == Language.HINDI);
+
+        // If flagged by out-of-scope blacklist keywords
+        if (!flaggedBlacklist.isEmpty()) {
+            String domain = "OUT_OF_SCOPE_" + flaggedBlacklist.get(0).toUpperCase();
+            String reason;
+            String suggestion;
+
+            if (isMarathi) {
+                reason = "दाखल केलेली माहिती (" + String.join(", ", flaggedBlacklist) + ") ही आयुर्वेदिक, पारंपरिक औषधी किंवा वनस्पती घटकांच्या कार्यक्षेत्राबाहेरील आहे. IP-SHAKTI केवळ आयुष (AYUSH) व जैविक विविधता कायद्याशी संबंधित बाबींचे विश्लेषण करते.";
+                suggestion = "कृपया अस्सल आयुर्वेदिक वनस्पती, पारंपरिक कृती (जसे की अश्वगंधा, त्रिफळा, हळद) किंवा नैसर्गिक घटकांची चौकशी दाखल करा.";
+            } else if (isHindi) {
+                reason = "प्रविष्ट किया गया इनपुट (" + String.join(", ", flaggedBlacklist) + ") आयुर्वेदिक, वानस्पतिक या पारंपरिक चिकित्सा के कार्यक्षेत्र से बाहर है। IP-SHAKTI केवल आयुष (AYUSH) और भारतीय जैवविविधता कानून के लिए समर्पित है।";
+                suggestion = "कृपया वास्तविक आयुर्वेदिक जड़ी-बूटी, पारंपरिक योग (जैसे अश्वगंधा, त्रिफला, गिलोय) या प्राकृतिक औषध संबंधी प्रश्न पूछें।";
+            } else {
+                reason = "The provided input contains non-botanical/technological terms (" + String.join(", ", flaggedBlacklist) + ") that fall outside the statutory scope of Ayurveda, traditional medicine, and biological resources. IP-SHAKTI exclusively provides guidance for AYUSH and natural product IPR.";
+                suggestion = "Please enter an authentic Ayurvedic plant, classical formulation (e.g., Ashwagandha, Triphala, Turmeric), or natural healthcare product.";
+            }
+
+            RelevanceEvaluation eval = new RelevanceEvaluation(false, 0.99, domain, reason, suggestion);
+            eval.setFlaggedKeywords(flaggedBlacklist);
+            return eval;
+        }
+
+        // Default: If no blacklisted terms detected, treat as within scope
+        String domain = "AYUSH_HERBAL_MEDICINE";
+        String reason = isMarathi
+                ? "दाखल केलेले उत्पादन किंवा प्रश्न आयुष व पारंपारिक ज्ञान क्षेत्राशी संबंधित आहे."
+                : (isHindi
+                ? "प्रविष्ट उत्पाद या प्रश्न आयुष और पारंपरिक ज्ञान के दायरे में उपयुक्त है।"
+                : "The query or product is relevant to Ayurveda, natural botanicals, and biological resource IPR.");
+        String suggestion = isMarathi
+                ? "पुढील कायदेशीर व नियामक मूल्यांकनासाठी पुढे चालू ठेवा."
+                : (isHindi
+                ? "अगले विनियामक और पेटेंट मूल्यांकन के लिए आगे बढ़ें।"
+                : "Proceed with 5-pillar IPR and regulatory evaluation.");
+
+        return new RelevanceEvaluation(true, 0.90, domain, reason, suggestion);
     }
 }

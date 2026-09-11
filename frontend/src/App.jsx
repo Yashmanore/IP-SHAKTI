@@ -12,13 +12,16 @@ import SourceExplorer from './pages/SourceExplorer';
 import MyCases from './pages/MyCases';
 import ExpertEscalation from './pages/ExpertEscalation';
 import LegalDossier from './pages/LegalDossier';
+import Guidance from './pages/Guidance';
+import { JurisdictionProvider } from './context/JurisdictionContext';
 import './i18n';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<MainLayout />}>
+    <JurisdictionProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<MainLayout />}>
           <Route index element={<Dashboard />} />
           {/* Placeholder routes */}
           <Route path="ask-ip-sakti" element={<AskIpSakti />} />
@@ -27,7 +30,7 @@ function App() {
           <Route path="regulatory-check" element={<RegulatoryCheck />} />
           <Route path="abs-biodiversity" element={<AbsBiodiversity />} />
           <Route path="tkdl-prior-art" element={<TkdlPriorArt />} />
-          <Route path="guidance" element={<div className="p-8 text-slate text-sm">Final Guidance page — coming soon.</div>} />
+          <Route path="guidance" element={<Guidance />} />
           <Route path="source-explorer" element={<SourceExplorer />} />
           <Route path="my-cases" element={<MyCases />} />
           <Route path="expert-escalation" element={<ExpertEscalation />} />
@@ -35,6 +38,7 @@ function App() {
         </Route>
       </Routes>
     </Router>
+  </JurisdictionProvider>
   );
 }
 

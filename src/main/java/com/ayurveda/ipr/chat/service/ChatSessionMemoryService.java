@@ -103,6 +103,24 @@ public class ChatSessionMemoryService {
     }
 
     /**
+     * Returns true when a session already has at least one recorded message.
+     * Used by the Context-Aware Gatekeeper to bypass relevance checks for
+     * ongoing clarification conversations.
+     */
+    public boolean hasActiveSession(String sessionId) {
+        if (sessionId == null || sessionId.isBlank()) return false;
+        List<ChatMessageEntity> messages = sessionMemoryCache.get(sessionId);
+        if (messages != null && !messages.isEmpty()) return true;
+        // Fall back to DB if not in cache
+        try {
+            return !chatMessageRepository.findBySessionIdOrderByCreatedAtAsc(sessionId).isEmpty();
+        } catch (Exception e) {
+            log.warn("Could not check active session status for {}: {}", sessionId, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Clears all memory for a specific session.
      */
     @Transactional

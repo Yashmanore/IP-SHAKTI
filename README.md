@@ -99,7 +99,7 @@ Generates structured legal deliverables via Google Gemini Flash:
   - 🌿 Biological Diversity Act Checklist (NBA Form I/III or SBB Section 7 intimation)
   - ⚖️ Synthesized Draft Patent Claims (Claim 1 Product & Claim 2 Process claims)
   - 📜 Statutory Source Citations & Phase-by-Phase Roadmap
-  - 🔒 DPDP Act 2023 Masking Stamp & Sovereign Disclaimer
+  - 🔒 DPDP Act 2024 Masking Stamp & Sovereign Disclaimer
 - Automatically delivers the attached PDF dossier to the applicant's registered email inbox via Spring Boot `JavaMailSender`.
 
 ---

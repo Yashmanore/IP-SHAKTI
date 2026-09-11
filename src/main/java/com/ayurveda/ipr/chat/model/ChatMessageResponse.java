@@ -1,5 +1,6 @@
 package com.ayurveda.ipr.chat.model;
 
+import com.ayurveda.ipr.llm.model.RelevanceEvaluation;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,7 +12,8 @@ public class ChatMessageResponse {
     public enum DialogueStatus {
         CLARIFICATION_REQUIRED,
         ASSESSMENT_COMPLETE,
-        SAFE_ABSTENTION
+        SAFE_ABSTENTION,
+        OUT_OF_SCOPE
     }
 
     private String sessionId;
@@ -26,6 +28,7 @@ public class ChatMessageResponse {
     private String detectedLanguage = "en";
     private ExecutiveLegalDeliverables llmDeliverables; // Populated if ASSESSMENT_COMPLETE
     private List<ActionRoadmapItem> actionRoadmap = new ArrayList<>(); // Populated if ASSESSMENT_COMPLETE
+    private RelevanceEvaluation relevanceEvaluation;   // Populated if relevance check evaluated
     private String disclaimer = "Information provided is for educational and guidance purposes under Indian law and does not constitute formal legal counsel.";
 
     public ChatMessageResponse() {
@@ -140,5 +143,13 @@ public class ChatMessageResponse {
 
     public void setDisclaimer(String disclaimer) {
         this.disclaimer = disclaimer;
+    }
+
+    public RelevanceEvaluation getRelevanceEvaluation() {
+        return relevanceEvaluation;
+    }
+
+    public void setRelevanceEvaluation(RelevanceEvaluation relevanceEvaluation) {
+        this.relevanceEvaluation = relevanceEvaluation;
     }
 }
