@@ -44,6 +44,7 @@ public class RagConfig {
     @Bean
     public EmbeddingModel embeddingModel() {
         log.info("Initializing in-process AllMiniLmL6V2EmbeddingModel (dimension: 384)");
+        System.gc();
         return new AllMiniLmL6V2EmbeddingModel();
     }
 

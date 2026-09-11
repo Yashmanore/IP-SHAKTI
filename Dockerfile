@@ -22,5 +22,5 @@ COPY --from=build /app/data ./data
 # Expose port (Render automatically maps $PORT)
 EXPOSE 8085
 
-# Memory-optimized execution for Render free tier (512MB RAM)
-ENTRYPOINT ["sh", "-c", "java -XX:+UseSerialGC -Xmx200m -Xms100m -XX:MaxMetaspaceSize=100m -XX:ReservedCodeCacheSize=32m -Xss256k -jar app.jar"]
+# Memory-optimized execution for Render free tier (512MB RAM) with sufficient heap for ONNX model
+ENTRYPOINT ["sh", "-c", "java -XX:+UseSerialGC -Xmx320m -Xms160m -XX:MaxMetaspaceSize=96m -XX:ReservedCodeCacheSize=32m -Xss256k -jar app.jar"]
