@@ -323,11 +323,16 @@ const ProductClassification = () => {
         setSubmitError(t('productClassification.classificationError', 'No classification result was returned.'));
       } else {
         setResult(data);
+        const parsedBotanicalList = ingredientsRaw
+          .split(/[,\n]/)
+          .map((s) => s.trim())
+          .filter(Boolean);
+
         const activeState = {
           ...assessmentContext,
           productName,
-          botanicalIngredients: botanicalList,
-          ingredients: botanicalIngredients,
+          botanicalIngredients: parsedBotanicalList,
+          ingredients: ingredientsRaw,
           intendedUse,
           applicantType,
           jurisdiction: assessmentContext?.jurisdiction || globalJurisdiction || 'INDIA',
@@ -355,11 +360,16 @@ const ProductClassification = () => {
   };
 
   const handleContinue = () => {
+    const parsedBotanicalList = ingredientsRaw
+      .split(/[,\n]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+
     const forwardState = {
       ...assessmentContext,
       productName,
-      botanicalIngredients: botanicalList,
-      ingredients: botanicalIngredients,
+      botanicalIngredients: parsedBotanicalList,
+      ingredients: ingredientsRaw,
       intendedUse,
       applicantType,
       jurisdiction: assessmentContext?.jurisdiction || globalJurisdiction || 'INDIA',
