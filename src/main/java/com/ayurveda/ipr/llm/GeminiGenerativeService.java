@@ -410,17 +410,34 @@ public class GeminiGenerativeService {
             String ingredients,
             String intendedUse,
             Language targetLang) {
+        return checkDomainRelevance(userInput, productName, ingredients, intendedUse, "", targetLang);
+    }
+
+    /**
+     * Authoritative Domain Relevance Gatekeeper using Google Gemini Flash.
+     * Evaluates whether the user's input/product belongs strictly to Ayurveda, AYUSH traditional
+     * medicine, botanical/herbal formulations, or biological resources (NBA).
+     * Eliminates false positive legal retrieval on irrelevant, sci-fi, nuclear, or commodity inputs.
+     */
+    public RelevanceEvaluation checkDomainRelevance(
+            String userInput,
+            String productName,
+            String ingredients,
+            String intendedUse,
+            String conversationHistory,
+            Language targetLang) {
 
         String cleanUser = userInput != null ? userInput.trim() : "";
         String cleanProd = productName != null ? productName.trim() : "";
         String cleanIngr = ingredients != null ? ingredients.trim() : "";
         String cleanUse = intendedUse != null ? intendedUse.trim() : "";
+        String cleanHistory = conversationHistory != null ? conversationHistory.trim() : "";
 
         List<String> flaggedBlacklist = scanIrrelevantKeywords(cleanUser + " " + cleanProd + " " + cleanIngr);
 
         if (geminiModel != null) {
             try {
-                String prompt = buildRelevancePrompt(cleanUser, cleanProd, cleanIngr, cleanUse, targetLang, flaggedBlacklist);
+                String prompt = buildRelevancePrompt(cleanUser, cleanProd, cleanIngr, cleanUse, cleanHistory, targetLang, flaggedBlacklist);
                 log.info("Evaluating domain relevance via Google Gemini model: '{}'...", modelName);
                 String rawResp = geminiModel.generate(prompt);
                 log.debug("Received raw relevance response from Gemini: {}", rawResp);
@@ -445,6 +462,7 @@ public class GeminiGenerativeService {
             String productName,
             String ingredients,
             String intendedUse,
+            String conversationHistory,
             Language targetLang,
             List<String> flaggedKeywords) {
 

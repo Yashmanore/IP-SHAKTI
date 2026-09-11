@@ -9,7 +9,7 @@ RUN mvn dependency:go-offline -B
 # Copy source code and build production jar
 COPY src ./src
 COPY data ./data
-RUN mvn clean package -DskipTests -B
+RUN mvn clean package -Dmaven.test.skip=true -B
 
 # Lightweight JRE runtime image
 FROM eclipse-temurin:21-jre-alpine
