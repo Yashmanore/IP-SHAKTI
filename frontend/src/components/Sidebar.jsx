@@ -16,7 +16,8 @@ import {
 } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { key: 'dashboard', path: '/', icon: LayoutDashboard },
+  { key: 'landing', path: '/', icon: Globe, labelDefault: 'Portal Overview' },
+  { key: 'dashboard', path: '/dashboard', icon: LayoutDashboard },
   { key: 'askIpSakti', path: '/ask-ip-sakti', icon: MessageSquareQuote },
   { key: 'productClassification', path: '/product-classification', icon: PackageSearch },
   { key: 'ipProtection', path: '/ip-protection', icon: ShieldCheck },
@@ -62,7 +63,7 @@ const Sidebar = () => {
                   <span className={isActive ? 'text-muted-gold' : 'text-slate-300 opacity-80'}>
                     <Icon size={18} />
                   </span>
-                  <span>{t(`nav.${item.key}`)}</span>
+                  <span>{t(`nav.${item.key}`, item.labelDefault || item.key)}</span>
                 </>
               )}
             </NavLink>

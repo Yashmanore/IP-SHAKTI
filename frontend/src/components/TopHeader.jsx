@@ -5,7 +5,8 @@ import { ChevronDown, UserCircle, Globe, MapPin } from 'lucide-react';
 import { useJurisdiction } from '../context/JurisdictionContext';
 
 const PAGE_TITLE_KEYS = {
-  '/': 'nav.dashboard',
+  '/': 'nav.landing',
+  '/dashboard': 'nav.dashboard',
   '/ask-ip-sakti': 'nav.askIpSakti',
   '/product-classification': 'nav.productClassification',
   '/ip-protection': 'nav.ipProtection',
@@ -21,7 +22,8 @@ const PAGE_TITLE_KEYS = {
 };
 
 const PAGE_TITLES_FALLBACK = {
-  '/': 'Dashboard',
+  '/': 'Portal Overview',
+  '/dashboard': 'Dashboard',
   '/ask-ip-sakti': 'Ask IP-SAKTI',
   '/product-classification': 'Product Classification',
   '/ip-protection': 'IP Protection',

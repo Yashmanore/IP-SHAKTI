@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
+import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import AskIpSakti from './pages/AskIpSakti';
 import ProductClassification from './pages/ProductClassification';
@@ -21,24 +22,27 @@ function App() {
     <JurisdictionProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<MainLayout />}>
-          <Route index element={<Dashboard />} />
-          {/* Placeholder routes */}
-          <Route path="ask-ip-sakti" element={<AskIpSakti />} />
-          <Route path="product-classification" element={<ProductClassification />} />
-          <Route path="ip-protection" element={<IpProtection />} />
-          <Route path="regulatory-check" element={<RegulatoryCheck />} />
-          <Route path="abs-biodiversity" element={<AbsBiodiversity />} />
-          <Route path="tkdl-prior-art" element={<TkdlPriorArt />} />
-          <Route path="guidance" element={<Guidance />} />
-          <Route path="source-explorer" element={<SourceExplorer />} />
-          <Route path="my-cases" element={<MyCases />} />
-          <Route path="expert-escalation" element={<ExpertEscalation />} />
-          <Route path="legal-dossier" element={<LegalDossier />} />
-        </Route>
-      </Routes>
-    </Router>
-  </JurisdictionProvider>
+          {/* Dedicated Landing Page at root */}
+          <Route path="/" element={<LandingPage />} />
+
+          {/* Main App Layout containing operational dashboard and services */}
+          <Route element={<MainLayout />}>
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="ask-ip-sakti" element={<AskIpSakti />} />
+            <Route path="product-classification" element={<ProductClassification />} />
+            <Route path="ip-protection" element={<IpProtection />} />
+            <Route path="regulatory-check" element={<RegulatoryCheck />} />
+            <Route path="abs-biodiversity" element={<AbsBiodiversity />} />
+            <Route path="tkdl-prior-art" element={<TkdlPriorArt />} />
+            <Route path="guidance" element={<Guidance />} />
+            <Route path="source-explorer" element={<SourceExplorer />} />
+            <Route path="my-cases" element={<MyCases />} />
+            <Route path="expert-escalation" element={<ExpertEscalation />} />
+            <Route path="legal-dossier" element={<LegalDossier />} />
+          </Route>
+        </Routes>
+      </Router>
+    </JurisdictionProvider>
   );
 }
 
