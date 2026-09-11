@@ -323,6 +323,21 @@ const ProductClassification = () => {
         setSubmitError(t('productClassification.classificationError', 'No classification result was returned.'));
       } else {
         setResult(data);
+        const activeState = {
+          ...assessmentContext,
+          productName,
+          botanicalIngredients: botanicalList,
+          ingredients: botanicalIngredients,
+          intendedUse,
+          applicantType,
+          jurisdiction: assessmentContext?.jurisdiction || globalJurisdiction || 'INDIA',
+          classificationResult: data,
+        };
+        try {
+          sessionStorage.setItem('ip_shakti_active_assessment', JSON.stringify(activeState));
+        } catch (storageErr) {
+          console.warn('Session storage quota exceeded', storageErr);
+        }
         // Scroll to result
         setTimeout(() => {
           document.getElementById('classification-result')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -340,13 +355,21 @@ const ProductClassification = () => {
   };
 
   const handleContinue = () => {
+    const forwardState = {
+      ...assessmentContext,
+      productName,
+      botanicalIngredients: botanicalList,
+      ingredients: botanicalIngredients,
+      intendedUse,
+      applicantType,
+      jurisdiction: assessmentContext?.jurisdiction || globalJurisdiction || 'INDIA',
+      classificationResult: result,
+    };
+    try {
+      sessionStorage.setItem('ip_shakti_active_assessment', JSON.stringify(forwardState));
+    } catch (storageErr) {}
     navigate('/ip-protection', {
-      state: {
-        ...assessmentContext,
-        productName,
-        jurisdiction: assessmentContext?.jurisdiction || globalJurisdiction || 'INDIA',
-        classificationResult: result,
-      },
+      state: forwardState,
     });
   };
 

@@ -1,13 +1,13 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
   ArrowRight,
   AlertCircle,
-  Loader2,
-  ChevronDown,
-  ChevronUp,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
   ShieldCheck,
   Tag,
   MapPin,
@@ -16,522 +16,86 @@ import {
   Lock,
   Sprout,
   BookOpen,
-  X,
-  RefreshCw,
   Info,
+  Scale,
+  FileText,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import Breadcrumb from '../components/Breadcrumb';
 import AssessmentStepper from '../components/AssessmentStepper';
+import ActiveAssessmentBar from '../components/ActiveAssessmentBar';
 import { useJurisdiction } from '../context/JurisdictionContext';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8085';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// IP Route Definitions
-// These are structural UI definitions only. Relevance/status comes from
-// the assessment context (classification result) or a future backend endpoint.
-// ─────────────────────────────────────────────────────────────────────────────
-const IP_ROUTES = [
-  {
-    key: 'patent',
-    nameKey: 'ipProtection.routes.patent.name',
-    explanationKey: 'ipProtection.routes.patent.explanation',
-    icon: <ShieldCheck size={20} />,
-    name: 'Patent',
-    explanation:
-      'May protect qualifying inventions or technical innovations — such as novel processes, formulations, or delivery mechanisms — subject to applicable patentability requirements.',
-    detailWhat:
-      'Patents may protect new, inventive, and industrially applicable inventions. For Ayurveda products, this typically concerns novel extraction processes, delivery mechanisms, or technical innovations — not traditional formulations.',
-    detailConsiderations: [
-      'Classical formulations documented in First Schedule books are generally subject to the traditional-knowledge patent bar.',
-      'Process patents for novel extraction or delivery mechanisms may be available depending on the specific innovation.',
-      'Patentability requires novelty, inventive step, and industrial applicability.',
-      'Subject-matter exclusions under the applicable patents act may apply.',
-    ],
-  },
-  {
-    key: 'trademark',
-    nameKey: 'ipProtection.routes.trademark.name',
-    explanationKey: 'ipProtection.routes.trademark.explanation',
-    icon: <Tag size={20} />,
-    name: 'Trademark',
-    explanation:
-      'May protect brand identifiers such as names, logos, labels, or distinctive marks used to distinguish your product in the marketplace.',
-    detailWhat:
-      'Trademarks protect signs, words, logos, or marks that distinguish goods or services of one enterprise from those of others.',
-    detailConsiderations: [
-      'Generic classical Ayurvedic names generally cannot be registered as trademarks.',
-      'Distinctive brand names or logos may be eligible for registration.',
-      'Registration provides territorial protection in the applicable jurisdiction.',
-      'Continuous use and renewal are generally required to maintain trademark rights.',
-    ],
-  },
-  {
-    key: 'gi',
-    nameKey: 'ipProtection.routes.gi.name',
-    explanationKey: 'ipProtection.routes.gi.explanation',
-    icon: <MapPin size={20} />,
-    name: 'Geographical Indication (GI)',
-    explanation:
-      'May be relevant where the product qualifies for GI protection — i.e., where quality, reputation, or characteristics are linked to a specific geographical origin.',
-    detailWhat:
-      'Geographical Indications identify a product as originating from a specific place, where the quality, reputation, or other characteristics are attributable to that origin.',
-    detailConsiderations: [
-      'Applicable only where a genuine link to a geographical origin exists.',
-      'GI registration is typically managed by producer associations or government bodies.',
-      'Individual companies generally cannot register a GI exclusively for themselves.',
-      'GI protection prevents unauthorized use of the geographical name by non-qualifying producers.',
-    ],
-  },
-  {
-    key: 'design',
-    nameKey: 'ipProtection.routes.design.name',
-    explanationKey: 'ipProtection.routes.design.explanation',
-    icon: <Palette size={20} />,
-    name: 'Industrial Design',
-    explanation:
-      'May protect qualifying visual or aesthetic features of a product — such as shape, configuration, pattern, or ornamentation — that give it a distinctive appearance.',
-    detailWhat:
-      'Industrial design rights protect the visual appearance or aesthetics of a product, distinct from its functional aspects.',
-    detailConsiderations: [
-      'Protects the look and feel, not the functional properties of a product.',
-      'The design must be novel and not previously disclosed.',
-      'Does not protect the underlying formulation or composition.',
-    ],
-  },
-  {
-    key: 'copyright',
-    nameKey: 'ipProtection.routes.copyright.name',
-    explanationKey: 'ipProtection.routes.copyright.explanation',
-    icon: <PenLine size={20} />,
-    name: 'Copyright',
-    explanation:
-      'May apply to qualifying original creative works — such as packaging artwork, marketing materials, instructional content, or software — depending on the subject matter.',
-    detailWhat:
-      'Copyright protects original creative expressions fixed in a tangible form. It does not protect ideas, methods, or formulations.',
-    detailConsiderations: [
-      'Arises automatically on creation in most jurisdictions — registration provides additional evidentiary benefits.',
-      'Does not protect the formulation, ingredient list, or technical method itself.',
-      'May protect original packaging artwork, product literature, or instructional content.',
-    ],
-  },
-  {
-    key: 'tradesecret',
-    nameKey: 'ipProtection.routes.tradeSecret.name',
-    explanationKey: 'ipProtection.routes.tradeSecret.explanation',
-    icon: <Lock size={20} />,
-    name: 'Trade Secret / Confidential Know-How',
-    explanation:
-      'Confidential formulation details, proprietary processes, or business information may sometimes be protected through confidentiality agreements and trade-secret practices where applicable.',
-    detailWhat:
-      'Trade secrets protect valuable confidential business information — such as formulas, processes, or methods — that provide a competitive advantage and are kept secret.',
-    detailConsiderations: [
-      'Requires active steps to maintain secrecy (e.g., confidentiality agreements, access controls).',
-      'Protection lasts as long as the information remains confidential.',
-      'Lost if independently discovered or if the secret becomes public.',
-      'No registration required, but legal advice on confidentiality practices is recommended.',
-    ],
-  },
-  {
-    key: 'pvp',
-    nameKey: 'ipProtection.routes.plantVariety.name',
-    explanationKey: 'ipProtection.routes.plantVariety.explanation',
-    icon: <Sprout size={20} />,
-    name: 'Plant Variety Protection',
-    explanation:
-      'May be relevant where the subject concerns a qualifying new, distinct, uniform, and stable plant variety developed through breeding or cultivation.',
-    detailWhat:
-      'Plant variety protection (also known as plant breeders\' rights) protects new plant varieties that are distinct, uniform, stable, and novel.',
-    detailConsiderations: [
-      'Applies specifically to plant varieties, not to extracts or formulations derived from existing plant varieties.',
-      'Requires the variety to be new, distinct from existing varieties, uniform, and stable.',
-      'Does not prevent others from using the protected variety for research or further breeding.',
-    ],
-  },
+// Registered Indian Geographical Indications (GI) for Botanicals & Spices
+const REGISTERED_GI_BOTANICALS = [
+  { name: 'Saffron', botanical: 'Crocus sativus', giTitle: 'Kashmir Saffron (GI No. 635)', state: 'Jammu & Kashmir' },
+  { name: 'Pepper', botanical: 'Piper nigrum', giTitle: 'Malabar Pepper (GI No. 49)', state: 'Kerala' },
+  { name: 'Cardamom', botanical: 'Elettaria cardamomum', giTitle: 'Alleppey Green Cardamom (GI No. 55)', state: 'Kerala/Tamil Nadu' },
+  { name: 'Turmeric', botanical: 'Curcuma longa', giTitle: 'Erode Turmeric (GI No. 279) / Kandhamal Haldi (GI No. 610)', state: 'Tamil Nadu / Odisha' },
+  { name: 'Ginger', botanical: 'Zingiber officinale', giTitle: 'Wayanad Cardamom & Ginger / Assam Karbi Anglong Ginger (GI No. 435)', state: 'Kerala / Assam' },
+  { name: 'Chilli', botanical: 'Capsicum annuum', giTitle: 'Guntur Sannam Chilli (GI No. 80) / Naga Mircha (GI No. 109)', state: 'Andhra Pradesh / Nagaland' },
+  { name: 'Tea', botanical: 'Camellia sinensis', giTitle: 'Kangra Tea (GI No. 41) / Darjeeling Tea (GI No. 1)', state: 'Himachal Pradesh / West Bengal' },
+  { name: 'Makhana', botanical: 'Euryale ferox', giTitle: 'Mithila Makhana (GI No. 696)', state: 'Bihar' },
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helper: derive patent-specific status from classification result
-// Returns null if no useful info is available (show "Not assessed")
-// ─────────────────────────────────────────────────────────────────────────────
-function derivePatentStatus(classificationResult) {
-  if (!classificationResult) return null;
-  if (classificationResult.patentabilityVerdict) {
-    return {
-      label: 'Guidance available',
-      verdict: classificationResult.patentabilityVerdict,
-      sections: classificationResult.relevantPatentSections || [],
-    };
-  }
-  return null;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Sub-components
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** Compact context summary at the top of the page */
-const ContextCard = ({ context, onGoToAsk }) => {
-  const { t } = useTranslation();
-  const { jurisdiction: globalJurisdiction } = useJurisdiction();
-  const cr = context?.classificationResult;
-  const jur = context?.jurisdiction || globalJurisdiction;
-  const hasContext = context?.productName || cr || jur;
-
-  if (!hasContext) {
-    return (
-      <div className="flex items-start gap-3 p-4 bg-warm-ivory border border-border-color rounded-lg mb-6 text-sm">
-        <AlertCircle size={16} className="text-slate shrink-0 mt-0.5" />
-        <div>
-          <p className="text-charcoal font-medium">{t('common.noContext', 'Assessment context is not available.')}</p>
-          <button
-            type="button"
-            onClick={onGoToAsk}
-            className="text-forest-green hover:underline mt-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-forest-green/50 rounded"
-          >
-            {t('common.returnToAsk', 'Return to Ask IP-SAKTI →')}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="p-4 bg-forest-green/5 border border-forest-green/20 rounded-lg mb-6 text-sm">
-      <p className="text-xs font-semibold text-forest-green uppercase tracking-wide mb-2">
-        {t('common.assessmentContext', 'Assessment Context')}
-      </p>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div>
-          <span className="text-xs text-slate font-medium block">{t('common.product', 'Product')}</span>
-          <span className="text-charcoal">{context?.productName || t('common.notProvided', 'Not provided')}</span>
-        </div>
-        <div>
-          <span className="text-xs text-slate font-medium block">{t('common.classification', 'Classification')}</span>
-          <span className="text-charcoal">{cr?.categoryDisplayName || t('common.notAssessed', 'Not assessed')}</span>
-        </div>
-        <div>
-          <span className="text-xs text-slate font-medium block">{t('common.jurisdictionLabel', 'Jurisdiction')}</span>
-          <span className="text-charcoal">
-            {jur === 'INDIA'
-              ? t('common.india', 'India')
-              : jur === 'INTERNATIONAL'
-                ? `${t('common.international', 'International')}${context?.destinationMarket ? ` — ${context.destinationMarket}` : ''}`
-                : t('common.notProvided', 'Not provided')}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/** Status badge — shows dynamic status or "Not assessed" */
-const StatusBadge = ({ status }) => {
-  const { t } = useTranslation();
-  if (!status) {
-    return (
-      <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-slate/10 text-slate border border-slate/20 font-medium">
-        {t('common.notAssessed', 'Not assessed')}
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-muted-gold/10 text-muted-gold border border-muted-gold/30 font-medium">
-      {status === 'Guidance available' ? t('common.assessed', 'Information available') : status}
-    </span>
-  );
-};
-
-/** "View requirements" detail drawer/expansion */
-const RequirementsPanel = ({ route, jurisdiction, onClose }) => {
-  const { t } = useTranslation();
-  const routeName = route.nameKey ? t(route.nameKey, route.name) : route.name;
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={`${routeName} requirements`}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
-    >
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/20"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-      {/* Panel */}
-      <div className="relative bg-white rounded-xl shadow-xl border border-border-color max-w-lg w-full max-h-[85vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-border-color px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-forest-green">{route.icon}</span>
-            <h2 className="text-lg font-heading font-semibold text-charcoal">{routeName}</h2>
-          </div>
-          <button
-            onClick={onClose}
-            aria-label={t('common.close', 'Close')}
-            className="text-slate hover:text-charcoal transition-colors focus:outline-none focus:ring-2 focus:ring-forest-green/50 rounded-full p-1"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className="px-6 py-5 space-y-5">
-          <div>
-            <h3 className="text-sm font-semibold text-charcoal mb-2">{t('common.keyConsiderations', 'Key considerations')}</h3>
-            <ul className="space-y-2">
-              {route.detailConsiderations.map((c, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-charcoal">
-                  <span className="text-muted-gold shrink-0 mt-0.5">•</span>
-                  {c}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-semibold text-charcoal mb-2">{t('common.jurisdictionLabel', 'Jurisdiction')}</h3>
-            <p className="text-sm text-slate">
-              {jurisdiction === 'INDIA'
-                ? t('common.india', 'India')
-                : jurisdiction === 'INTERNATIONAL'
-                  ? t('common.international', 'International')
-                  : t('common.notProvided', 'Not specified.')}
-            </p>
-          </div>
-
-          <div className="p-3 bg-warm-ivory rounded-lg border border-border-color">
-            <p className="text-xs text-slate italic">
-              {t('regulatoryCheck.detailedReqUnavailable', 'Detailed source-backed requirements are not available yet.')}
-            </p>
-          </div>
-
-          <p className="text-xs text-slate border-t border-border-color pt-4">
-            {t('regulatoryCheck.generalAwarenessNotice', 'This information is provided for general awareness only and does not constitute legal advice.')}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/** Individual IP route card */
-const IpRouteCard = ({ route, status, verdict, jurisdiction, onViewRequirements }) => {
-  const { t } = useTranslation();
-  return (
-    <div className="card p-5 flex flex-col sm:flex-row sm:items-start gap-4">
-      {/* Icon */}
-      <div className="w-10 h-10 rounded-lg bg-warm-ivory flex items-center justify-center text-forest-green shrink-0">
-        {route.icon}
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex flex-wrap items-center gap-3 mb-1.5">
-          <h3 className="text-base font-semibold text-charcoal">
-            {route.nameKey ? t(route.nameKey, route.name) : route.name}
-          </h3>
-          <StatusBadge status={status} />
-        </div>
-        <p className="text-sm text-slate leading-relaxed mb-3">
-          {route.explanationKey ? t(route.explanationKey, route.explanation) : route.explanation}
-        </p>
-
-        {/* Show patent verdict from classification if available */}
-        {verdict && (
-          <div className="p-3 bg-warm-ivory border border-border-color rounded-lg mb-3 text-sm text-charcoal leading-relaxed">
-            <span className="font-medium text-forest-green text-xs uppercase tracking-wide block mb-1">
-              {t('ipProtection.fromClassification', 'From classification result')}
-            </span>
-            {verdict}
-          </div>
-        )}
-      </div>
-
-      {/* Action */}
-      <div className="shrink-0 self-start">
-        <button
-          type="button"
-          onClick={() => onViewRequirements(route)}
-          aria-label={`View requirements for ${route.name}`}
-          className="text-sm font-medium text-forest-green border border-forest-green/40 px-4 py-2 rounded-lg hover:bg-forest-green hover:text-white transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-forest-green/50"
-        >
-          {t('ipProtection.viewRequirements', 'View requirements')}
-        </button>
-      </div>
-    </div>
-  );
-};
-
-/** RAG source search result section */
-const SourceGroundedSection = ({ jurisdiction }) => {
-  const { t } = useTranslation();
-  const [sources, setSources] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  const fetchSources = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const j = jurisdiction === 'INTERNATIONAL' ? 'INTERNATIONAL' : 'INDIA';
-      const res = await fetch(
-        `${API_BASE_URL}/api/v1/rag/search?query=intellectual+property+protection+ayurveda&jurisdiction=${j}&maxResults=5&minScore=0.65`
-      );
-      if (!res.ok) throw new Error(`Server error: ${res.status}`);
-      const data = await res.json();
-      setSources(data);
-    } catch (err) {
-      if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
-        setError('service_unavailable');
-      } else {
-        setError(err.message || 'Unknown error');
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [jurisdiction]);
-
-  return (
-    <section className="card p-6">
-      <div className="flex items-start gap-3 mb-4">
-        <BookOpen size={18} className="text-muted-gold shrink-0 mt-0.5" />
-        <div className="flex-1">
-          <h2 className="text-lg font-heading font-semibold text-charcoal mb-1">
-            {t('ipProtection.sourceGroundedTitle', 'Source-Grounded IP Guidance')}
-          </h2>
-          <p className="text-sm text-slate leading-relaxed">
-            {t('ipProtection.sourceGroundedDesc', 'IP-SAKTI connects to Indian and international IP authorities and legal frameworks to ground its IP route analysis in verifiable sources.')}
-          </p>
-        </div>
-      </div>
-
-      {!sources && !loading && !error && (
-        <div className="flex flex-col items-center py-8 text-center">
-          <p className="text-sm text-slate mb-4">
-            {t('ipProtection.emptySource', 'No source-grounded IP guidance is available for this assessment yet.')}
-          </p>
-          <button
-            type="button"
-            onClick={fetchSources}
-            className="flex items-center gap-2 text-sm font-medium text-forest-green border border-forest-green/40 px-4 py-2 rounded-lg hover:bg-forest-green hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-forest-green/50"
-          >
-            <RefreshCw size={14} /> {t('common.searchSources', 'Search sources')}
-          </button>
-        </div>
-      )}
-
-      {loading && (
-        <div className="flex items-center gap-3 py-6 text-slate text-sm">
-          <Loader2 size={16} className="animate-spin" /> {t('common.searchingSources', 'Searching authoritative sources…')}
-        </div>
-      )}
-
-      {error === 'service_unavailable' && (
-        <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm">
-          <AlertCircle size={16} className="text-warning mt-0.5 shrink-0" />
-          <div className="flex-1">
-            <p className="font-medium text-charcoal">{t('common.serviceUnavailable', 'Source search service is not connected yet.')}</p>
-            <p className="text-slate mt-0.5">{t('regulatoryCheck.sourceServiceUnavailableDesc', 'Source records will appear when the RAG service is available.')}</p>
-          </div>
-          <button
-            type="button"
-            onClick={fetchSources}
-            className="text-xs font-medium text-forest-green hover:underline whitespace-nowrap focus:outline-none"
-          >
-            {t('common.retry', 'Retry')}
-          </button>
-        </div>
-      )}
-
-      {error && error !== 'service_unavailable' && (
-        <div className="flex items-start gap-3 p-4 bg-red-50 border border-error/30 rounded-lg text-sm">
-          <AlertCircle size={16} className="text-error mt-0.5 shrink-0" />
-          <div className="flex-1">
-            <p className="font-medium text-charcoal">{t('common.errorOccurred', 'IP protection assessment could not be loaded.')}</p>
-            <p className="text-slate mt-0.5">{error}</p>
-          </div>
-          <button
-            type="button"
-            onClick={fetchSources}
-            className="text-xs font-medium text-forest-green hover:underline whitespace-nowrap focus:outline-none"
-          >
-            {t('common.retry', 'Retry')}
-          </button>
-        </div>
-      )}
-
-      {sources && sources.length === 0 && (
-        <p className="text-sm text-slate italic py-4">
-          {t('sourceExplorer.noMatch', 'No matching source records were found for this query and jurisdiction.')}
-        </p>
-      )}
-
-      {sources && sources.length > 0 && (
-        <ul className="space-y-3 mt-2">
-          {sources.map((src, i) => (
-            <li key={i} className="p-4 bg-warm-ivory rounded-lg border border-border-color text-sm">
-              {src.title && (
-                <p className="font-semibold text-charcoal mb-1">{src.title}</p>
-              )}
-              {src.content && (
-                <p className="text-slate leading-relaxed line-clamp-3">{src.content}</p>
-              )}
-              {src.section && (
-                <p className="text-xs text-muted-gold mt-2 font-medium">{src.section}</p>
-              )}
-              {src.sourceUrl && (
-                <a
-                  href={src.sourceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-forest-green hover:underline mt-1 block"
-                >
-                  {t('common.viewSource', 'View source →')}
-                </a>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
-  );
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Main Page
-// ─────────────────────────────────────────────────────────────────────────────
-const IpProtection = () => {
+export default function IpProtection() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { jurisdiction: globalJurisdiction } = useJurisdiction();
-  const assessmentContext = location.state || null;
 
-  const [openPanel, setOpenPanel] = useState(null);
+  // Load from location.state OR sessionStorage
+  const [assessmentState, setAssessmentState] = useState(() => {
+    if (location.state?.classificationResult) {
+      return location.state;
+    }
+    try {
+      const saved = sessionStorage.getItem('ip_shakti_active_assessment');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return null;
+  });
 
-  const classificationResult = assessmentContext?.classificationResult || null;
-  const effectiveJurisdiction = assessmentContext?.jurisdiction || globalJurisdiction || 'INDIA';
-  const effectiveContext = assessmentContext
-    ? { ...assessmentContext, jurisdiction: effectiveJurisdiction }
-    : { jurisdiction: effectiveJurisdiction };
+  const [expandedSection, setExpandedSection] = useState('patent');
+  const [showClaimsModal, setShowClaimsModal] = useState(false);
 
-  // Derive patent status from the classification result (only for patent card)
-  const patentStatus = derivePatentStatus(classificationResult);
+  useEffect(() => {
+    if (location.state?.classificationResult) {
+      setAssessmentState(location.state);
+      try {
+        sessionStorage.setItem('ip_shakti_active_assessment', JSON.stringify(location.state));
+      } catch (e) {}
+    }
+  }, [location.state]);
 
-  const handleViewRequirements = (route) => {
-    setOpenPanel(route);
+  const handleAssessmentChange = (newAssessment) => {
+    setAssessmentState(newAssessment);
   };
 
-  const handleClosePanel = () => {
-    setOpenPanel(null);
-  };
+  const cr = assessmentState?.classificationResult;
+  const prodName = assessmentState?.productName || 'Ayurvedic Product';
+  const botanicalList = assessmentState?.botanicalIngredients || 
+    (assessmentState?.ingredients ? (Array.isArray(assessmentState.ingredients) ? assessmentState.ingredients : assessmentState.ingredients.split(',').map(s => s.trim())) : []);
+
+  // Detect GIs in ingredients
+  const detectedGIs = REGISTERED_GI_BOTANICALS.filter((gi) =>
+    botanicalList.some((ing) => ing.toLowerCase().includes(gi.name.toLowerCase()) || ing.toLowerCase().includes(gi.botanical.toLowerCase()))
+  );
+
+  // Patentability status calculation
+  const isPatentable = cr?.formulationPatentableInIndia ?? false;
+  const isProprietaryCatB = cr?.category === 'PROPRIETARY_AYURVEDIC_MEDICINE_CATEGORY_B';
+  const isPhytopharmaceutical = cr?.category === 'NEW_BOTANICAL_OR_PHYTOPHARMACEUTICAL';
+  const isClassical = cr?.category === 'CLASSICAL_AYURVEDIC_FORMULATION';
 
   const handleBack = () => {
-    navigate('/product-classification', { state: effectiveContext });
+    navigate('/product-classification', { state: assessmentState });
   };
 
   const handleContinue = () => {
-    navigate('/regulatory-check', { state: effectiveContext });
+    navigate('/regulatory-check', { state: assessmentState });
   };
 
   return (
@@ -544,102 +108,458 @@ const IpProtection = () => {
       />
 
       {/* Page Title */}
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-3xl font-heading font-bold text-forest-green mb-2">
-          {t('ipProtection.title', 'IP Protection')}
+          {t('ipProtection.title', 'IP Protection & Patentability Analysis')}
         </h1>
         <p className="text-slate text-base leading-relaxed">
-          {t('ipProtection.subtitle', 'Explore intellectual property protection routes that may be relevant to your Ayurveda product.')}
+          {t('ipProtection.subtitle', 'Rigorous statutory evaluation of patentability, trademark classification, traditional knowledge bars, and geographical indications under Indian IP law.')}
         </p>
       </div>
 
-      {/* Assessment Stepper */}
       <AssessmentStepper activeKey="ip" />
 
-      {/* Assessment Context */}
-      <ContextCard
-        context={assessmentContext}
-        onGoToAsk={() => navigate('/ask-ip-sakti')}
+      {/* Unified Formulation Evaluator Bar */}
+      <ActiveAssessmentBar
+        currentAssessment={assessmentState}
+        onAssessmentChange={handleAssessmentChange}
+        stepTitle="Active IPR Assessment"
       />
 
-      {/* Info note about page purpose */}
-      <div className="flex items-start gap-3 p-4 bg-warm-ivory border border-border-color rounded-lg mb-6 text-sm">
-        <Info size={16} className="text-slate shrink-0 mt-0.5" />
-        <p className="text-slate leading-relaxed">
-          {t('ipProtection.infoNote', 'The routes below represent possible IP protection categories. Relevance depends on your specific product, formulation, and jurisdiction. Status shown as "Not assessed" means the backend has not yet evaluated that route for this assessment.')}
-        </p>
-      </div>
+      {/* ── STATUTORY IPR DASHBOARD ────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        {/* Main Patentability Verdict Card */}
+        <div className="lg:col-span-2 card p-6 border-l-4 border-l-forest-green">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="text-forest-green" size={24} />
+              <h2 className="text-xl font-heading font-bold text-charcoal">
+                Indian Patents Act, 1970 Statutory Verdict
+              </h2>
+            </div>
+            <span
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                isPatentable
+                  ? 'bg-success/15 text-success border border-success/30'
+                  : 'bg-error/15 text-error border border-error/30'
+              }`}
+            >
+              {isPatentable ? <CheckCircle2 size={13} /> : <XCircle size={13} />}
+              {isPatentable ? 'Potentially Patentable' : 'Statutory Bar (§3(p) / §3(e))'}
+            </span>
+          </div>
 
-      {/* Main IP Routes Section */}
-      <section className="mb-8">
-        <h2 className="text-xl font-heading font-semibold text-forest-green mb-2">
-          {t('ipProtection.routesTitle', 'Potential IP Protection Routes')}
-        </h2>
-        <p className="text-sm text-slate mb-6 leading-relaxed">
-          {t('ipProtection.routesSubtitle', 'Different forms of intellectual property may protect different aspects of an Ayurveda product, formulation, brand, appearance, creative material, or confidential know-how. Review the routes below based on your assessment context.')}
-        </p>
+          <p className="text-sm text-charcoal leading-relaxed mb-4">
+            {cr?.patentabilityVerdict ||
+              'Formulation based on classical botanical ingredients faces statutory non-patentability barriers under Section 3(p) and 3(e) unless non-obvious synergistic efficacy or novel delivery technology is proven.'}
+          </p>
 
-        <div className="space-y-4">
-          {IP_ROUTES.map((route) => {
-            // Only the Patent card gets dynamic data from the classification result
-            const isPatent = route.key === 'patent';
-            const status = isPatent && patentStatus ? patentStatus.label : null;
-            const verdict = isPatent && patentStatus ? patentStatus.verdict : null;
+          <div className="bg-warm-ivory/60 rounded-lg p-4 border border-border-color mb-4 space-y-2 text-xs text-charcoal">
+            <div className="flex items-start gap-2">
+              <strong className="text-forest-green shrink-0">Recommended Strategy:</strong>
+              <span>{cr?.recommendedIprStrategy || 'Protect brand via Trademark (Class 5). Secure proprietary extraction ratios as Trade Secrets. Avoid filing crude herbal mixture claims.'}</span>
+            </div>
+            {cr?.relevantPatentSections && cr.relevantPatentSections.length > 0 && (
+              <div className="flex items-start gap-2 pt-1 border-t border-border-color/60">
+                <strong className="text-forest-green shrink-0">Statutory Sections Triggered:</strong>
+                <div className="flex flex-wrap gap-1.5">
+                  {cr.relevantPatentSections.map((sec, i) => (
+                    <span key={i} className="px-2 py-0.5 rounded bg-white font-medium border border-border-color text-charcoal">
+                      {sec}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
-            return (
-              <IpRouteCard
-                key={route.key}
-                route={route}
-                status={status}
-                verdict={verdict}
-                jurisdiction={effectiveJurisdiction}
-                onViewRequirements={handleViewRequirements}
-              />
-            );
-          })}
+          <div className="flex items-center justify-between pt-2">
+            <span className="text-xs text-slate">
+              Governed by Indian Patent Office (IPO) Guidelines for Traditional Knowledge Inventions
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowClaimsModal(true)}
+              className="text-xs font-bold text-forest-green hover:text-deep-teal flex items-center gap-1 hover:underline cursor-pointer"
+            >
+              <FileText size={14} /> View Claims Drafting Guidance →
+            </button>
+          </div>
         </div>
-      </section>
 
-      {/* Source-grounded guidance */}
-      <div className="mb-8">
-        <SourceGroundedSection jurisdiction={effectiveJurisdiction} />
+        {/* IPR Summary Sidebar Widget */}
+        <div className="card p-5 space-y-4 bg-linear-to-b from-white to-warm-ivory/30">
+          <h3 className="text-sm font-bold text-charcoal uppercase tracking-wider flex items-center gap-2">
+            <Scale size={16} className="text-forest-green" />
+            IP Protection Snapshot
+          </h3>
+
+          <div className="space-y-2.5 text-xs">
+            <div className="flex items-center justify-between p-2 rounded-lg bg-white border border-border-color">
+              <span className="text-slate font-medium">Patent Formulation</span>
+              <span className={`font-bold ${isPatentable ? 'text-success' : 'text-error'}`}>
+                {isPatentable ? 'Eligible (Process/Synergy)' : 'Barred (§3(p))'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between p-2 rounded-lg bg-white border border-border-color">
+              <span className="text-slate font-medium">Trademark Class</span>
+              <span className="font-bold text-forest-green">Class 5 (Pharmaceuticals)</span>
+            </div>
+            <div className="flex items-center justify-between p-2 rounded-lg bg-white border border-border-color">
+              <span className="text-slate font-medium">GI Status</span>
+              <span className={`font-bold ${detectedGIs.length > 0 ? 'text-muted-gold' : 'text-slate'}`}>
+                {detectedGIs.length > 0 ? `${detectedGIs.length} GI Botanical(s)` : 'None Detected'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between p-2 rounded-lg bg-white border border-border-color">
+              <span className="text-slate font-medium">NBA §6 Approval</span>
+              <span className="font-bold text-error">Mandatory Before Patent</span>
+            </div>
+          </div>
+
+          <div className="p-3 bg-forest-green/10 rounded-lg border border-forest-green/20 text-[11px] text-forest-green leading-tight">
+            <strong>Judge-Proof Rule:</strong> A patent on traditional medicinal herbs cannot be granted in India even if foreign jurisdictions grant it, due to §3(p) and TKDL prior art pre-grant oppositions.
+          </div>
+        </div>
       </div>
 
-      {/* Disclaimer */}
-      <p className="text-xs text-slate border-t border-border-color pt-5 mb-8 leading-relaxed">
-        <strong>{t('common.disclaimer', 'Disclaimer:')}</strong> {t('common.disclaimerText', 'IP-SAKTI provides information and source-grounded guidance, not legal advice or a legal determination of protection.')}
-      </p>
+      {/* ── DETAILED IP ROUTES ACCORDION ───────────────────────────────── */}
+      <div className="space-y-4 mb-8">
+        <h2 className="text-lg font-heading font-bold text-forest-green">
+          Statutory Route-by-Route Deep Dive
+        </h2>
+
+        {/* 1. SECTION 3(p) TRADITIONAL KNOWLEDGE BAR */}
+        <div className="card overflow-hidden border border-border-color">
+          <button
+            type="button"
+            onClick={() => setExpandedSection(expandedSection === 'patent' ? null : 'patent')}
+            className="w-full flex items-center justify-between p-5 bg-warm-ivory/20 hover:bg-warm-ivory/50 transition-colors text-left"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-forest-green/10 flex items-center justify-center text-forest-green shrink-0">
+                <ShieldCheck size={18} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-charcoal">
+                  1. Patent Protection & Section 3 Statutory Bars
+                </h3>
+                <p className="text-xs text-slate">
+                  Patents Act 1970: §3(p) Traditional Knowledge Bar, §3(e) Synergism Bar, §3(d) Enhanced Efficacy
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                isPatentable ? 'bg-success/15 text-success' : 'bg-error/15 text-error'
+              }`}>
+                {isPatentable ? 'Process/Synergy Path' : 'Hard Statutory Bar'}
+              </span>
+              {expandedSection === 'patent' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            </div>
+          </button>
+
+          {expandedSection === 'patent' && (
+            <div className="p-6 border-t border-border-color space-y-4 text-sm text-charcoal leading-relaxed bg-white">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-lg border border-error/20 bg-error/5">
+                  <h4 className="font-bold text-error flex items-center gap-1.5 mb-2 text-xs uppercase tracking-wider">
+                    <XCircle size={15} /> What Is Strictly Prohibited (§3(p) & §3(e))
+                  </h4>
+                  <ul className="space-y-1.5 text-xs text-charcoal/90 list-disc list-inside">
+                    <li><strong>Mere Mixtures:</strong> Combining known classical herbs (e.g. Ashwagandha + Turmeric) without synergistic proof is barred under Section 3(e).</li>
+                    <li><strong>Known Indications:</strong> Using plants for indications documented in classical treatises (Charaka, Sushruta, API) is barred under Section 3(p).</li>
+                    <li><strong>Crude Extracts:</strong> Aqueous or alcohol crude extracts possessing known bioactivity cannot be patented as novel compounds.</li>
+                  </ul>
+                </div>
+
+                <div className="p-4 rounded-lg border border-success/20 bg-success/5">
+                  <h4 className="font-bold text-success flex items-center gap-1.5 mb-2 text-xs uppercase tracking-wider">
+                    <CheckCircle2 size={15} /> Legally Viable Patenting Routes
+                  </h4>
+                  <ul className="space-y-1.5 text-xs text-charcoal/90 list-disc list-inside">
+                    <li><strong>Novel Process Claims (§2(1)(j)):</strong> Proprietary extraction methods, such as supercritical CO2 fractionation with specific temperature/pressure parameters.</li>
+                    <li><strong>Novel Delivery Systems (NDDS):</strong> Liposomes, phytosomes, or nano-emulsions enhancing targeted bio-availability.</li>
+                    <li><strong>Proven Synergistic Compositions:</strong> Specific non-obvious ratios with experimental proof (Combination Index CI &lt; 0.8 in clinical/cell assays).</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-lg bg-warm-ivory border border-border-color text-xs space-y-2">
+                <p className="font-bold text-forest-green flex items-center gap-1.5">
+                  <AlertTriangle size={14} className="text-warning" /> Mandatory Requirement: NBA Section 6 Prior Approval
+                </p>
+                <p className="text-slate">
+                  Under <strong>Section 6 of the Biological Diversity Act, 2002</strong>, no person can apply for an Indian or international patent based on Indian biological resources without obtaining prior approval from the <strong>National Biodiversity Authority (NBA)</strong> via <strong>Form III</strong> before patent grant. Failure to comply constitutes a cognizable criminal offense under Section 55.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 2. TRADEMARK PROTECTION (TRADE MARKS ACT 1999) */}
+        <div className="card overflow-hidden border border-border-color">
+          <button
+            type="button"
+            onClick={() => setExpandedSection(expandedSection === 'trademark' ? null : 'trademark')}
+            className="w-full flex items-center justify-between p-5 bg-warm-ivory/20 hover:bg-warm-ivory/50 transition-colors text-left"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-forest-green/10 flex items-center justify-center text-forest-green shrink-0">
+                <Tag size={18} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-charcoal">
+                  2. Trademark Strategy (Trade Marks Act, 1999)
+                </h3>
+                <p className="text-xs text-slate">
+                  Nice Classification (Class 5, Class 3, Class 30) & Section 9 Absolute Grounds for Refusal
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-forest-green/10 text-forest-green">
+                Primary IPR Asset
+              </span>
+              {expandedSection === 'trademark' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            </div>
+          </button>
+
+          {expandedSection === 'trademark' && (
+            <div className="p-6 border-t border-border-color space-y-4 text-sm text-charcoal leading-relaxed bg-white">
+              <p className="text-xs text-slate leading-relaxed">
+                Because herbal formulations face severe patentability thresholds, <strong>Brand Equity (Trademark)</strong> is the strongest and most commercializable IP asset for Ayurvedic products.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="p-3.5 rounded-lg border border-border-color bg-warm-ivory/30">
+                  <span className="text-xs font-bold text-forest-green block mb-1">Class 5 (Recommended)</span>
+                  <p className="text-xs text-slate">
+                    Ayurvedic medicines, medicinal herbal preparations, pharmaceutical products, medicated oils.
+                  </p>
+                </div>
+                <div className="p-3.5 rounded-lg border border-border-color bg-warm-ivory/30">
+                  <span className="text-xs font-bold text-forest-green block mb-1">Class 3 (Cosmetics)</span>
+                  <p className="text-xs text-slate">
+                    Herbal soaps, Ayurvedic skin care lotions, hair oils, shampoos, beauty serums.
+                  </p>
+                </div>
+                <div className="p-3.5 rounded-lg border border-border-color bg-warm-ivory/30">
+                  <span className="text-xs font-bold text-forest-green block mb-1">Class 30 / 32 (Aahar)</span>
+                  <p className="text-xs text-slate">
+                    Ayurveda Aahar food supplements, herbal teas, infused spices, herbal functional beverages.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-lg bg-error/5 border border-error/20 text-xs">
+                <strong className="text-error block mb-1">Critical Section 9(1)(b) Refusal Bar:</strong>
+                <p className="text-charcoal/90">
+                  Generic Sanskrit classical terms such as <em>"Chyawanprash"</em>, <em>"Triphala"</em>, <em>"Brahmi Ghrita"</em>, or <em>"Kwath"</em> cannot be registered as individual exclusive trademarks because they are publici juris. Applicants must adopt distinctive, coined, or fanciful composite marks (e.g. <em>"NirogShakti™"</em> or <em>"Dabur Chyawanprash™"</em>).
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 3. GEOGRAPHICAL INDICATIONS (GI ACT 1999) */}
+        <div className="card overflow-hidden border border-border-color">
+          <button
+            type="button"
+            onClick={() => setExpandedSection(expandedSection === 'gi' ? null : 'gi')}
+            className="w-full flex items-center justify-between p-5 bg-warm-ivory/20 hover:bg-warm-ivory/50 transition-colors text-left"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-forest-green/10 flex items-center justify-center text-forest-green shrink-0">
+                <MapPin size={18} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-charcoal">
+                  3. Geographical Indications (GI of Goods Act, 1999)
+                </h3>
+                <p className="text-xs text-slate">
+                  Authorized User rights under Section 7(3) & Origin Verification
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                detectedGIs.length > 0 ? 'bg-muted-gold/20 text-muted-gold' : 'bg-slate/10 text-slate'
+              }`}>
+                {detectedGIs.length > 0 ? `${detectedGIs.length} Detected` : 'Standard Botanicals'}
+              </span>
+              {expandedSection === 'gi' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            </div>
+          </button>
+
+          {expandedSection === 'gi' && (
+            <div className="p-6 border-t border-border-color space-y-4 text-sm text-charcoal leading-relaxed bg-white">
+              {detectedGIs.length > 0 ? (
+                <div className="space-y-3">
+                  <div className="p-4 rounded-lg bg-muted-gold/10 border border-muted-gold/30 text-xs">
+                    <strong className="text-charcoal block mb-1">
+                      Registered GI Botanicals Detected in Formulation:
+                    </strong>
+                    <div className="space-y-2 mt-2">
+                      {detectedGIs.map((gi, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-2 rounded bg-white border border-border-color">
+                          <span className="font-semibold text-forest-green">{gi.giTitle}</span>
+                          <span className="text-slate font-medium">{gi.state}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-slate leading-relaxed">
+                    <strong>Statutory Compliance Requirement:</strong> If your product advertises or packages these ingredients with their GI names (e.g. <em>"Contains Certified Malabar Pepper"</em>), the enterprise must be registered as an <strong>Authorized User under Section 7(3)</strong> with the GI Registry in Chennai. Using registered GI titles without certification constitutes infringement under Section 22.
+                  </p>
+                </div>
+              ) : (
+                <div className="p-4 rounded-lg bg-warm-ivory text-xs text-slate">
+                  No registered GI botanical triggers detected for this specific ingredient composition. Standard pharmacopoeial specifications (API) apply.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* 4. TRADE SECRETS VS PATENTING STRATEGY */}
+        <div className="card overflow-hidden border border-border-color">
+          <button
+            type="button"
+            onClick={() => setExpandedSection(expandedSection === 'tradesecret' ? null : 'tradesecret')}
+            className="w-full flex items-center justify-between p-5 bg-warm-ivory/20 hover:bg-warm-ivory/50 transition-colors text-left"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-forest-green/10 flex items-center justify-center text-forest-green shrink-0">
+                <Lock size={18} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-charcoal">
+                  4. Trade Secret Protection vs Patent Disclosure
+                </h3>
+                <p className="text-xs text-slate">
+                  Protecting proprietary extraction ratios, fermentation microorganisms & temperature profiles
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-forest-green/10 text-forest-green">
+                Commercial Defense
+              </span>
+              {expandedSection === 'tradesecret' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            </div>
+          </button>
+
+          {expandedSection === 'tradesecret' && (
+            <div className="p-6 border-t border-border-color space-y-4 text-xs text-charcoal leading-relaxed bg-white">
+              <p className="text-slate leading-relaxed">
+                Filing a patent application mandates complete specification disclosure under Section 10 of the Patents Act. If the patent is subsequently refused under §3(p), the proprietary formulation enters the public domain without monopoly protection.
+              </p>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse border border-border-color text-xs">
+                  <thead>
+                    <tr className="bg-warm-ivory text-charcoal font-bold">
+                      <th className="p-2.5 border border-border-color">Parameter</th>
+                      <th className="p-2.5 border border-border-color">Patent Protection</th>
+                      <th className="p-2.5 border border-border-color">Trade Secret Protection</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="p-2.5 border border-border-color font-semibold">Duration</td>
+                      <td className="p-2.5 border border-border-color">20 years from filing date</td>
+                      <td className="p-2.5 border border-border-color text-success font-semibold">Perpetual (as long as secret is kept)</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2.5 border border-border-color font-semibold">Disclosure</td>
+                      <td className="p-2.5 border border-border-color text-error">Mandatory public disclosure</td>
+                      <td className="p-2.5 border border-border-color text-success font-semibold">Confidential under NDAs & SOPs</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2.5 border border-border-color font-semibold">Best Applied For</td>
+                      <td className="p-2.5 border border-border-color">Novel nano-delivery systems, synthetic analogs</td>
+                      <td className="p-2.5 border border-border-color">Proprietary blending ratios, fermentation strains</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Bottom navigation */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t border-border-color">
         <button
           type="button"
           onClick={handleBack}
-          aria-label={t('ipProtection.backToClassification', 'Back to Product Classification')}
-          className="flex items-center gap-2 text-sm font-medium text-forest-green border border-forest-green/40 px-5 py-2.5 rounded-lg hover:bg-forest-green hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-forest-green/50"
+          className="flex items-center gap-2 text-sm font-semibold text-forest-green border border-forest-green/40 px-5 py-2.5 rounded-lg hover:bg-forest-green hover:text-white transition-colors cursor-pointer"
         >
-          <ArrowLeft size={16} /> {t('ipProtection.backToClassification', 'Back to Product Classification')}
+          <ArrowLeft size={16} /> Back to Product Classification
         </button>
         <button
           type="button"
           onClick={handleContinue}
-          aria-label={t('ipProtection.continueToRegulatory', 'Continue to Regulatory Check')}
-          className="flex items-center gap-2 bg-forest-green text-white px-6 py-2.5 rounded-lg font-medium hover:bg-deep-teal transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-forest-green/50"
+          className="flex items-center gap-2 bg-forest-green text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-deep-teal transition-colors shadow-sm cursor-pointer"
         >
-          {t('ipProtection.continueToRegulatory', 'Continue to Regulatory Check')} <ArrowRight size={16} />
+          Continue to Regulatory Check <ArrowRight size={16} />
         </button>
       </div>
 
-      {/* Requirements panel modal */}
-      {openPanel && (
-        <RequirementsPanel
-          route={openPanel}
-          jurisdiction={effectiveJurisdiction}
-          onClose={handleClosePanel}
-        />
+      {/* Claims Drafting Guidance Modal */}
+      {showClaimsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/60 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-border-color pb-3">
+              <h3 className="text-lg font-bold text-forest-green flex items-center gap-2">
+                <FileText size={20} />
+                IPO Claims Drafting Strategy Roadmap
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowClaimsModal(false)}
+                className="text-slate hover:text-charcoal text-lg font-bold p-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs text-charcoal leading-relaxed">
+              <div className="p-3 rounded-lg bg-error/10 border border-error/20">
+                <strong className="text-error block mb-1">Claim Type 1: Crude Botanical Formulation (DO NOT DRAFT)</strong>
+                <code className="text-[11px] block bg-white p-2 rounded border border-border-color text-charcoal/90">
+                  "A medicinal composition comprising 50% Curcuma longa and 50% Zingiber officinale for treating arthritis."
+                </code>
+                <p className="mt-1 text-slate">
+                  <strong>IPO Examiner Objection:</strong> Section 3(p) absolute rejection; cited against TKDL references and Charaka Samhita.
+                </p>
+              </div>
+
+              <div className="p-3 rounded-lg bg-success/10 border border-success/20">
+                <strong className="text-success block mb-1">Claim Type 2: Standardized Process & Synergistic Fraction (PATENTABLE)</strong>
+                <code className="text-[11px] block bg-white p-2 rounded border border-border-color text-charcoal/90">
+                  "A process for preparing an enriched bioactive phyto-complex comprising: (a) supercritical CO2 extraction at 280 bar and 45°C to isolate Fraction A; (b) micro-encapsulating said Fraction A in a phospholipid matrix to achieve a dissolution rate exceeding 85% in 30 minutes..."
+                </code>
+                <p className="mt-1 text-slate">
+                  <strong>IPO Examiner Disposition:</strong> Novel process under Section 2(1)(j). Overcomes §3(p) if experimental bio-availability data is provided.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-2 text-right">
+              <button
+                type="button"
+                onClick={() => setShowClaimsModal(false)}
+                className="px-4 py-2 bg-forest-green text-white rounded-lg text-xs font-bold hover:bg-deep-teal cursor-pointer"
+              >
+                Close Guidance
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
-};
-
-export default IpProtection;
+}

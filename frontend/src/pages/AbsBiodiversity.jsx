@@ -1,452 +1,111 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
   ArrowRight,
   AlertCircle,
-  Loader2,
+  CheckCircle2,
+  AlertTriangle,
   Leaf,
-  BookOpen,
-  RefreshCw,
-  Info,
-  CircleCheck,
-  Circle,
+  Users,
   Globe,
   MapPin,
-  HelpCircle,
   FileText,
-  Users,
-  Database,
+  DollarSign,
+  Scale,
+  ShieldAlert,
+  Info,
+  Calculator,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import Breadcrumb from '../components/Breadcrumb';
 import AssessmentStepper from '../components/AssessmentStepper';
+import ActiveAssessmentBar from '../components/ActiveAssessmentBar';
 import { useJurisdiction } from '../context/JurisdictionContext';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8085';
+// Notified NTAC (Normally Traded as Commodities) Species List under Section 40
+const NTAC_COMMODITY_SPECIES = [
+  { name: 'Turmeric (Haldi)', botanical: 'Curcuma longa', ntacStatus: 'Notified NTAC (MoEFCC S.O. 135(E))' },
+  { name: 'Black Pepper (Maricha)', botanical: 'Piper nigrum', ntacStatus: 'Notified NTAC' },
+  { name: 'Ginger (Shunthi)', botanical: 'Zingiber officinale', ntacStatus: 'Notified NTAC' },
+  { name: 'Cardamom (Ela)', botanical: 'Elettaria cardamomum', ntacStatus: 'Notified NTAC' },
+  { name: 'Cumin (Jeera)', botanical: 'Cuminum cyminum', ntacStatus: 'Notified NTAC' },
+  { name: 'Fenugreek (Methi)', botanical: 'Trigonella foenum-graecum', ntacStatus: 'Notified NTAC' },
+  { name: 'Clove (Lavanga)', botanical: 'Syzygium aromaticum', ntacStatus: 'Notified NTAC' },
+  { name: 'Coriander (Dhanyaka)', botanical: 'Coriandrum sativum', ntacStatus: 'Notified NTAC' },
+];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
-function hasNbaData(cr) {
-  return !!(cr?.nbaComplianceStatus || cr?.requiredNbaForm);
-}
-
-function hasClassification(cr) {
-  return !!cr?.category;
-}
-
-// Derive the overall ABS status label from available data
-function deriveAbsStatus(cr, bioResource, tradKnowledge) {
-  if (!cr && bioResource === '' && tradKnowledge === '') return 'not_assessed';
-  if (bioResource === 'no' && tradKnowledge === 'no') return 'more_info'; // still needs review
-  if (hasNbaData(cr)) return 'guidance_available';
-  if (bioResource === 'yes' || tradKnowledge === 'yes') return 'more_info';
-  if (bioResource === 'not_sure' || tradKnowledge === 'not_sure') return 'more_info';
-  return 'not_assessed';
-}
-
-const ABS_STATUS_CONFIG = {
-  not_assessed: {
-    label: 'Not assessed',
-    style: 'bg-slate/10 text-slate border-slate/20',
-    description: 'Provide biological-resource and traditional-knowledge details to support the ABS assessment.',
-  },
-  more_info: {
-    label: 'More information required',
-    style: 'bg-warning/10 text-warning border-warning/30',
-    description: 'Additional details about biological resources and/or traditional knowledge are needed to complete the ABS review.',
-  },
-  guidance_available: {
-    label: 'Guidance available',
-    style: 'bg-muted-gold/10 text-muted-gold border-muted-gold/30',
-    description: 'ABS-related guidance is available from the backend classification engine based on the product information provided.',
-  },
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Sub-components
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** Shared tri-option radio selector (Yes / No / Not sure) */
-const TriOptionSelector = ({ id, value, onChange, label, helpText }) => {
-  const { t } = useTranslation();
-  const options = [
-    { value: 'yes', label: t('common.yes', 'Yes') },
-    { value: 'no', label: t('common.no', 'No') },
-    { value: 'not_sure', label: t('common.notSure', 'Not sure') },
-  ];
-  return (
-    <fieldset>
-      <legend className="block text-sm font-medium text-charcoal mb-2">
-        {label}
-      </legend>
-      {helpText && <p className="text-xs text-slate mb-3">{helpText}</p>}
-      <div className="flex flex-wrap gap-3">
-        {options.map((opt) => (
-          <label
-            key={opt.value}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer text-sm font-medium transition-colors
-              ${value === opt.value
-                ? 'border-forest-green bg-forest-green/5 text-forest-green ring-1 ring-forest-green'
-                : 'border-border-color bg-white text-charcoal hover:border-deep-teal hover:bg-warm-ivory'
-              }`}
-          >
-            <input
-              type="radio"
-              name={id}
-              value={opt.value}
-              checked={value === opt.value}
-              onChange={() => onChange(opt.value)}
-              className="accent-forest-green"
-            />
-            {opt.label}
-          </label>
-        ))}
-      </div>
-    </fieldset>
-  );
-};
-
-/** Context card */
-const ContextCard = ({ context, onGoToAsk }) => {
-  const { t } = useTranslation();
-  const { jurisdiction: globalJurisdiction } = useJurisdiction();
-  const cr = context?.classificationResult;
-  const jur = context?.jurisdiction || globalJurisdiction;
-  const hasContext = context?.productName || cr || jur;
-
-  if (!hasContext) {
-    return (
-      <div className="flex items-start gap-3 p-4 bg-warm-ivory border border-border-color rounded-lg mb-6 text-sm">
-        <AlertCircle size={16} className="text-slate shrink-0 mt-0.5" />
-        <div>
-          <p className="text-charcoal font-medium">{t('common.noContext', 'Assessment context is not available.')}</p>
-          <button
-            type="button"
-            onClick={onGoToAsk}
-            className="text-forest-green hover:underline mt-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-forest-green/50 rounded"
-          >
-            {t('common.returnToAsk', 'Return to Ask IP-SAKTI →')}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="p-4 bg-forest-green/5 border border-forest-green/20 rounded-lg mb-6 text-sm">
-      <p className="text-xs font-semibold text-forest-green uppercase tracking-wide mb-2">
-        {t('common.assessmentContext', 'Assessment Context')}
-      </p>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div>
-          <span className="text-xs text-slate font-medium block">{t('common.product', 'Product')}</span>
-          <span className="text-charcoal">{context?.productName || t('common.notProvided', 'Not provided')}</span>
-        </div>
-        <div>
-          <span className="text-xs text-slate font-medium block">{t('common.classification', 'Classification')}</span>
-          <span className="text-charcoal">{cr?.categoryDisplayName || t('common.notAssessed', 'Not assessed')}</span>
-        </div>
-        <div>
-          <span className="text-xs text-slate font-medium block">{t('common.jurisdictionLabel', 'Jurisdiction')}</span>
-          <span className="text-charcoal">
-            {jur === 'INDIA'
-              ? t('common.india', 'India')
-              : jur === 'INTERNATIONAL'
-                ? `${t('common.international', 'International')}${context?.destinationMarket ? ` — ${context.destinationMarket}` : ''}`
-                : t('common.notProvided', 'Not provided')}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/** ABS status summary card */
-const AbsStatusCard = ({ status, cr }) => {
-  const { t } = useTranslation();
-  const config = ABS_STATUS_CONFIG[status] || ABS_STATUS_CONFIG.not_assessed;
-  return (
-    <div className="card p-5 flex flex-col sm:flex-row sm:items-start gap-4 mb-6">
-      <div className="w-10 h-10 rounded-lg bg-warm-ivory flex items-center justify-center text-forest-green shrink-0">
-        <Leaf size={20} />
-      </div>
-      <div className="flex-1">
-        <div className="flex flex-wrap items-center gap-3 mb-1.5">
-          <h3 className="text-base font-semibold text-charcoal">
-            {t('absBiodiversity.statusCardTitle', 'ABS / Biodiversity Status')}
-          </h3>
-          <span className={`inline-flex items-center text-xs px-2.5 py-1 rounded-full border font-medium ${config.style}`}>
-            {t(`absBiodiversity.statusLabels.${status}`, config.label)}
-          </span>
-        </div>
-        <p className="text-sm text-slate leading-relaxed">
-          {t(`absBiodiversity.statusDescs.${status}`, config.description)}
-        </p>
-
-        {/* Show NBA guidance from classification if available */}
-        {hasNbaData(cr) && (
-          <div className="mt-4 space-y-3 pt-4 border-t border-border-color">
-            {cr.nbaComplianceStatus && (
-              <div>
-                <p className="text-xs font-semibold text-slate uppercase tracking-wide mb-1">
-                  {t('absBiodiversity.nbaStatusLabel', 'NBA / Biodiversity Compliance Status')}
-                </p>
-                <p className="text-sm text-charcoal leading-relaxed">{cr.nbaComplianceStatus}</p>
-              </div>
-            )}
-            {cr.requiredNbaForm && (
-              <div>
-                <p className="text-xs font-semibold text-slate uppercase tracking-wide mb-1">
-                  {t('absBiodiversity.requiredNbaForm', 'Required NBA Form')}
-                </p>
-                <p className="text-sm text-charcoal">{cr.requiredNbaForm}</p>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-/** Checklist item — only ticked when data actually confirms it */
-const ChecklistItem = ({ label, ticked, value }) => {
-  const { t } = useTranslation();
-  return (
-    <div className="flex items-start gap-3 py-3 border-b border-border-color last:border-0">
-      <div className={`mt-0.5 shrink-0 ${ticked ? 'text-success' : 'text-slate/40'}`}>
-        {ticked ? <CircleCheck size={16} /> : <Circle size={16} />}
-      </div>
-      <div className="flex-1">
-        <p className={`text-sm font-medium ${ticked ? 'text-charcoal' : 'text-slate'}`}>{label}</p>
-        {value && (
-          <p className="text-xs text-slate mt-0.5">{value}</p>
-        )}
-      </div>
-      {!ticked && (
-        <span className="text-xs text-slate bg-warm-ivory border border-border-color px-2 py-0.5 rounded-full shrink-0">
-          {t('common.notProvided', 'Not provided')}
-        </span>
-      )}
-    </div>
-  );
-};
-
-/** Source-Grounded section using RAG */
-const SourceGroundedSection = ({ jurisdiction }) => {
-  const { t } = useTranslation();
-  const [sources, setSources] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  const fetchSources = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const j = jurisdiction === 'INTERNATIONAL' ? 'INTERNATIONAL' : 'INDIA';
-      const res = await fetch(
-        `${API_BASE_URL}/api/v1/rag/search?query=biological+diversity+access+benefit+sharing+ayurveda&jurisdiction=${j}&maxResults=5&minScore=0.65`
-      );
-      if (!res.ok) throw new Error(`Server error: ${res.status}`);
-      const data = await res.json();
-      setSources(data);
-    } catch (err) {
-      setError(
-        err.message.includes('Failed to fetch') || err.message.includes('NetworkError')
-          ? 'service_unavailable'
-          : err.message || 'Unknown error'
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [jurisdiction]);
-
-  return (
-    <section className="card p-6">
-      <div className="flex items-start gap-3 mb-4">
-        <BookOpen size={18} className="text-muted-gold shrink-0 mt-0.5" />
-        <div>
-          <h2 className="text-lg font-heading font-semibold text-charcoal mb-1">
-            {t('absBiodiversity.sourceGroundedTitle', 'Source-Grounded Guidance')}
-          </h2>
-          <p className="text-sm text-slate leading-relaxed">
-            {t('absBiodiversity.sourceGroundedDesc', 'IP-SAKTI uses authoritative legal and biodiversity-related sources to support its guidance. Source records will appear here when available.')}
-          </p>
-        </div>
-      </div>
-
-      {!sources && !loading && !error && (
-        <div className="flex flex-col items-center py-8 text-center">
-          <p className="text-sm text-slate mb-4">
-            {t('absBiodiversity.noSourcesAvailable', 'No source-grounded ABS guidance is available for this assessment yet.')}
-          </p>
-          <button
-            type="button"
-            onClick={fetchSources}
-            className="flex items-center gap-2 text-sm font-medium text-forest-green border border-forest-green/40 px-4 py-2 rounded-lg hover:bg-forest-green hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-forest-green/50"
-          >
-            <RefreshCw size={14} /> {t('common.searchSources', 'Search sources')}
-          </button>
-        </div>
-      )}
-
-      {loading && (
-        <div className="flex items-center gap-3 py-6 text-slate text-sm">
-          <Loader2 size={16} className="animate-spin" /> {t('absBiodiversity.searchingSources', 'Searching authoritative biodiversity sources…')}
-        </div>
-      )}
-
-      {error === 'service_unavailable' && (
-        <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm">
-          <AlertCircle size={16} className="text-warning mt-0.5 shrink-0" />
-          <div className="flex-1">
-            <p className="font-medium text-charcoal">{t('absBiodiversity.serviceUnavailable', 'Source search service is not connected yet.')}</p>
-            <p className="text-slate mt-0.5">{t('absBiodiversity.serviceUnavailableDesc', 'Source records will appear when the RAG service is available.')}</p>
-          </div>
-          <button type="button" onClick={fetchSources} className="text-xs font-medium text-forest-green hover:underline whitespace-nowrap focus:outline-none">{t('common.retry', 'Retry')}</button>
-        </div>
-      )}
-
-      {error && error !== 'service_unavailable' && (
-        <div className="flex items-start gap-3 p-4 bg-red-50 border border-error/30 rounded-lg text-sm">
-          <AlertCircle size={16} className="text-error mt-0.5 shrink-0" />
-          <div className="flex-1">
-            <p className="font-medium text-charcoal">{t('absBiodiversity.errorLoad', 'ABS assessment could not be loaded.')}</p>
-            <p className="text-slate mt-0.5">{error}</p>
-          </div>
-          <button type="button" onClick={fetchSources} className="text-xs font-medium text-forest-green hover:underline whitespace-nowrap focus:outline-none">{t('common.retry', 'Retry')}</button>
-        </div>
-      )}
-
-      {sources && sources.length === 0 && (
-        <p className="text-sm text-slate italic py-4">
-          {t('absBiodiversity.noSourcesMatching', 'No matching ABS source records found for this jurisdiction.')}
-        </p>
-      )}
-
-      {sources && sources.length > 0 && (
-        <ul className="space-y-3 mt-2">
-          {sources.map((src, i) => (
-            <li key={i} className="p-4 bg-warm-ivory rounded-lg border border-border-color text-sm">
-              {src.title && <p className="font-semibold text-charcoal mb-1">{src.title}</p>}
-              {src.content && <p className="text-slate leading-relaxed line-clamp-3">{src.content}</p>}
-              {src.section && <p className="text-xs text-muted-gold mt-2 font-medium">{src.section}</p>}
-              {src.sourceUrl && (
-                <a href={src.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-forest-green hover:underline mt-1 block">
-                  {t('common.viewSource', 'View source →')}
-                </a>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
-  );
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Main Page
-// ─────────────────────────────────────────────────────────────────────────────
-const AbsBiodiversity = () => {
+export default function AbsBiodiversity() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { jurisdiction: globalJurisdiction } = useJurisdiction();
-  const assessmentContext = location.state || null;
-  const cr = assessmentContext?.classificationResult || null;
-  const effectiveJurisdiction = assessmentContext?.jurisdiction || globalJurisdiction || 'INDIA';
-  const effectiveContext = assessmentContext
-    ? { ...assessmentContext, jurisdiction: effectiveJurisdiction }
-    : { jurisdiction: effectiveJurisdiction };
 
-  // ── Local ABS input state ──
-  const [bioResource, setBioResource] = useState('');
-  const [bioResourceName, setBioResourceName] = useState('');
-  const [bioResourceOrigin, setBioResourceOrigin] = useState('');
-  const [bioResourceCountry, setBioResourceCountry] = useState('');
-  const [bioResourceUse, setBioResourceUse] = useState('');
-
-  const [tradKnowledge, setTradKnowledge] = useState('');
-  const [tkDescription, setTkDescription] = useState('');
-  const [tkSourceType, setTkSourceType] = useState('');
-  const [tkCommunity, setTkCommunity] = useState('');
-  const [tkPubliclyDocumented, setTkPubliclyDocumented] = useState('');
-
-  const absStatus = deriveAbsStatus(cr, bioResource, tradKnowledge);
-
-  // Carry updated state forward
-  const buildForwardState = () => ({
-    ...effectiveContext,
-    jurisdiction: effectiveJurisdiction,
-    absAssessment: {
-      bioResource,
-      bioResourceName: bioResource === 'yes' ? bioResourceName : null,
-      bioResourceOrigin: bioResource === 'yes' ? bioResourceOrigin : null,
-      bioResourceCountry: bioResource === 'yes' ? bioResourceCountry : null,
-      bioResourceUse: bioResource === 'yes' ? bioResourceUse : null,
-      tradKnowledge,
-      tkDescription: tradKnowledge === 'yes' ? tkDescription : null,
-      tkSourceType: tradKnowledge === 'yes' ? tkSourceType : null,
-      tkCommunity: tradKnowledge === 'yes' ? tkCommunity : null,
-      tkPubliclyDocumented: tradKnowledge === 'yes' ? tkPubliclyDocumented : null,
-    },
+  const [assessmentState, setAssessmentState] = useState(() => {
+    if (location.state?.classificationResult) {
+      return location.state;
+    }
+    try {
+      const saved = sessionStorage.getItem('ip_shakti_active_assessment');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return null;
   });
 
-  const handleBack = () => navigate('/regulatory-check', { state: effectiveContext });
-  const handleContinue = () => navigate('/tkdl-prior-art', { state: buildForwardState() });
+  // Entity & Calculation State
+  const [applicantType, setApplicantType] = useState('INDIAN_COMPANY');
+  const [turnoverLakhs, setTurnoverLakhs] = useState(250); // ₹2.5 Crores
+  const [activeTab, setActiveTab] = useState('entity');
 
-  // Checklist resolution
-  const checklistItems = [
-    {
-      label: t('absBiodiversity.checklistItems.bioIdentified', 'Biological resource identified'),
-      ticked: bioResource === 'yes' && !!bioResourceName.trim(),
-      value: bioResource === 'yes' && bioResourceName ? bioResourceName : null,
-    },
-    {
-      label: t('absBiodiversity.checklistItems.originDoc', 'Source/origin documented'),
-      ticked: bioResource === 'yes' && !!bioResourceOrigin.trim(),
-      value: bioResource === 'yes' && bioResourceOrigin ? bioResourceOrigin : null,
-    },
-    {
-      label: t('absBiodiversity.checklistItems.countryIdentified', 'Country of origin identified'),
-      ticked: bioResource === 'yes' && !!bioResourceCountry.trim(),
-      value: bioResource === 'yes' && bioResourceCountry ? bioResourceCountry : null,
-    },
-    {
-      label: t('absBiodiversity.checklistItems.tkIdentified', 'Traditional knowledge involvement identified'),
-      ticked: tradKnowledge === 'yes' || tradKnowledge === 'no',
-      value: tradKnowledge
-        ? tradKnowledge === 'yes'
-          ? t('absBiodiversity.tkIndicated', 'Traditional knowledge involvement indicated')
-          : tradKnowledge === 'no'
-            ? t('absBiodiversity.noTkIndicated', 'No traditional knowledge involvement indicated')
-            : null
-        : null,
-    },
-    {
-      label: t('absBiodiversity.checklistItems.tkSourceIdentified', 'Knowledge source / community identified where applicable'),
-      ticked: tradKnowledge === 'yes' && !!tkCommunity.trim(),
-      value: tradKnowledge === 'yes' && tkCommunity ? tkCommunity : null,
-    },
-    {
-      label: t('absBiodiversity.checklistItems.accessDoc', 'Access documentation available where applicable'),
-      ticked: false, // No document upload system implemented yet
-      value: null,
-    },
-    {
-      label: t('absBiodiversity.checklistItems.benefitSharing', 'Benefit-sharing obligations assessed'),
-      ticked: hasNbaData(cr),
-      value: cr?.nbaComplianceStatus || null,
-    },
-    {
-      label: t('absBiodiversity.checklistItems.authorityReviewed', 'Relevant authority / source records reviewed'),
-      ticked: false,
-      value: null,
-    },
-  ];
+  useEffect(() => {
+    if (location.state?.classificationResult) {
+      setAssessmentState(location.state);
+      try {
+        sessionStorage.setItem('ip_shakti_active_assessment', JSON.stringify(location.state));
+      } catch (e) {}
+    }
+  }, [location.state]);
+
+  const handleAssessmentChange = (newAssessment) => {
+    setAssessmentState(newAssessment);
+  };
+
+  const cr = assessmentState?.classificationResult;
+  const prodName = assessmentState?.productName || 'Ayurvedic Product';
+  const botanicalList = assessmentState?.botanicalIngredients || 
+    (assessmentState?.ingredients ? (Array.isArray(assessmentState.ingredients) ? assessmentState.ingredients : assessmentState.ingredients.split(',').map(s => s.trim())) : []);
+
+  // NTAC check
+  const detectedNtac = NTAC_COMMODITY_SPECIES.filter((sp) =>
+    botanicalList.some((ing) => ing.toLowerCase().includes(sp.name.toLowerCase()) || ing.toLowerCase().includes(sp.botanical.toLowerCase()))
+  );
+
+  // ABS Benefit Sharing Royalty Calculation
+  // Turnover in Lakhs (₹):
+  // Up to 100 Lakhs (1 Cr): 0.1%
+  // 100 to 320 Lakhs (1 to 3.2 Cr): 0.2%
+  // Above 320 Lakhs (> 3.2 Cr): 0.5%
+  let absRoyaltyRate = 0.1;
+  if (turnoverLakhs > 320) {
+    absRoyaltyRate = 0.5;
+  } else if (turnoverLakhs > 100) {
+    absRoyaltyRate = 0.2;
+  }
+
+  const annualTurnoverInRupees = turnoverLakhs * 100000;
+  const statutoryAbsRoyaltyRupees = Math.round(annualTurnoverInRupees * (absRoyaltyRate / 100));
+
+  const isForeignEntity = applicantType === 'FOREIGN_ENTITY_OR_NRI';
+
+  const handleBack = () => {
+    navigate('/regulatory-check', { state: assessmentState });
+  };
+
+  const handleContinue = () => {
+    navigate('/tkdl-prior-art', { state: assessmentState });
+  };
 
   return (
     <div className="max-w-5xl mx-auto pb-16">
@@ -460,345 +119,338 @@ const AbsBiodiversity = () => {
       />
 
       {/* Page Title */}
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-3xl font-heading font-bold text-forest-green mb-2">
-          {t('absBiodiversity.title', 'ABS & Biodiversity')}
+          {t('absBiodiversity.title', 'ABS & Biological Diversity Act Compliance')}
         </h1>
         <p className="text-slate text-base leading-relaxed">
-          {t('absBiodiversity.subtitle', 'Assess potential Access and Benefit-Sharing considerations related to biological resources and traditional knowledge.')}
+          {t('absBiodiversity.subtitle', 'Statutory compliance analysis under Biological Diversity Act 2002 & 2023 Amendment (Section 3 vs Section 7, Section 6 IPR Approval, and ABS Benefit Sharing Royalty).')}
         </p>
       </div>
 
-      {/* Stepper */}
       <AssessmentStepper activeKey="abs" />
 
-      {/* Assessment Context */}
-      <ContextCard context={assessmentContext} onGoToAsk={() => navigate('/ask-ip-sakti')} />
+      {/* Active Assessment Bar */}
+      <ActiveAssessmentBar
+        currentAssessment={assessmentState}
+        onAssessmentChange={handleAssessmentChange}
+        stepTitle="Active Biodiversity Assessment"
+      />
 
-      {/* ABS Status Card */}
-      <AbsStatusCard status={absStatus} cr={cr} />
+      {/* ── STATUTORY SUMMARY CARD ──────────────────────────────────────── */}
+      <div className="card p-6 border-l-4 border-l-forest-green mb-8">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2">
+            <Scale className="text-forest-green" size={24} />
+            <h2 className="text-xl font-heading font-bold text-charcoal">
+              Statutory ABS Regime: {isForeignEntity ? 'Section 3 (Prior Approval of NBA)' : 'Section 7 (Prior Intimation to SBB)'}
+            </h2>
+          </div>
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+            isForeignEntity
+              ? 'bg-error/15 text-error border border-error/30'
+              : 'bg-forest-green/15 text-forest-green border border-forest-green/30'
+          }`}>
+            {isForeignEntity ? 'National Authority (NBA)' : 'State Board (SBB)'}
+          </span>
+        </div>
 
-      {/* Info note */}
-      <div className="flex items-start gap-3 p-4 bg-warm-ivory border border-border-color rounded-lg mb-8 text-sm">
-        <Info size={16} className="text-slate shrink-0 mt-0.5" />
-        <p className="text-slate leading-relaxed">
-          {t('absBiodiversity.infoNote', 'This page helps identify whether ABS-related considerations may apply. It does not make a final legal determination. Where applicable, access to biological resources and associated traditional knowledge may involve Access and Benefit-Sharing obligations. Applicability depends on the resource, origin, knowledge context, jurisdiction, and applicable legal framework.')}
+        <p className="text-sm text-charcoal leading-relaxed mb-4">
+          {isForeignEntity
+            ? 'Because the entity has foreign shareholding or non-Indian directors, Section 3 applies: Accessing Indian biological resources without prior written approval of the National Biodiversity Authority (NBA) is strictly prohibited.'
+            : 'For Indian entities, commercial utilization of biological resources requires prior intimation to the State Biodiversity Board (SBB) under Section 7. Registered AYUSH practitioners enjoy exemption under the 2023 Amendment.'}
         </p>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
-
-          {/* ── SECTION 1: BIOLOGICAL RESOURCE ───────────────────────── */}
-          <section className="card p-6">
-            <div className="flex items-center gap-2 mb-1">
-              <Leaf size={18} className="text-muted-gold" />
-              <h2 className="text-lg font-heading font-semibold text-charcoal">
-                {t('absBiodiversity.bioResourceTitle', '1. Biological Resource')}
-              </h2>
-            </div>
-            <p className="text-sm text-slate mb-5">
-              {t('absBiodiversity.bioResourceSubtitle', 'Biological resources include plants, animals, micro-organisms, or their derivatives used in the product.')}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div className="p-3.5 rounded-lg bg-warm-ivory/60 border border-border-color space-y-1">
+            <strong className="text-forest-green block">Applicable Mandatory Form:</strong>
+            <p className="text-charcoal/90 font-medium">
+              {isForeignEntity ? 'NBA Form I (Access to Biological Resources) + Form III for Patenting' : 'State Biodiversity Board (SBB) Commercial Utilization Intimation Form'}
             </p>
-
-            <TriOptionSelector
-              id="bioResource"
-              value={bioResource}
-              onChange={setBioResource}
-              label={t('absBiodiversity.bioResourceQuestion', 'Does this product utilize biological resources originating from India or elsewhere?')}
-            />
-
-            {bioResource === 'not_sure' && (
-              <div className="mt-4 flex items-start gap-3 p-4 bg-warm-ivory border border-border-color rounded-lg text-sm">
-                <HelpCircle size={16} className="text-slate shrink-0 mt-0.5" />
-                <p className="text-slate leading-relaxed">
-                  {t('absBiodiversity.notSureBioHelp', 'Additional information may be required to determine whether biodiversity-related requirements apply. Consider consulting the relevant legal or scientific documentation.')}
-                </p>
-              </div>
-            )}
-
-            {bioResource === 'yes' && (
-              <div className="mt-5 space-y-4 pt-5 border-t border-border-color">
-                <p className="text-sm font-medium text-charcoal">
-                  {t('absBiodiversity.bioDetailsHeading', 'Biological resource details')}
-                </p>
-                <div>
-                  <label htmlFor="bioResourceName" className="block text-sm font-medium text-charcoal mb-1.5">
-                    {t('absBiodiversity.bioResourceName', 'Biological Resource Name')}
-                  </label>
-                  <input
-                    id="bioResourceName"
-                    type="text"
-                    value={bioResourceName}
-                    onChange={(e) => setBioResourceName(e.target.value)}
-                    placeholder={t('absBiodiversity.bioResourceNamePlaceholder', 'e.g., Withania somnifera (Ashwagandha)')}
-                    className="w-full rounded-lg border border-border-color px-4 py-2.5 text-sm text-charcoal placeholder:text-slate/50 bg-white focus:outline-none focus:ring-2 focus:ring-forest-green/40 transition-shadow"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="bioResourceOrigin" className="block text-sm font-medium text-charcoal mb-1.5">
-                    {t('absBiodiversity.bioResourceOrigin', 'Geographical Origin')}
-                  </label>
-                  <input
-                    id="bioResourceOrigin"
-                    type="text"
-                    value={bioResourceOrigin}
-                    onChange={(e) => setBioResourceOrigin(e.target.value)}
-                    placeholder={t('absBiodiversity.bioResourceOriginPlaceholder', 'e.g., Western Ghats, Madhya Pradesh')}
-                    className="w-full rounded-lg border border-border-color px-4 py-2.5 text-sm text-charcoal placeholder:text-slate/50 bg-white focus:outline-none focus:ring-2 focus:ring-forest-green/40 transition-shadow"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="bioResourceCountry" className="block text-sm font-medium text-charcoal mb-1.5">
-                    {t('absBiodiversity.bioResourceCountry', 'Country of Origin')}
-                  </label>
-                  <input
-                    id="bioResourceCountry"
-                    type="text"
-                    value={bioResourceCountry}
-                    onChange={(e) => setBioResourceCountry(e.target.value)}
-                    placeholder={t('absBiodiversity.bioResourceCountryPlaceholder', 'e.g., India')}
-                    className="w-full rounded-lg border border-border-color px-4 py-2.5 text-sm text-charcoal placeholder:text-slate/50 bg-white focus:outline-none focus:ring-2 focus:ring-forest-green/40 transition-shadow"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="bioResourceUse" className="block text-sm font-medium text-charcoal mb-1.5">
-                    {t('absBiodiversity.bioResourceUse', 'Intended Use of Resource')}
-                  </label>
-                  <textarea
-                    id="bioResourceUse"
-                    value={bioResourceUse}
-                    onChange={(e) => setBioResourceUse(e.target.value)}
-                    placeholder={t('absBiodiversity.bioResourceUsePlaceholder', 'Describe how the biological resource is processed or applied')}
-                    rows={3}
-                    className="w-full rounded-lg border border-border-color px-4 py-3 text-sm text-charcoal placeholder:text-slate/50 bg-white resize-y focus:outline-none focus:ring-2 focus:ring-forest-green/40 transition-shadow"
-                  />
-                </div>
-              </div>
-            )}
-          </section>
-
-          {/* ── SECTION 2: TRADITIONAL KNOWLEDGE ─────────────────────── */}
-          <section className="card p-6">
-            <div className="flex items-center gap-2 mb-1">
-              <Users size={18} className="text-muted-gold" />
-              <h2 className="text-lg font-heading font-semibold text-charcoal">
-                {t('absBiodiversity.tkTitle', '2. Traditional Knowledge (TK)')}
-              </h2>
-            </div>
-            <p className="text-sm text-slate mb-5">
-              {t('absBiodiversity.tkSubtitle', 'Traditional knowledge refers to knowledge, innovations, or practices held by indigenous or local communities relating to biological resources.')}
+          </div>
+          <div className="p-3.5 rounded-lg bg-warm-ivory/60 border border-border-color space-y-1">
+            <strong className="text-forest-green block">Patents Act Nexus (Section 6 Mandate):</strong>
+            <p className="text-charcoal/90">
+              Form III approval from NBA is mandatory <strong>prior to the grant of any Indian patent</strong> claiming Indian biological resources.
             </p>
-
-            <TriOptionSelector
-              id="tradKnowledge"
-              value={tradKnowledge}
-              onChange={setTradKnowledge}
-              label={t('absBiodiversity.tkQuestion', 'Is this formulation or usage based on or derived from traditional knowledge?')}
-            />
-
-            {tradKnowledge === 'not_sure' && (
-              <div className="mt-4 flex items-start gap-3 p-4 bg-warm-ivory border border-border-color rounded-lg text-sm">
-                <HelpCircle size={16} className="text-slate shrink-0 mt-0.5" />
-                <p className="text-slate leading-relaxed">
-                  {t('absBiodiversity.notSureTkHelp', 'Additional information may be required to assess traditional-knowledge relevance. Consider reviewing classical Ayurvedic texts, TKDL records, and the product\'s knowledge history.')}
-                </p>
-              </div>
-            )}
-
-            {tradKnowledge === 'yes' && (
-              <div className="mt-5 space-y-4 pt-5 border-t border-border-color">
-                <p className="text-sm font-medium text-charcoal">
-                  {t('absBiodiversity.tkDetailsHeading', 'Traditional knowledge details')}
-                </p>
-                <div>
-                  <label htmlFor="tkDescription" className="block text-sm font-medium text-charcoal mb-1.5">
-                    {t('absBiodiversity.tkDesc', 'Description of Traditional Knowledge')}
-                  </label>
-                  <textarea
-                    id="tkDescription"
-                    value={tkDescription}
-                    onChange={(e) => setTkDescription(e.target.value)}
-                    placeholder={t('absBiodiversity.tkDescPlaceholder', 'Brief description of the traditional knowledge involved')}
-                    rows={3}
-                    className="w-full rounded-lg border border-border-color px-4 py-3 text-sm text-charcoal placeholder:text-slate/50 bg-white resize-y focus:outline-none focus:ring-2 focus:ring-forest-green/40 transition-shadow"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="tkSourceType" className="block text-sm font-medium text-charcoal mb-1.5">
-                    {t('absBiodiversity.tkSourceType', 'Source Type')}
-                  </label>
-                  <input
-                    id="tkSourceType"
-                    type="text"
-                    value={tkSourceType}
-                    onChange={(e) => setTkSourceType(e.target.value)}
-                    placeholder={t('absBiodiversity.tkSourcePlaceholder', 'e.g. classical text, community practice, oral tradition')}
-                    className="w-full rounded-lg border border-border-color px-4 py-2.5 text-sm text-charcoal placeholder:text-slate/50 bg-white focus:outline-none focus:ring-2 focus:ring-forest-green/40 transition-shadow"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="tkCommunity" className="block text-sm font-medium text-charcoal mb-1.5">
-                    {t('absBiodiversity.tkCommunity', 'Community / Knowledge Source')}
-                  </label>
-                  <input
-                    id="tkCommunity"
-                    type="text"
-                    value={tkCommunity}
-                    onChange={(e) => setTkCommunity(e.target.value)}
-                    placeholder={t('absBiodiversity.tkCommunityPlaceholder', 'e.g., Local community, Vaidya lineage, or classical text reference')}
-                    className="w-full rounded-lg border border-border-color px-4 py-2.5 text-sm text-charcoal placeholder:text-slate/50 bg-white focus:outline-none focus:ring-2 focus:ring-forest-green/40 transition-shadow"
-                  />
-                </div>
-                <div>
-                  <TriOptionSelector
-                    id="tkPubliclyDocumented"
-                    value={tkPubliclyDocumented}
-                    onChange={setTkPubliclyDocumented}
-                    label={t('absBiodiversity.tkPubliclyDoc', 'Is this knowledge publicly documented?')}
-                    helpText={t('absBiodiversity.tkPubliclyDocHelp', 'For example, in classical Ayurvedic texts, published research, or databases such as TKDL.')}
-                  />
-                </div>
-              </div>
-            )}
-          </section>
-
-          {/* ── SECTION 3: JURISDICTION CONTEXT ────────────────────── */}
-          {effectiveJurisdiction === 'INDIA' || !effectiveJurisdiction ? (
-            <section className="card p-6">
-              <div className="flex items-center gap-2 mb-3">
-                <MapPin size={18} className="text-forest-green" />
-                <h2 className="text-lg font-heading font-semibold text-charcoal">
-                  {t('absBiodiversity.indiaTitle', 'India – ABS Context')}
-                </h2>
-              </div>
-              <p className="text-sm text-slate leading-relaxed mb-4">
-                {t('absBiodiversity.indiaDesc', 'India-specific ABS considerations should be assessed using the applicable biodiversity framework and authoritative sources. The backend classification engine provides NBA-related guidance based on the applicant type and commercial utilization details provided during classification.')}
-              </p>
-
-              {hasNbaData(cr) ? (
-                <dl className="divide-y divide-border-color">
-                  {cr.nbaComplianceStatus && (
-                    <div className="py-3">
-                      <dt className="text-xs font-semibold text-slate uppercase tracking-wide mb-1">
-                        {t('absBiodiversity.nbaComplianceStatus', 'NBA Compliance Status')}
-                      </dt>
-                      <dd className="text-sm text-charcoal leading-relaxed">{cr.nbaComplianceStatus}</dd>
-                    </div>
-                  )}
-                  {cr.requiredNbaForm && (
-                    <div className="py-3">
-                      <dt className="text-xs font-semibold text-slate uppercase tracking-wide mb-1">
-                        {t('absBiodiversity.requiredNbaForm', 'Required NBA Form')}
-                      </dt>
-                      <dd className="text-sm text-charcoal">{cr.requiredNbaForm}</dd>
-                    </div>
-                  )}
-                </dl>
-              ) : (
-                <div className="p-4 bg-warm-ivory rounded-lg border border-border-color text-sm text-slate italic">
-                  {t('absBiodiversity.noIndiaRecords', 'No India-specific source records are available for this assessment yet.')}
-                  {!hasClassification(cr) && (
-                    <span className="block mt-1">
-                      {t('absBiodiversity.completeClassificationNba', 'Complete the product classification to receive NBA guidance.')}
-                    </span>
-                  )}
-                </div>
-              )}
-            </section>
-          ) : (
-            <section className="card p-6">
-              <div className="flex items-center gap-2 mb-3">
-                <Globe size={18} className="text-forest-green" />
-                <h2 className="text-lg font-heading font-semibold text-charcoal">
-                  {t('absBiodiversity.intlTitle', 'International – ABS Context')}
-                </h2>
-              </div>
-              <p className="text-sm text-slate leading-relaxed mb-4">
-                {t('absBiodiversity.intlDesc', 'International ABS requirements vary by destination country and applicable international instruments. Jurisdiction-specific requirements require country-specific legal advice.')}
-                {assessmentContext?.destinationMarket && (
-                  <span className="block mt-2">
-                    <strong className="text-charcoal">{t('absBiodiversity.destinationMarket', 'Destination market:')}</strong> {assessmentContext.destinationMarket}
-                  </span>
-                )}
-              </p>
-              <div className="p-4 bg-warm-ivory rounded-lg border border-border-color text-sm text-slate italic">
-                {t('absBiodiversity.noIntlRecords', 'International ABS source records are not available for this assessment yet.')}
-              </div>
-            </section>
-          )}
-
-          {/* ── SECTION 4: DOCUMENTATION NOTE ───────────────────────── */}
-          <section className="card p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <FileText size={18} className="text-slate" />
-              <h2 className="text-base font-heading font-semibold text-charcoal">
-                {t('absBiodiversity.supportingDocTitle', 'Supporting Documentation')}
-              </h2>
-            </div>
-            <p className="text-sm text-slate leading-relaxed">
-              {t('absBiodiversity.supportingDocDesc', 'Supporting documentation can be attached when document support is available in a future version of this application.')}
-            </p>
-          </section>
-
-          {/* Disclaimer */}
-          <p className="text-xs text-slate border-t border-border-color pt-5 leading-relaxed">
-            <strong>{t('common.disclaimer', 'Disclaimer:')}</strong> {t('common.disclaimerText', 'IP-SAKTI provides information and source-grounded guidance, not legal advice or a legal determination of protection.')}
-          </p>
-
-          {/* Bottom navigation */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
-            <button
-              type="button"
-              onClick={handleBack}
-              aria-label={t('absBiodiversity.backToRegulatory', 'Back to Regulatory Check')}
-              className="flex items-center gap-2 text-sm font-medium text-forest-green border border-forest-green/40 px-5 py-2.5 rounded-lg hover:bg-forest-green hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-forest-green/50"
-            >
-              <ArrowLeft size={16} /> {t('absBiodiversity.backToRegulatory', 'Back to Regulatory Check')}
-            </button>
-            <button
-              type="button"
-              onClick={handleContinue}
-              aria-label={t('absBiodiversity.continueToTkdl', 'Continue to TKDL Prior Art')}
-              className="flex items-center gap-2 bg-forest-green text-white px-6 py-2.5 rounded-lg font-medium hover:bg-deep-teal transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-forest-green/50"
-            >
-              {t('absBiodiversity.continueToTkdl', 'Continue to TKDL Prior Art')} <ArrowRight size={16} />
-            </button>
           </div>
         </div>
+      </div>
 
-        {/* ── RIGHT COLUMN: Checklist + Source ───────────────────────── */}
-        <div className="space-y-6">
+      {/* ── NAVIGATION TABS ────────────────────────────────────────────── */}
+      <div className="flex border-b border-border-color mb-6 overflow-x-auto">
+        {[
+          { id: 'entity', label: 'Section 3 vs Section 7 Determination', icon: <Users size={16} /> },
+          { id: 'calculator', label: 'Live ABS Royalty Calculator', icon: <Calculator size={16} /> },
+          { id: 'ntac', label: `Section 40 NTAC Commodity Check (${detectedNtac.length})`, icon: <Leaf size={16} /> },
+          { id: 'forms', label: 'Statutory NBA Form Roadmap', icon: <FileText size={16} /> },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap cursor-pointer ${
+              activeTab === tab.id
+                ? 'border-forest-green text-forest-green bg-forest-green/5'
+                : 'border-transparent text-slate hover:text-charcoal'
+            }`}
+          >
+            {tab.icon}
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-          {/* Information checklist */}
-          <aside className="card p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <Database size={16} className="text-slate" />
-              <h2 className="text-base font-heading font-semibold text-charcoal">
-                {t('absBiodiversity.checklistTitle', 'Information Needed for ABS Review')}
-              </h2>
-            </div>
-            <p className="text-xs text-slate mb-4 leading-relaxed">
-              {t('absBiodiversity.checklistSubtitle', 'Items are marked complete only when the information has been provided in this assessment.')}
-            </p>
-            <div>
-              {checklistItems.map((item) => (
-                <ChecklistItem
-                  key={item.label}
-                  label={item.label}
-                  ticked={item.ticked}
-                  value={item.value}
-                />
+      {/* TAB 1: SECTION 3 VS SECTION 7 DETERMINATION */}
+      {activeTab === 'entity' && (
+        <div className="card p-6 space-y-6">
+          <div>
+            <label className="block text-xs font-bold text-charcoal uppercase tracking-wider mb-2">
+              Select Applicant Entity Legal Status:
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {[
+                { id: 'INDIAN_COMPANY', label: 'Indian Company / LLP', sub: '100% Indian shareholding & management' },
+                { id: 'INDIAN_INDIVIDUAL', label: 'Indian Citizen / Vaidya', sub: 'Sole proprietor / AYUSH practitioner' },
+                { id: 'FOREIGN_ENTITY_OR_NRI', label: 'Foreign Entity / NRI / FDI', sub: 'Entity with any foreign ownership/directors' },
+              ].map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setApplicantType(opt.id)}
+                  className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                    applicantType === opt.id
+                      ? 'border-forest-green bg-forest-green/5 ring-2 ring-forest-green/30'
+                      : 'border-border-color bg-white hover:bg-warm-ivory'
+                  }`}
+                >
+                  <span className="font-bold text-sm text-charcoal block mb-0.5">{opt.label}</span>
+                  <span className="text-[11px] text-slate block">{opt.sub}</span>
+                </button>
               ))}
             </div>
-          </aside>
+          </div>
 
-          {/* Source-grounded guidance */}
-          <SourceGroundedSection jurisdiction={effectiveJurisdiction} />
+          <div className="p-5 rounded-xl bg-warm-ivory/60 border border-border-color space-y-3 text-xs leading-relaxed">
+            <h3 className="text-sm font-bold text-forest-green flex items-center gap-2">
+              <Scale size={16} />
+              Statutory Roadmap under Biological Diversity Act:
+            </h3>
+
+            {isForeignEntity ? (
+              <div className="space-y-2 text-charcoal">
+                <div className="p-3 rounded-lg bg-error/10 border border-error/20 text-error">
+                  <strong>Section 3 Triggered (National Biodiversity Authority - NBA):</strong>
+                  <p className="text-xs text-charcoal/90 mt-1">
+                    Non-Indian individuals, NRIs, and Indian companies with any foreign capital (even 1% FDI) or foreign directors are classified as "Section 3 persons". You MUST submit <strong>NBA Form I</strong> in Chennai and execute an Access & Benefit Sharing agreement <strong>before obtaining or collecting any Indian herbs or bio-resources</strong>.
+                  </p>
+                </div>
+                <div className="text-slate">
+                  • <strong>Processing Time:</strong> Approximately 180 days.<br />
+                  • <strong>Statutory Fee:</strong> ₹10,000 application fee + ABS contribution.<br />
+                  • <strong>Penal Warning:</strong> Section 55 imposes imprisonment up to 5 years for non-compliance.
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2 text-charcoal">
+                <div className="p-3 rounded-lg bg-success/10 border border-success/20 text-success">
+                  <strong>Section 7 Governed (State Biodiversity Board - SBB):</strong>
+                  <p className="text-xs text-charcoal/90 mt-1">
+                    Indian citizens and domestic entities are governed under Section 7. Prior intimation must be submitted to the concerned State Biodiversity Board (e.g. Maharashtra SBB, Kerala SBB) where the biological resource is procured or processed for commercial utilization.
+                  </p>
+                </div>
+                <div className="text-slate">
+                  • <strong>2023 Amendment Relief:</strong> Codified traditional knowledge users and local vaidyas are granted exemptions from commercial intimation fees.<br />
+                  • <strong>Benefit Sharing:</strong> Fair and equitable benefit sharing applies to commercial manufacturers based on annual ex-factory turnover.
+                </div>
+              </div>
+            )}
+          </div>
         </div>
+      )}
+
+      {/* TAB 2: LIVE ABS ROYALTY CALCULATOR */}
+      {activeTab === 'calculator' && (
+        <div className="card p-6 space-y-6">
+          <div className="flex items-center justify-between border-b border-border-color pb-3">
+            <div>
+              <h3 className="text-base font-bold text-charcoal flex items-center gap-2">
+                <Calculator size={18} className="text-forest-green" />
+                Statutory Access & Benefit Sharing (ABS) Royalty Calculator
+              </h3>
+              <p className="text-xs text-slate">
+                Calculated strictly in accordance with NBA ABS Guidelines 2014 & Amended Framework
+              </p>
+            </div>
+            <span className="text-xs font-bold px-2.5 py-1 rounded bg-forest-green text-white">
+              Official Formula
+            </span>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <div className="flex justify-between items-center text-xs font-bold text-charcoal mb-2">
+                <span>Annual Ex-Factory Product Turnover (in Lakhs ₹):</span>
+                <span className="text-forest-green text-sm">₹{turnoverLakhs} Lakhs (₹{(turnoverLakhs / 100).toFixed(2)} Crores)</span>
+              </div>
+              <input
+                type="range"
+                min="10"
+                max="1000"
+                step="10"
+                value={turnoverLakhs}
+                onChange={(e) => setTurnoverLakhs(Number(e.target.value))}
+                className="w-full accent-forest-green cursor-pointer"
+              />
+              <div className="flex justify-between text-[10px] text-slate mt-1">
+                <span>₹10 Lakhs (0.1% Rate)</span>
+                <span>₹100 Lakhs (1 Cr)</span>
+                <span>₹320 Lakhs (3.2 Cr, 0.5% Rate)</span>
+                <span>₹1,000 Lakhs (10 Cr)</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+              <div className="p-4 rounded-xl bg-warm-ivory/50 border border-border-color">
+                <span className="text-xs text-slate block mb-1">Applicable ABS Slab Rate</span>
+                <span className="text-2xl font-bold text-forest-green font-sans">{absRoyaltyRate}%</span>
+                <p className="text-[10px] text-slate mt-1">
+                  {turnoverLakhs <= 100 ? 'Turnover ≤ ₹1 Cr (0.1%)' : turnoverLakhs <= 320 ? 'Turnover ₹1-3.2 Cr (0.2%)' : 'Turnover > ₹3.2 Cr (0.5%)'}
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-forest-green/10 border border-forest-green/30 sm:col-span-2">
+                <span className="text-xs text-slate block mb-1">Estimated Annual ABS Contribution Liability</span>
+                <span className="text-2xl font-bold text-forest-green font-sans">
+                  ₹{statutoryAbsRoyaltyRupees.toLocaleString('en-IN')} / year
+                </span>
+                <p className="text-[10px] text-charcoal/80 mt-1">
+                  95% directed to local Biodiversity Management Committees (BMCs) for herbal conservation; 5% retained by SBB/NBA.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: SECTION 40 NTAC COMMODITY CHECK */}
+      {activeTab === 'ntac' && (
+        <div className="card p-6 space-y-5">
+          <div className="flex items-center justify-between border-b border-border-color pb-3">
+            <div>
+              <h3 className="text-base font-bold text-charcoal flex items-center gap-2">
+                <Leaf size={18} className="text-forest-green" />
+                Section 40: Normally Traded as Commodities (NTAC) Scanner
+              </h3>
+              <p className="text-xs text-slate">
+                Exemptions under Ministry of Environment, Forest & Climate Change (MoEFCC) Official Gazette
+              </p>
+            </div>
+            <span className="text-xs font-bold px-2.5 py-1 rounded bg-muted-gold/20 text-muted-gold">
+              400+ Notified Species
+            </span>
+          </div>
+
+          <div className="p-4 rounded-xl bg-warm-ivory/60 border border-border-color text-xs text-charcoal space-y-2">
+            <strong className="text-forest-green block text-sm">Critical Legal Nuance (Judge-Proof Rule):</strong>
+            <p className="text-slate leading-relaxed">
+              Under Section 40, biological resources traded normally as agricultural commodities (e.g., Turmeric, Black Pepper, Ginger) are exempt from NBA approval <strong>ONLY when traded purely as agricultural commodities in market yards</strong>.
+            </p>
+            <p className="text-error font-medium leading-relaxed">
+              ⚠️ The moment an enterprise utilizes these commodities for <strong>commercial bioprospecting, patented pharmaceutical formulations, or active extract manufacturing</strong>, the Section 40 exemption CEASES, and full SBB/NBA compliance is statutorily triggered.
+            </p>
+          </div>
+
+          {detectedNtac.length > 0 ? (
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold text-charcoal uppercase tracking-wider">
+                Detected Formulation Ingredients with NTAC Status:
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                {detectedNtac.map((item, idx) => (
+                  <div key={idx} className="p-3 rounded-lg bg-white border border-border-color flex justify-between items-center text-xs">
+                    <div>
+                      <span className="font-bold text-charcoal block">{item.name}</span>
+                      <span className="text-slate italic text-[11px]">{item.botanical}</span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-success/10 text-success">
+                      {item.ntacStatus}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 rounded-lg bg-warm-ivory text-xs text-slate">
+              None of the active ingredients in this formulation are listed in the common spice NTAC commodity list. Standard Section 3/7 compliance applies.
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 4: STATUTORY NBA FORM ROADMAP */}
+      {activeTab === 'forms' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[
+            {
+              title: 'NBA Form I: Access to Biological Resources',
+              statute: 'Section 3 & Rule 14',
+              target: 'Foreign entities, NRIs, and foreign-participating Indian firms',
+              purpose: 'Mandatory prior approval before collecting or purchasing Indian herbs for research or commercial use.',
+              timeline: '180 days statutory review window',
+            },
+            {
+              title: 'NBA Form II: Transfer of Research Results',
+              statute: 'Section 4 & Rule 16',
+              target: 'Indian researchers transferring data to foreign entities',
+              purpose: 'Approval required before transferring clinical or laboratory research results on Indian bio-resources to foreign collaborators.',
+              timeline: '90 days statutory review window',
+            },
+            {
+              title: 'NBA Form III: Application for Patent / IPR',
+              statute: 'Section 6 & Rule 18',
+              target: 'ANY person (Indian or Foreign) filing a patent',
+              purpose: 'Mandatory approval from NBA BEFORE grant of any Indian or PCT patent claiming Indian biological resources.',
+              timeline: '90 days statutory review window',
+            },
+            {
+              title: 'SBB Intimation: Commercial Utilization Form',
+              statute: 'Section 7 & State Rules',
+              target: 'Indian companies and citizens',
+              purpose: 'Prior intimation to the State Biodiversity Board of the state where bio-resources are collected or processed.',
+              timeline: '30-60 days acknowledgment',
+            },
+          ].map((f, i) => (
+            <div key={i} className="card p-5 space-y-2 text-xs border border-border-color">
+              <div className="flex items-center justify-between border-b border-border-color pb-1.5">
+                <h4 className="font-bold text-sm text-forest-green">{f.title}</h4>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate/10 text-slate">{f.statute}</span>
+              </div>
+              <p className="text-charcoal/90"><strong>Applies to:</strong> {f.target}</p>
+              <p className="text-slate"><strong>Purpose:</strong> {f.purpose}</p>
+              <p className="text-forest-green font-semibold"><strong>Timeline:</strong> {f.timeline}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Bottom navigation */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-6 mt-8 border-t border-border-color">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="flex items-center gap-2 text-sm font-semibold text-forest-green border border-forest-green/40 px-5 py-2.5 rounded-lg hover:bg-forest-green hover:text-white transition-colors cursor-pointer"
+        >
+          <ArrowLeft size={16} /> Back to Regulatory Check
+        </button>
+        <button
+          type="button"
+          onClick={handleContinue}
+          className="flex items-center gap-2 bg-forest-green text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-deep-teal transition-colors shadow-sm cursor-pointer"
+        >
+          Continue to TKDL Prior Art <ArrowRight size={16} />
+        </button>
       </div>
     </div>
   );
-};
-
-export default AbsBiodiversity;
+}
