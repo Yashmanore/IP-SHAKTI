@@ -23,4 +23,4 @@ COPY --from=build /app/data ./data
 EXPOSE 8085
 
 # Memory-optimized execution for Render free tier (512MB RAM)
-ENTRYPOINT ["sh", "-c", "java -Xmx380m -Xms200m -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "java -XX:+UseSerialGC -Xmx200m -Xms100m -XX:MaxMetaspaceSize=100m -XX:ReservedCodeCacheSize=32m -Xss256k -jar app.jar"]

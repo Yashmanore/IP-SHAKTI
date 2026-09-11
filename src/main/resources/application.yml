@@ -10,6 +10,11 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME:neondb_owner}
     password: ${SPRING_DATASOURCE_PASSWORD:npg_4rwHVRYI6bnj}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 3
+      minimum-idle: 1
+      idle-timeout: 30000
+      max-lifetime: 60000
   jpa:
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
