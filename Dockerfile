@@ -1,5 +1,5 @@
 # Multi-stage Docker build for IP-SHAKTI Spring Boot backend
-FROM maven:3.9.6-eclipse-temurin-21-alpine AS build
+FROM maven:3.9.6-eclipse-temurin-21 AS build
 WORKDIR /app
 
 # Copy pom.xml and download dependencies
@@ -11,8 +11,8 @@ COPY src ./src
 COPY data ./data
 RUN mvn clean package -Dmaven.test.skip=true -B
 
-# Lightweight JRE runtime image
-FROM eclipse-temurin:21-jre-alpine
+# Debian/glibc JRE runtime image (ensures libstdc++.so.6 & glibc for ONNX LangChain4j embedding model)
+FROM eclipse-temurin:21-jre
 WORKDIR /app
 
 # Copy built artifact
