@@ -18,11 +18,84 @@ import java.util.List;
 @Service
 public class Rule158BClassificationEngine {
 
+    private static final List<String> NON_AYUSH_TERMS = List.of(
+            "pizza", "hamburger", "burger", "chocolate", "espresso", "rodeo", "french fries", "fries",
+            "pasta", "sandwich", "steak", "hotdog", "chips", "soda", "coke", "pepsi", "beer", "whiskey",
+            "computer", "software", "microchip", "uranium", "nuclear", "crypto", "nft", "tire", "plastic",
+            "diesel", "petrol", "missile", "robot", "quantum"
+    );
+
+    private static final List<String> BOTANICAL_INDICATORS = List.of(
+            "extract", "herb", "plant", "root", "leaf", "leaves", "bark", "seed", "flower", "fruit",
+            "rhizome", "stem", "oil", "churna", "powder", "bhasma", "decoction", "taila", "ghrita",
+            "asava", "arishta", "vati", "kwath", "rasayana", "synergy", "phytochemical", "botanical",
+            "fraction", "standardized", "aqueous", "ethanolic", "tincture", "capsule", "syrup",
+            "withania", "somnifera", "curcuma", "longa", "ocimum", "sanctum", "azadirachta", "indica",
+            "emblica", "officinalis", "zingiber", "piper", "nigrum", "longum", "boswellia", "serrata",
+            "aloe", "vera", "barbadensis", "bacopa", "monnieri", "terminalia", "arjuna", "chebula",
+            "ashwagandha", "turmeric", "haldi", "tulsi", "neem", "amla", "triphala", "brahmi",
+            "guggulu", "guggul", "giloy", "mulethi", "licorice", "shatavari", "safed musli",
+            "haritaki", "bibhitaki", "shunthi", "sunthi", "maricha", "pippali", "ela", "dalchini",
+            "lavang", "clove", "kesar", "saffron", "jaiphal", "nutmeg", "shankhpushpi", "manjistha",
+            "chyawanprash", "dashmool", "aushadh", "ayurved"
+    );
+
     public ClassificationResult evaluate(ClassificationRequest req) {
         ClassificationResult res = new ClassificationResult();
         List<String> trace = new ArrayList<>();
         List<String> patentSections = new ArrayList<>();
         List<String> disclaimers = new ArrayList<>();
+
+        // DOMAIN GUARDRAIL 1: Reject explicit non-AYUSH commodities
+        String combined = ((req.getProductName() != null ? req.getProductName() : "") + " " +
+                (req.getBotanicalIngredients() != null ? String.join(" ", req.getBotanicalIngredients()) : "") + " " +
+                (req.getClaimedIndication() != null ? req.getClaimedIndication() : "")).toLowerCase();
+
+        List<String> matchedBlacklist = NON_AYUSH_TERMS.stream().filter(combined::contains).toList();
+        if (!matchedBlacklist.isEmpty()) {
+            trace.add("Statutory Guardrail: Input contains non-AYUSH commodities [" + String.join(", ", matchedBlacklist) + "].");
+            res.setCategory(ProductCategory.OUT_OF_SCOPE);
+            res.setCategoryDisplayName("Out of Scope / Non-Ayurvedic Input");
+            res.setGoverningAct("Not Applicable");
+            res.setLicensingAuthority("Not Applicable");
+            res.setLicensingProcedure("Not eligible for AYUSH licensing or Rule 158-B pathways.");
+            res.setClinicalTrialRequirement("Not applicable for non-herbal/culinary commodities.");
+            disclaimers.add("This product does not qualify under AYUSH or herbal medicine frameworks.");
+            res.setFormulationPatentableInIndia(false);
+            res.setPatentabilityVerdict("REJECTED: The input items (" + String.join(", ", matchedBlacklist) + ") are culinary or non-botanical commodities outside Ayurvedic Pharmacopoeia (API) and Drugs & Cosmetics Act scope.");
+            res.setRecommendedIprStrategy("Protect as standard trademark under Class 29/30/43 or Non-AYUSH patent/trade secret.");
+            res.setNbaComplianceStatus("Not applicable.");
+            res.setRequiredNbaForm("None");
+            res.setDecisionTrace(trace);
+            res.setMandatoryLabelDisclaimers(disclaimers);
+            res.setRelevantPatentSections(List.of("Not Applicable"));
+            return res;
+        }
+
+        // DOMAIN GUARDRAIL 2 (POSITIVE VERIFICATION): Product name can be arbitrary, but ingredients MUST be botanical/AYUSH
+        if (req.getBotanicalIngredients() != null && !req.getBotanicalIngredients().isEmpty()) {
+            String ingrStr = String.join(" ", req.getBotanicalIngredients()).toLowerCase();
+            boolean hasBotanical = BOTANICAL_INDICATORS.stream().anyMatch(ingrStr::contains);
+            if (!hasBotanical) {
+                trace.add("Statutory Guardrail: Formulation ingredients fail positive botanical/AYUSH authentication.");
+                res.setCategory(ProductCategory.OUT_OF_SCOPE);
+                res.setCategoryDisplayName("Out of Scope / Non-Ayurvedic Input");
+                res.setGoverningAct("Not Applicable");
+                res.setLicensingAuthority("Not Applicable");
+                res.setLicensingProcedure("Not eligible for AYUSH licensing or Rule 158-B pathways.");
+                res.setClinicalTrialRequirement("Not applicable for non-herbal commodities.");
+                disclaimers.add("The provided ingredients are not recognized as Ayurvedic medicinal plants or classical extracts.");
+                res.setFormulationPatentableInIndia(false);
+                res.setPatentabilityVerdict("REJECTED: The formulation ingredients are not recognized medicinal herbs, traditional extracts, or biological resources under the Drugs & Cosmetics Act or First Schedule treatises.");
+                res.setRecommendedIprStrategy("Protect as standard brand trademark or non-AYUSH patent.");
+                res.setNbaComplianceStatus("Not applicable.");
+                res.setRequiredNbaForm("None");
+                res.setDecisionTrace(trace);
+                res.setMandatoryLabelDisclaimers(disclaimers);
+                res.setRelevantPatentSections(List.of("Not Applicable"));
+                return res;
+            }
+        }
 
         trace.add("Step 1: Inspecting primary intended use and formulation origin...");
 

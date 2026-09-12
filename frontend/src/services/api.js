@@ -11,10 +11,92 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ||
   (isLocal ? 'http://localhost:8085' : 'https://ip-shakti-backend.onrender.com');
 
 /**
+ * Known non-AYUSH keywords (culinary items, Western foods, technology, commodities)
+ */
+const NON_AYUSH_TERMS = [
+  'pizza', 'hamburger', 'burger', 'chocolate', 'espresso', 'rodeo', 'pasta', 'fries',
+  'sandwich', 'steak', 'hotdog', 'chips', 'soda', 'coke', 'pepsi', 'beer', 'whiskey',
+  'computer', 'software', 'microchip', 'uranium', 'nuclear', 'crypto', 'nft', 'tire',
+  'plastic', 'diesel', 'petrol', 'missile', 'robot', 'ai model', 'quantum'
+];
+
+const BOTANICAL_INDICATORS = [
+  'extract', 'herb', 'plant', 'root', 'leaf', 'leaves', 'bark', 'seed', 'flower', 'fruit',
+  'rhizome', 'stem', 'oil', 'churna', 'powder', 'bhasma', 'decoction', 'taila', 'ghrita',
+  'asava', 'arishta', 'vati', 'kwath', 'rasayana', 'synergy', 'phytochemical', 'botanical',
+  'fraction', 'standardized', 'aqueous', 'ethanolic', 'tincture', 'capsule', 'syrup',
+  'withania', 'somnifera', 'curcuma', 'longa', 'ocimum', 'sanctum', 'azadirachta', 'indica',
+  'emblica', 'officinalis', 'zingiber', 'piper', 'nigrum', 'longum', 'boswellia', 'serrata',
+  'aloe', 'vera', 'barbadensis', 'bacopa', 'monnieri', 'terminalia', 'arjuna', 'chebula',
+  'ashwagandha', 'turmeric', 'haldi', 'tulsi', 'neem', 'amla', 'triphala', 'brahmi',
+  'guggulu', 'guggul', 'giloy', 'mulethi', 'licorice', 'shatavari', 'safed musli',
+  'haritaki', 'bibhitaki', 'shunthi', 'sunthi', 'maricha', 'pippali', 'ela', 'dalchini',
+  'lavang', 'clove', 'kesar', 'saffron', 'jaiphal', 'nutmeg', 'shankhpushpi', 'manjistha',
+  'chyawanprash', 'dashmool', 'aushadh', 'ayurved'
+];
+
+/**
  * Deterministic Client-Side Rule 158-B Decision Tree Evaluator
  * Matches exact logic of Rule158BClassificationEngine.java
  */
 function evaluateRule158BClient(req) {
+  const combinedText = `${req.productName || ''} ${(req.botanicalIngredients || []).join(' ')} ${req.claimedIndication || ''}`.toLowerCase();
+  const ingredientsText = (req.botanicalIngredients || []).join(' ').toLowerCase();
+  
+  // DOMAIN GUARDRAIL 1: Check for explicit non-Ayurvedic / Western food / technological commodities
+  const matchedNonAyush = NON_AYUSH_TERMS.filter(term => combinedText.includes(term));
+  if (matchedNonAyush.length > 0) {
+    return {
+      category: 'OUT_OF_SCOPE',
+      categoryDisplayName: 'Out of Scope / Non-Ayurvedic Input',
+      governingAct: 'Not Applicable',
+      licensingAuthority: 'Not Applicable',
+      licensingProcedure: 'Not eligible for AYUSH licensing or Drugs & Cosmetics Act Rule 158-B pathways.',
+      clinicalTrialRequirement: 'Not applicable for non-botanical/non-AYUSH commodities.',
+      mandatoryLabelDisclaimers: ['This formulation does not qualify under AYUSH, Traditional Medicine, or Indian Biological Resources frameworks.'],
+      formulationPatentableInIndia: false,
+      patentabilityVerdict: `REJECTED BY STATUTORY GUARDRAIL: The entered items (${matchedNonAyush.join(', ')}) are non-herbal, culinary, or technological commodities not recognized in Ayurvedic classical treatises (First Schedule) or the Drugs & Cosmetics Act.`,
+      relevantPatentSections: ['Not Applicable'],
+      recommendedIprStrategy: 'File standard Non-AYUSH Patent, Trademark (Class 29/30/43 for food/dining), or Trade Secret.',
+      nbaComplianceStatus: 'Not applicable (no Indian biological resources or classical medicinal plants used).',
+      requiredNbaForm: 'None',
+      decisionTrace: [
+        `Statutory Guardrail Triggered: Input contains non-AYUSH terms [${matchedNonAyush.join(', ')}].`,
+        'Evaluation halted: Product cannot be classified as an Ayurvedic drug, classical medicine, or phytopharmaceutical.'
+      ],
+      isOutOfScope: true,
+      isRelevant: false
+    };
+  }
+
+  // DOMAIN GUARDRAIL 2 (POSITIVE VERIFICATION): Product name can be arbitrary, but ingredients MUST be botanical/AYUSH
+  if (ingredientsText.trim().length > 0) {
+    const hasBotanical = BOTANICAL_INDICATORS.some(ind => ingredientsText.includes(ind));
+    if (!hasBotanical) {
+      return {
+        category: 'OUT_OF_SCOPE',
+        categoryDisplayName: 'Out of Scope / Non-Ayurvedic Input',
+        governingAct: 'Not Applicable',
+        licensingAuthority: 'Not Applicable',
+        licensingProcedure: 'Not eligible for AYUSH licensing or Drugs & Cosmetics Act Rule 158-B pathways.',
+        clinicalTrialRequirement: 'Not applicable for non-herbal commodities.',
+        mandatoryLabelDisclaimers: ['Ingredients do not qualify as recognized medicinal herbs, traditional extracts, or biological resources.'],
+        formulationPatentableInIndia: false,
+        patentabilityVerdict: 'REJECTED BY STATUTORY GUARDRAIL: The ingredients entered are not recognized as Ayurvedic medicinal plants or classical preparations. While the product brand name can be arbitrary, the formulation components must be authentic AYUSH botanicals.',
+        relevantPatentSections: ['Not Applicable'],
+        recommendedIprStrategy: 'Protect as standard Non-AYUSH brand trademark.',
+        nbaComplianceStatus: 'Not applicable.',
+        requiredNbaForm: 'None',
+        decisionTrace: [
+          'Statutory Guardrail Triggered: Ingredients failed positive botanical/AYUSH authentication.',
+          'Evaluation halted: No recognized medicinal herbs or traditional extracts found in formulation details.'
+        ],
+        isOutOfScope: true,
+        isRelevant: false
+      };
+    }
+  }
+
   const isCosmetic = req.intendedUse === 'COSMETIC_BEAUTY';
   const isDietary = req.intendedUse === 'DIETARY_NUTRITION';
   const isClassical = req.matchesScheduleIBook && !req.formulaOrRatioModified && !req.newIndicationOrDosageRoute;
@@ -132,6 +214,25 @@ export async function submitAssessment(payload) {
     clarificationAnswers: payload.clarificationAnswers || {},
   };
 
+  // Pre-validate casual / recreational intended uses (e.g. "drinking")
+  const lowerUse = (chatRequest.intendedUse || '').toLowerCase().trim();
+  const casualWords = ['drinking', 'beverage', 'drink', 'cocktail', 'alcohol', 'beer', 'wine', 'smoking', 'party', 'partying', 'recreation', 'intoxication'];
+  const matchedCasual = casualWords.find(w => lowerUse.includes(w));
+  if (matchedCasual) {
+    return {
+      sessionId: chatRequest.sessionId || `IPS-${Date.now()}`,
+      status: 'OUT_OF_SCOPE',
+      botMessage: `Statutory Scope Notice: The entered intended use '${chatRequest.intendedUse}' is a casual, recreational, or beverage purpose. Under Indian law (Drugs & Cosmetics Act 1940 Rule 158-B and FSSAI Ayurveda Aahar Regulations 2022), Ayurvedic medicines and biological resources cannot be evaluated or licensed for casual recreational '${chatRequest.intendedUse}'. Only Therapeutic disease mitigation, Dietary nutrition (Ayurveda Aahar), or Cosmetic care are recognized statutory pathways.`,
+      citationPills: ['Out of Scope', 'Non-Statutory Intended Use: ' + chatRequest.intendedUse],
+      relevanceEvaluation: {
+        isRelevant: false,
+        detectedDomain: 'OUT_OF_SCOPE_RECREATIONAL',
+        reason: `'${chatRequest.intendedUse}' is not a recognized statutory healthcare intended use under AYUSH regulations.`,
+        suggestedAction: 'Please select a recognized statutory purpose: Therapeutic Treatment (disease mitigation), Dietary Nutrition (Ayurveda Aahar), or Cosmetic Care.'
+      }
+    };
+  }
+
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000);
@@ -235,3 +336,24 @@ export async function classifyProduct(request) {
   // Fallback to deterministic client-side evaluator
   return evaluateRule158BClient(request);
 }
+
+/**
+ * Fetch composite external portals and clinical evidence for a botanical or formulation
+ */
+export async function lookupPortals(query = 'Ashwagandha') {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    const response = await fetch(`${API_BASE_URL}/api/v1/portals/lookup?query=${encodeURIComponent(query)}`, {
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    if (response.ok) {
+      return await response.json();
+    }
+  } catch (err) {
+    console.warn('Portal lookup failed:', err);
+  }
+  return null;
+}
+

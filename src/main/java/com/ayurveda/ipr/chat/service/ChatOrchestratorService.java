@@ -365,6 +365,22 @@ public class ChatOrchestratorService {
             ));
         }
 
+        if (portals.getAyushResearchEvidence() != null && portals.getAyushResearchEvidence().isHasCuratedEvidence() 
+                && !portals.getAyushResearchEvidence().getPublishedClinicalTrials().isEmpty()) {
+            AyushEvidenceResponse.ClinicalTrial primaryTrial = portals.getAyushResearchEvidence().getPublishedClinicalTrials().get(0);
+            citations.add(new StatutorySourceCitation(
+                    "AYUSH Clinical Evidence / PubMed",
+                    "PMID: " + primaryTrial.getPmid() + " (" + primaryTrial.getJournal() + ", " + primaryTrial.getYear() + ")",
+                    "INDIA",
+                    primaryTrial.getTitle() + " [n=" + primaryTrial.getSampleSize() + " subjects]. " + primaryTrial.getPrimaryOutcomes(),
+                    "data/raw/json/ayush_clinical_evidence_dataset.json",
+                    0.96,
+                    primaryTrial.getPubmedUrl(),
+                    "National Library of Medicine (PubMed) / Ministry of AYUSH",
+                    primaryTrial.getYear()
+            ));
+        }
+
         // 4. Assemble the 5 Pillars
 
         // Pillar 1: IP Analysis

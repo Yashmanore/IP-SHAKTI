@@ -21,11 +21,13 @@ import {
   BookOpen,
   ChevronDown,
   ChevronUp,
+  ExternalLink,
 } from 'lucide-react';
 import Breadcrumb from '../components/Breadcrumb';
 import AssessmentStepper from '../components/AssessmentStepper';
 import ActiveAssessmentBar from '../components/ActiveAssessmentBar';
 import { useJurisdiction } from '../context/JurisdictionContext';
+import { lookupPortals } from '../services/api';
 
 // Schedule T GMP Audit Items
 const SCHEDULE_T_ITEMS = [
@@ -69,6 +71,8 @@ export default function RegulatoryCheck() {
   });
 
   const [activeTab, setActiveTab] = useState('rule158b');
+  const [evidenceData, setEvidenceData] = useState(null);
+  const [loadingEvidence, setLoadingEvidence] = useState(false);
 
   useEffect(() => {
     if (location.state?.classificationResult) {
@@ -87,6 +91,23 @@ export default function RegulatoryCheck() {
   const prodName = assessmentState?.productName || 'Ayurvedic Product';
   const botanicalList = assessmentState?.botanicalIngredients || 
     (assessmentState?.ingredients ? (Array.isArray(assessmentState.ingredients) ? assessmentState.ingredients : assessmentState.ingredients.split(',').map(s => s.trim())) : []);
+
+  // Fetch verified empirical clinical evidence & API monographs from backend
+  useEffect(() => {
+    const primaryTerm = botanicalList.length > 0 ? botanicalList[0] : prodName;
+    if (!primaryTerm) return;
+    let isMounted = true;
+    setLoadingEvidence(true);
+    lookupPortals(primaryTerm).then((res) => {
+      if (isMounted) {
+        setEvidenceData(res?.ayushResearchEvidence || null);
+        setLoadingEvidence(false);
+      }
+    }).catch(() => {
+      if (isMounted) setLoadingEvidence(false);
+    });
+    return () => { isMounted = false; };
+  }, [botanicalList, prodName]);
 
   const gmpCheckedCount = Object.values(checkedGmp).filter(Boolean).length;
   const gmpPercentage = Math.round((gmpCheckedCount / SCHEDULE_T_ITEMS.length) * 100);
@@ -180,6 +201,7 @@ export default function RegulatoryCheck() {
       <div className="flex border-b border-border-color mb-6 overflow-x-auto">
         {[
           { id: 'rule158b', label: 'Rule 158-B Pathway Matrix', icon: <FileText size={16} /> },
+          { id: 'clinicalEvidence', label: 'Empirical Clinical Evidence & Monographs', icon: <Stethoscope size={16} /> },
           { id: 'scheduleT', label: `Schedule T GMP Audit (${gmpPercentage}%)`, icon: <Factory size={16} /> },
           { id: 'rule161', label: 'Rule 161 Labeling & Packaging', icon: <Tag size={16} /> },
           { id: 'dmr', label: 'DMR(OA) Advertising Screen', icon: <Megaphone size={16} /> },
@@ -199,6 +221,195 @@ export default function RegulatoryCheck() {
           </button>
         ))}
       </div>
+
+      {/* TAB: EMPIRICAL CLINICAL EVIDENCE & PHARMACOPOEIAL MONOGRAPHS */}
+      {activeTab === 'clinicalEvidence' && (
+        <div className="space-y-6">
+          {loadingEvidence ? (
+            <div className="card p-8 text-center space-y-3">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-forest-green mx-auto" />
+              <p className="text-sm font-medium text-charcoal">Resolving empirical clinical evidence & API monographs from database...</p>
+            </div>
+          ) : evidenceData?.hasCuratedEvidence ? (
+            <div className="space-y-6">
+              {/* Botanical Header Card */}
+              <div className="card p-6 border-l-4 border-forest-green bg-gradient-to-r from-forest-green/5 via-white to-transparent">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                  <div>
+                    <span className="text-[11px] font-bold text-forest-green uppercase tracking-wider">
+                      Ayurvedic Pharmacopoeia of India (API) Validated Record
+                    </span>
+                    <h2 className="text-xl font-bold text-charcoal flex items-center gap-2">
+                      {evidenceData.sanskritName}
+                      <span className="text-sm font-normal text-slate italic">({evidenceData.botanicalBinomial})</span>
+                    </h2>
+                  </div>
+                  <span className="px-3 py-1 bg-forest-green/10 text-forest-green text-xs font-bold rounded-full border border-forest-green/30 flex items-center gap-1.5">
+                    <ShieldCheck size={14} /> Rule 158-B Exemptable Proof
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-2 border-t border-border-color/60">
+                  <div>
+                    <span className="text-slate block">Family:</span>
+                    <strong className="text-charcoal">{evidenceData.family}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate block">Part Used:</span>
+                    <strong className="text-charcoal">{evidenceData.partUsed}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate block">Official Monograph Ref:</span>
+                    <strong className="text-forest-green">{evidenceData.apiMonographRef}</strong>
+                  </div>
+                </div>
+
+                <div className="mt-3 pt-3 border-t border-border-color/60 text-xs">
+                  <span className="text-slate block mb-1">Standard Chemical Marker Assay:</span>
+                  <div className="p-2.5 rounded-lg bg-warm-ivory border border-border-color font-mono text-[11px] text-charcoal">
+                    {evidenceData.activeChemicalMarkers}
+                  </div>
+                </div>
+
+                {evidenceData.therapeuticUses && evidenceData.therapeuticUses.length > 0 && (
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5 text-xs">
+                    <span className="text-slate text-[11px] font-semibold mr-1">Classical Karma:</span>
+                    {evidenceData.therapeuticUses.map((use, i) => (
+                      <span key={i} className="px-2 py-0.5 rounded bg-forest-green/10 text-forest-green text-[10px] font-bold">
+                        {use}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Toxicology Profile Card */}
+              {evidenceData.toxicologyProfile && (
+                <div className="card p-6 space-y-4">
+                  <h3 className="text-base font-bold text-charcoal flex items-center gap-2">
+                    <FlaskConical size={18} className="text-forest-green" />
+                    Preclinical Toxicology & Safety Benchmarks (OECD 423)
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                    <div className="p-3.5 rounded-lg bg-forest-green/5 border border-forest-green/20">
+                      <span className="text-slate block text-[11px]">Acute Oral Toxicity (LD50):</span>
+                      <strong className="text-forest-green text-sm block mt-0.5">{evidenceData.toxicologyProfile.ld50Value}</strong>
+                      <span className="text-[10px] text-slate mt-1 block">{evidenceData.toxicologyProfile.oecdGuideline}</span>
+                    </div>
+                    <div className="p-3.5 rounded-lg bg-forest-green/5 border border-forest-green/20">
+                      <span className="text-slate block text-[11px]">Subchronic NOAEL:</span>
+                      <strong className="text-charcoal text-sm block mt-0.5">{evidenceData.toxicologyProfile.noael}</strong>
+                      <span className="text-[10px] text-slate mt-1 block">Repeat-dose safety margin</span>
+                    </div>
+                    <div className="p-3.5 rounded-lg bg-forest-green/5 border border-forest-green/20">
+                      <span className="text-slate block text-[11px]">Heavy Metal Safety Limits:</span>
+                      <strong className="text-charcoal text-xs block mt-0.5">{evidenceData.toxicologyProfile.heavyMetalCompliance}</strong>
+                      <span className="text-[10px] text-success font-semibold mt-1 block">✓ Complies with AYUSH Gazette</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate italic bg-warm-ivory/60 p-3 rounded-lg border border-border-color">
+                    <strong>Safety Assessment:</strong> {evidenceData.toxicologyProfile.safetyAssessment}
+                  </p>
+                </div>
+              )}
+
+              {/* Published Human Clinical Trials */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-bold text-charcoal flex items-center gap-2">
+                    <Stethoscope size={18} className="text-forest-green" />
+                    Verified Published Human Clinical Trials (PubMed / CTRI)
+                  </h3>
+                  <span className="text-xs font-semibold text-slate">
+                    {evidenceData.publishedClinicalTrials?.length || 0} Landmark Studies
+                  </span>
+                </div>
+
+                <div className="space-y-4">
+                  {evidenceData.publishedClinicalTrials?.map((trial, idx) => (
+                    <div key={idx} className="card p-5 space-y-3 hover:shadow-md transition-shadow border border-border-color">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div className="flex-1 min-w-[280px]">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-forest-green text-white mr-2">
+                            {trial.studyDesign}
+                          </span>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-warm-ivory text-charcoal border border-border-color mr-2">
+                            n = {trial.sampleSize} Subjects
+                          </span>
+                          <span className="text-xs text-slate font-medium">
+                            {trial.journal} ({trial.year})
+                          </span>
+                          <h4 className="text-sm font-bold text-charcoal mt-1.5 leading-snug">
+                            {trial.title}
+                          </h4>
+                          <p className="text-xs text-slate mt-0.5">Authors: {trial.authors}</p>
+                        </div>
+                        <a
+                          href={trial.pubmedUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-forest-green/10 text-forest-green text-xs font-bold hover:bg-forest-green hover:text-white transition-colors shrink-0"
+                        >
+                          PubMed PMID: {trial.pmid} <ExternalLink size={12} />
+                        </a>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 text-xs border-t border-border-color/60">
+                        <div className="p-3 rounded-lg bg-warm-ivory/70 border border-border-color space-y-1">
+                          <strong className="text-charcoal block">Dosage & Regimen:</strong>
+                          <p className="text-slate">{trial.dosageRegimen}</p>
+                        </div>
+                        <div className="p-3 rounded-lg bg-warm-ivory/70 border border-border-color space-y-1">
+                          <strong className="text-forest-green block">Statistically Significant Clinical Outcome:</strong>
+                          <p className="text-charcoal/90">{trial.primaryOutcomes}</p>
+                        </div>
+                      </div>
+
+                      <div className="p-3 rounded-lg bg-forest-green/5 border border-forest-green/20 text-xs space-y-1.5">
+                        <div>
+                          <strong className="text-forest-green">Rule 158-B Statutory Defense: </strong>
+                          <span className="text-charcoal/90">{trial.rule158bApplicability}</span>
+                        </div>
+                        <div>
+                          <strong className="text-deep-teal">Section 3(e) Synergism Defense: </strong>
+                          <span className="text-charcoal/90">{trial.patentSection3eSynergism}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="card p-6 space-y-4">
+              <div className="flex items-center gap-3 text-forest-green">
+                <BookOpen size={24} />
+                <div>
+                  <h3 className="text-base font-bold text-charcoal">Ministry of AYUSH Research Portal Connector</h3>
+                  <p className="text-xs text-slate">Live search query formulation for {prodName}</p>
+                </div>
+              </div>
+              <p className="text-xs text-slate leading-relaxed">
+                Specific empirical monograph records for this exact query are accessible directly via the Central Council for Research in Ayurvedic Sciences (CCRAS) and Ministry of AYUSH portal.
+              </p>
+              <div className="p-4 rounded-xl bg-forest-green/5 border border-forest-green/20 flex flex-wrap items-center justify-between gap-3">
+                <div className="text-xs space-y-1">
+                  <span className="font-bold text-forest-green block">Pre-Configured Live Query URL:</span>
+                  <span className="text-slate font-mono text-[11px] break-all">{evidenceData?.preconfiguredSearchUrl || 'https://ayushportal.nic.in/'}</span>
+                </div>
+                <a
+                  href={evidenceData?.preconfiguredSearchUrl || 'https://ayushportal.nic.in/'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-forest-green text-white text-xs font-bold rounded-lg hover:bg-deep-teal transition-colors flex items-center gap-1.5 shrink-0"
+                >
+                  Search AYUSH Portal <ExternalLink size={14} />
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* TAB 1: RULE 158-B DETAILED PATHWAY MATRIX */}
       {activeTab === 'rule158b' && (

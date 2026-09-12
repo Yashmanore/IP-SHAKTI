@@ -36,6 +36,11 @@ public enum ProductCategory {
             "Ayurvedic Cosmetic (Saundarya Prasadak)",
             "Drugs and Cosmetics Act 1940, Section 3(aaa) & Rule 158-B",
             "AYUSH State Licensing Authority (Form 32-A Cosmetic License)"
+    ),
+    OUT_OF_SCOPE(
+            "Out of Scope / Non-Ayurvedic Input",
+            "Not Applicable",
+            "Not Applicable"
     );
 
     private final String displayName;

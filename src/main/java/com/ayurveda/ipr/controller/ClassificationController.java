@@ -3,6 +3,7 @@ package com.ayurveda.ipr.controller;
 import com.ayurveda.ipr.classifier.Rule158BClassificationEngine;
 import com.ayurveda.ipr.classifier.model.ClassificationRequest;
 import com.ayurveda.ipr.classifier.model.ClassificationResult;
+import com.ayurveda.ipr.classifier.model.ProductCategory;
 import com.ayurveda.ipr.llm.GeminiGenerativeService;
 import com.ayurveda.ipr.llm.model.RelevanceEvaluation;
 import com.ayurveda.ipr.multilingual.model.Language;
@@ -53,7 +54,7 @@ public class ClassificationController {
         String botanicalStr = request.getBotanicalIngredients() != null ? String.join(", ", request.getBotanicalIngredients()) : "";
         String intendedUseStr = request.getIntendedUse() != null ? request.getIntendedUse().name() : "";
 
-        String combinedClaims = java.util.stream.Stream.of(request.getClaimedIndication(), request.getScheduleIBookName())
+        String combinedClaims = java.util.stream.Stream.of(request.getClaimedIndication(), request.getScheduleIBookName(), botanicalStr)
                 .filter(s -> s != null && !s.isBlank())
                 .collect(java.util.stream.Collectors.joining(" | "));
 
@@ -67,6 +68,7 @@ public class ClassificationController {
 
         if (!relevance.isRelevant()) {
             ClassificationResult outResult = new ClassificationResult();
+            outResult.setCategory(ProductCategory.OUT_OF_SCOPE);
             outResult.setCategoryDisplayName("Out of Scope / Non-Ayurvedic Input (" + relevance.getDetectedDomain() + ")");
             outResult.setGoverningAct("Not Applicable");
             outResult.setLicensingAuthority("Not Applicable");

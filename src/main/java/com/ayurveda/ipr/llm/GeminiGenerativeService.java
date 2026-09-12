@@ -455,7 +455,7 @@ public class GeminiGenerativeService {
         }
 
         // Deterministic Fallback Engine
-        return evaluateDeterministicRelevance(cleanUser, cleanProd, cleanIngr, targetLang, flaggedBlacklist);
+        return evaluateDeterministicRelevance(cleanUser, cleanProd, cleanIngr, cleanUse, targetLang, flaggedBlacklist);
     }
 
     private String buildRelevancePrompt(
@@ -479,6 +479,7 @@ public class GeminiGenerativeService {
         sb.append("- Information technology, software, algorithms, artificial intelligence, blockchain, cryptocurrencies, NFTs, cybernetics.\n");
         sb.append("- Heavy machinery, aerospace, Martian/space colonies, automotive parts, missiles, weapons.\n");
         sb.append("- Fictional, nonsensical, or parody mashups (e.g., 'Cyber-Chyawanprash-3000 with microchips', 'Radioactive Herbal Cream', 'AI Quantum Triphala').\n");
+        sb.append("- Culinary foods, fast food, snacks, confectionery, Western foods, and beverages (e.g., pizza, hamburger, burger, chocolate, espresso, rodeo, fries, pasta, sandwich, steak, soda).\n");
         sb.append("- General non-herbal commodities (e.g., rubber tires, synthetic plastics, textiles, electronic gadgets).\n\n");
 
         sb.append("INPUT UNDER EVALUATION:\n");
@@ -491,20 +492,26 @@ public class GeminiGenerativeService {
         }
         sb.append("\n");
 
+        sb.append("CRITICAL DOMAIN RULES:\n");
+        sb.append("1. PRODUCT NAME EXCEPTION: The 'Stated Product Name' is an arbitrary brand/trademark name chosen by the applicant (e.g. 'liza', 'Z-Plus', 'AuraShield', 'HerbaLife'). DO NOT reject an input simply because the product name is fanciful, modern, or non-Sanskrit.\n");
+        sb.append("2. STRICT POSITIVE INGREDIENT & CONTEXT MANDATE: Unlike the product name, the 'Stated Ingredients' and user query MUST positively describe legitimate Ayurvedic, AYUSH, or botanical substances (e.g., medicinal plants, botanical extracts, classical treatises/recipes, phytosomes, bhasmas, or approved Ayurveda Aahar ingredients).\n");
+        sb.append("3. MANDATORY REJECTION FOR NON-AYUSH INGREDIENTS: If the ingredients or inquiry consist of general consumer foods (e.g. pizza, hamburger, pasta, rodeo, espresso), mechanical objects, synthetic chemicals, software, or ANY arbitrary words that are not recognized medicinal herbs or traditional Indian biological resources, you MUST REJECT the input immediately with isRelevant: false and detectedDomain: 'OUT_OF_SCOPE'.\n");
+        sb.append("4. ZERO BENEFIT OF THE DOUBT: Unless the ingredients are positively verifiable as botanical, herbal, or classical Ayurvedic substances, reject the input. Do not extrapolate or assume non-herbal items could have medicinal properties under Indian AYUSH law.\n");
+        sb.append("5. STATUTORY INTENDED USE REQUIREMENT: The 'Intended Use' MUST describe a legally recognized statutory healthcare or wellness purpose under Indian law (Therapeutic treatment, Dietary nutrition/Ayurveda Aahar, or Cosmetic care). Recreational, casual, beverage, or non-medicinal uses (e.g. 'drinking', 'beverage', 'cocktail', 'smoking', 'partying', 'intoxication') are STRICTLY OUT OF SCOPE. Even if an authentic Ayurvedic plant like Ashwagandha is used, an intended use of casual 'drinking' or recreational beverage CANNOT be licensed or evaluated under Rule 158-B and MUST be rejected with isRelevant: false.\n\n");
+
         sb.append("INSTRUCTIONS:\n");
         sb.append("1. Decide if this input is RELEVANT (isRelevant: true) or OUT OF SCOPE (isRelevant: false).\n");
-        sb.append("2. ZERO-HALLUCINATION & CONTEXT REQUIREMENT: Do not guess or fabricate facts if no context or verification data is available in the database or APIs for the specified product, plant, or entity. If context is missing for any key-value pair, state 'NO DATA AVAILABLE' rather than assuming validity.\n");
-        sb.append("3. If the user combines an Ayurvedic word with science fiction or technology (e.g. 'Cyber-Chyawanprash' or 'Uranium Chyawanprash'), it is strictly OUT OF SCOPE (isRelevant: false).\n");
-        sb.append("4. Provide the explanation ('reason') and recommendation ('suggestedAction') in language '").append(targetLang.getCode()).append("' (");
+        sb.append("2. ZERO-HALLUCINATION & CONTEXT REQUIREMENT: Do not guess or fabricate facts. If no context or verified botanical/AYUSH data exists for the ingredients, state 'NO DATA AVAILABLE / OUT OF SCOPE' rather than assuming validity.\n");
+        sb.append("3. Provide the explanation ('reason') and recommendation ('suggestedAction') in language '").append(targetLang.getCode()).append("' (");
         if (targetLang == Language.MARATHI) sb.append("Pure Devanagari Marathi");
         else if (targetLang == Language.HINDI) sb.append("Pure Devanagari Hindi");
         else sb.append("English");
         sb.append(").\n");
-        sb.append("5. Return ONLY valid JSON matching this schema:\n");
+        sb.append("4. Return ONLY valid JSON matching this schema:\n");
         sb.append("{\n");
         sb.append("  \"isRelevant\": true,\n");
         sb.append("  \"confidence\": 0.98,\n");
-        sb.append("  \"detectedDomain\": \"AYUSH_HERBAL_MEDICINE | OUT_OF_SCOPE_NUCLEAR | OUT_OF_SCOPE_CYBERNETICS | OUT_OF_SCOPE_COMMODITY | OUT_OF_SCOPE_FICTION\",\n");
+        sb.append("  \"detectedDomain\": \"AYUSH_HERBAL_MEDICINE | OUT_OF_SCOPE\",\n");
         sb.append("  \"reason\": \"Detailed explanation of why it is in-scope or rejected as out of scope\",\n");
         sb.append("  \"suggestedAction\": \"Guidance to user\"\n");
         sb.append("}\n");
@@ -571,6 +578,12 @@ public class GeminiGenerativeService {
             if (lower.contains(k)) flagged.add(k);
         }
 
+        // Culinary, Western junk food, and non-AYUSH commodities
+        String[] culinaryKeys = {"pizza", "hamburger", "burger", "chocolate", "espresso", "rodeo", "french fries", "fries", "pasta", "sandwich", "steak", "hotdog", "chips", "soda", "coke", "pepsi", "beer", "whiskey"};
+        for (String k : culinaryKeys) {
+            if (lower.contains(k)) flagged.add(k);
+        }
+
         return flagged;
     }
 
@@ -578,15 +591,38 @@ public class GeminiGenerativeService {
             String userInput,
             String productName,
             String ingredients,
+            String intendedUse,
             Language targetLang,
             List<String> flaggedBlacklist) {
 
         boolean isMarathi = (targetLang == Language.MARATHI);
         boolean isHindi = (targetLang == Language.HINDI);
 
+        // CASUAL / NON-STATUTORY INTENDED USE CHECK: Reject non-medicinal, recreational or beverage uses
+        if (intendedUse != null && !intendedUse.isBlank()) {
+            String useLower = intendedUse.toLowerCase().trim();
+            String[] casualNonAyushUses = {"drinking", "beverage", "drink", "cocktail", "alcohol", "beer", "wine", "liquor", "smoking", "party", "partying", "recreation", "intoxication", "fuel", "weapon"};
+            for (String casual : casualNonAyushUses) {
+                if (useLower.contains(casual)) {
+                    String domain = "OUT_OF_SCOPE";
+                    String reason = isMarathi
+                            ? "विनंती केलेला वापर ('" + intendedUse + "') हा आयुष किंवा औषध कायद्यांतर्गत कायदेशीर औषधी/आरोग्य हेतू म्हणून मान्य नाही. केवळ उपचारात्मक, आयुर्वेद आहार किंवा सौंदर्य प्रसाधन हेतू मान्य आहेत."
+                            : (isHindi
+                            ? "प्रविष्ट किया गया उपयोग ('" + intendedUse + "') आयुष या औषधि कानून के अंतर्गत मान्य चिकित्सीय या स्वास्थ्य उद्देश्य नहीं है। केवल रोगोपचार, पोषण (आयुर्वेद आहार) या कॉस्मेटिक प्रयोजन मान्य हैं।"
+                            : "The specified intended use ('" + intendedUse + "') is a casual, recreational, or beverage purpose not recognized under the Drugs & Cosmetics Act (Rule 158-B) or FSSAI Ayurveda Aahar regulations. Ayurvedic medicine cannot be licensed or evaluated for casual '" + intendedUse + "'.");
+                    String suggestion = isMarathi
+                            ? "कृपया अधिकृत कायदेशीर हेतू नमूद करा: उपचारात्मक (रोग निवारण), आहार पूरक (आयुर्वेद आहार), किंवा सौंदर्य प्रसाधन."
+                            : (isHindi
+                            ? "कृपया मान्य विनियामक प्रयोजन चुनें: चिकित्सीय उपचार (Therapeutic Treatment), आहार पूरक (Ayurveda Aahar), या प्रसाधन (Cosmetic)."
+                            : "Please select a recognized statutory intended use: Therapeutic Treatment (disease mitigation), Dietary Nutrition (Ayurveda Aahar), or Cosmetic Care.");
+                    return new RelevanceEvaluation(false, 0.99, domain, reason, suggestion);
+                }
+            }
+        }
+
         // If flagged by out-of-scope blacklist keywords
         if (!flaggedBlacklist.isEmpty()) {
-            String domain = "OUT_OF_SCOPE_" + flaggedBlacklist.get(0).toUpperCase();
+            String domain = "OUT_OF_SCOPE";
             String reason;
             String suggestion;
 
@@ -597,8 +633,8 @@ public class GeminiGenerativeService {
                 reason = "प्रविष्ट किया गया इनपुट (" + String.join(", ", flaggedBlacklist) + ") आयुर्वेदिक, वानस्पतिक या पारंपरिक चिकित्सा के कार्यक्षेत्र से बाहर है। IP-SHAKTI केवल आयुष (AYUSH) और भारतीय जैवविविधता कानून के लिए समर्पित है।";
                 suggestion = "कृपया वास्तविक आयुर्वेदिक जड़ी-बूटी, पारंपरिक योग (जैसे अश्वगंधा, त्रिफला, गिलोय) या प्राकृतिक औषध संबंधी प्रश्न पूछें।";
             } else {
-                reason = "The provided input contains non-botanical/technological terms (" + String.join(", ", flaggedBlacklist) + ") that fall outside the statutory scope of Ayurveda, traditional medicine, and biological resources. IP-SHAKTI exclusively provides guidance for AYUSH and natural product IPR.";
-                suggestion = "Please enter an authentic Ayurvedic plant, classical formulation (e.g., Ashwagandha, Triphala, Turmeric), or natural healthcare product.";
+                reason = "The provided ingredients/query contain non-botanical items (" + String.join(", ", flaggedBlacklist) + ") that fall outside the statutory scope of Ayurveda and traditional medicine. IP-SHAKTI exclusively provides guidance for AYUSH and natural biological resource IPR.";
+                suggestion = "Please enter an authentic Ayurvedic medicinal plant, classical formulation (e.g., Ashwagandha, Triphala, Turmeric), or botanical extract.";
             }
 
             RelevanceEvaluation eval = new RelevanceEvaluation(false, 0.99, domain, reason, suggestion);
@@ -606,13 +642,35 @@ public class GeminiGenerativeService {
             return eval;
         }
 
-        // Default: If no blacklisted terms detected, treat as within scope
+        // POSITIVE AYUSH / BOTANICAL VALIDATION
+        // Product name is an arbitrary trademark and is NOT evaluated for botanical names.
+        // Ingredients and query MUST contain recognizable botanical, herbal, or classical Ayurvedic keywords.
+        String contentToCheck = (ingredients != null && !ingredients.isBlank()) ? ingredients.toLowerCase() : userInput.toLowerCase();
+        if (!contentToCheck.isBlank()) {
+            boolean hasBotanicalIndicator = containsBotanicalOrAyushIndicators(contentToCheck);
+            if (!hasBotanicalIndicator) {
+                String domain = "OUT_OF_SCOPE";
+                String reason = isMarathi
+                        ? "दाखल केलेले घटक हे आयुर्वेदिक ग्रंथ, वनस्पती औषध किंवा आयुष कायद्यांतर्गत औषधी घटक म्हणून मान्य नाहीत. IP-SHAKTI केवळ वनस्पती व पारंपारिक ज्ञान घटकांचे मूल्यांकन करते."
+                        : (isHindi
+                        ? "प्रविष्ट किए गए घटक आयुर्वेदिक संहिताओं, वानस्पतिक औषधियों या आयुष कानून के अंतर्गत मान्य नहीं हैं। IP-SHAKTI केवल प्रामाणिक जड़ी-बूटियों और जैविक संसाधनों का विश्लेषण करता है।"
+                        : "The entered ingredients are not recognized as Ayurvedic medicinal plants, traditional extracts, or biological resources under the Drugs & Cosmetics Act or First Schedule treatises.");
+                String suggestion = isMarathi
+                        ? "कृपया अधिकृत वनस्पती नाव (उदा. Withania somnifera), शास्त्रीय ग्रंथ नाव किंवा आयुर्वेदिक घटक प्रविष्ट करा."
+                        : (isHindi
+                        ? "कृपया प्रामाणिक वानस्पतिक नाम (जैसे Curcuma longa, अश्वगंधा) या पारंपरिक आयुर्वेदिक योग दर्ज करें।"
+                        : "Please enter authentic botanical binomials (e.g., Withania somnifera, Curcuma longa) or recognized Ayurvedic herbs.");
+                return new RelevanceEvaluation(false, 0.95, domain, reason, suggestion);
+            }
+        }
+
+        // Default: Positively verified as within scope
         String domain = "AYUSH_HERBAL_MEDICINE";
         String reason = isMarathi
-                ? "दाखल केलेले उत्पादन किंवा प्रश्न आयुष व पारंपारिक ज्ञान क्षेत्राशी संबंधित आहे."
+                ? "दाखल केलेले घटक व प्रश्न आयुष व पारंपारिक ज्ञान क्षेत्राशी संबंधित आहेत."
                 : (isHindi
-                ? "प्रविष्ट उत्पाद या प्रश्न आयुष और पारंपरिक ज्ञान के दायरे में उपयुक्त है।"
-                : "The query or product is relevant to Ayurveda, natural botanicals, and biological resource IPR.");
+                ? "प्रविष्ट घटक और प्रश्न आयुष और पारंपरिक ज्ञान के दायरे में उपयुक्त हैं।"
+                : "The ingredients and formulation are positively verified as relevant to Ayurveda, natural botanicals, and biological resource IPR.");
         String suggestion = isMarathi
                 ? "पुढील कायदेशीर व नियामक मूल्यांकनासाठी पुढे चालू ठेवा."
                 : (isHindi
@@ -620,5 +678,41 @@ public class GeminiGenerativeService {
                 : "Proceed with 5-pillar IPR and regulatory evaluation.");
 
         return new RelevanceEvaluation(true, 0.90, domain, reason, suggestion);
+    }
+
+    /**
+     * Checks whether the ingredient or query text contains authentic botanical, herbal,
+     * or classical Ayurvedic indicators.
+     */
+    private boolean containsBotanicalOrAyushIndicators(String text) {
+        String lower = text.toLowerCase();
+        String[] indicators = {
+                // Botanical parts and preparations
+                "extract", "herb", "plant", "root", "leaf", "leaves", "bark", "seed", "flower", "fruit",
+                "rhizome", "stem", "oil", "churna", "powder", "bhasma", "decoction", "taila", "ghrita",
+                "asava", "arishta", "vati", "kwath", "rasayana", "synergy", "phytochemical", "botanical",
+                "fraction", "standardized", "aqueous", "ethanolic", "tincture", "capsule", "syrup",
+                // Common botanical genera / species
+                "withania", "somnifera", "curcuma", "longa", "ocimum", "sanctum", "azadirachta", "indica",
+                "emblica", "officinalis", "zingiber", "piper", "nigrum", "longum", "boswellia", "serrata",
+                "aloe", "vera", "barbadensis", "bacopa", "monnieri", "terminalia", "arjuna", "chebula",
+                "bellerica", "commiphora", "mukul", "tinospora", "cordifolia", "glycyrrhiza", "glabra",
+                "cinnamomum", "tribulus", "terrestris", "asparagus", "racemosus", "mucuna", "pruriens",
+                "centella", "asiatica", "andrographis", "paniculata", "picrorhiza", "kurroa", "swertia",
+                "chirayita", "plumbago", "zeylanica", "sida", "cordifolia", "boerhavia", "diffusa",
+                // Vernacular / Sanskrit common names
+                "ashwagandha", "turmeric", "haldi", "tulsi", "neem", "amla", "triphala", "brahmi",
+                "guggulu", "guggul", "giloy", "mulethi", "licorice", "shatavari", "safed musli",
+                "haritaki", "bibhitaki", "shunthi", "sunthi", "maricha", "pippali", "ela", "dalchini",
+                "lavang", "clove", "kesar", "saffron", "jaiphal", "nutmeg", "shankhpushpi", "manjistha",
+                "kutki", "chirata", "chitraka", "bala", "punarnava", "musta", "bilva", "chandan",
+                "sandalwood", "sariva", "vidanga", "kutaja", "chyawanprash", "dashmool", "churna",
+                "bhasma", "ras", "aushadh", "ayurved"
+        };
+
+        for (String ind : indicators) {
+            if (lower.contains(ind)) return true;
+        }
+        return false;
     }
 }

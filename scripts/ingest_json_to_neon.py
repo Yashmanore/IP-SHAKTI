@@ -108,6 +108,45 @@ def format_sugam_record(item):
     }
     return text, meta
 
+def format_clinical_record(item):
+    trials_text = []
+    for tr in item.get('published_clinical_trials', []):
+        pmid = tr.get('pmid', '')
+        ctri = tr.get('ctriId', tr.get('ctri_id', ''))
+        title = tr.get('title', '')
+        journal = tr.get('journal', '')
+        year = tr.get('year', '')
+        sample = tr.get('sampleSize', tr.get('sample_size', ''))
+        outcomes = tr.get('primaryOutcomes', tr.get('primary_outcomes', ''))
+        rule158 = tr.get('rule158bApplicability', tr.get('rule_158b_applicability', ''))
+        synergy = tr.get('patentSection3eSynergism', tr.get('patent_section_3e_synergism', ''))
+        trials_text.append(
+            f"• Clinical RCT (PMID: {pmid}, CTRI: {ctri}): {title} ({journal}, {year}, n={sample} subjects). "
+            f"Outcomes: {outcomes}. Rule 158-B: {rule158}. Synergism: {synergy}"
+        )
+
+    tox = item.get('toxicology_profile', {})
+    text = (
+        f"[AYUSH Pharmacopoeia & Clinical Evidence | Botanical: {item.get('sanskrit_name', '')} ({item.get('botanical_name', '')})]\n"
+        f"Family: {item.get('family', '')}. Part Used: {item.get('part_used', '')}.\n"
+        f"API Monograph: {item.get('api_monograph_ref', '')}.\n"
+        f"Active Chemical Markers: {item.get('active_chemical_markers', '')}.\n"
+        f"Classical Therapeutic Uses: {', '.join(item.get('therapeutic_uses', []))}.\n"
+        f"Toxicology Profile (OECD 423): LD50 {tox.get('ld50_value', '')}, NOAEL: {tox.get('noael', '')}. Heavy Metals: {tox.get('heavy_metal_compliance', '')}. Safety Assessment: {tox.get('safety_assessment', '')}.\n"
+        f"Published Clinical Studies:\n" + "\n".join(trials_text)
+    )
+    meta = {
+        "jurisdiction": "INDIA",
+        "category": "CLINICAL_EVIDENCE",
+        "doc_title": f"API Monograph & Clinical Evidence: {item.get('sanskrit_name', '')} ({item.get('botanical_name', '')})",
+        "source_file": "data/raw/json/ayush_clinical_evidence_dataset.json",
+        "plant_name": item.get("sanskrit_name", ""),
+        "botanical_name": item.get("botanical_name", ""),
+        "api_monograph": item.get("api_monograph_ref", ""),
+        "pmids": [tr.get("pmid", "") for tr in item.get("published_clinical_trials", []) if tr.get("pmid")]
+    }
+    return text, meta
+
 def main():
     print("=" * 70)
     print(" IP-SHAKTI: Structured JSON Knowledge Datasets Ingestion into Neon")
@@ -163,6 +202,17 @@ def main():
                 items_to_ingest.append((t, m))
         print(f"Loaded {len(data)} SUGAM regulatory checklist records.")
 
+    # Dataset 5: AYUSH Clinical Evidence & Pharmacopoeia Monographs (142 Plants)
+    clinical_path = os.path.join(JSON_DATA_DIR, "ayush_clinical_evidence_dataset.json")
+    if os.path.exists(clinical_path):
+        with open(clinical_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            records_list = data.get("records", [])
+            for item in records_list:
+                t, m = format_clinical_record(item)
+                items_to_ingest.append((t, m))
+        print(f"Loaded {len(records_list)} AYUSH Clinical Evidence & API Monograph records.")
+
     print(f"\nTotal structured records to embed and insert: {len(items_to_ingest)}")
 
     # Embed passages
@@ -183,7 +233,7 @@ def main():
     with conn.cursor() as cur:
         cur.execute(f"""
             DELETE FROM {TABLE_NAME} 
-            WHERE metadata->>'category' IN ('TKDL', 'TRADEMARK', 'GI', 'REGULATORY_CHECKLIST');
+            WHERE metadata->>'category' IN ('TKDL', 'TRADEMARK', 'GI', 'REGULATORY_CHECKLIST', 'CLINICAL_EVIDENCE');
         """)
         conn.commit()
 

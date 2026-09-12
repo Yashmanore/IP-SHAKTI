@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   PackageSearch,
   AlertCircle,
+  AlertTriangle,
   Loader2,
   ArrowLeft,
   ArrowRight,
@@ -707,7 +708,57 @@ const ProductClassification = () => {
             )}
 
             {/* ── CLASSIFICATION RESULT ──────────────────────────────── */}
-            {result && (
+            {result && (result.category === 'OUT_OF_SCOPE' || result.isOutOfScope || result.isRelevant === false) ? (
+              <section
+                id="classification-result"
+                className="card p-6 border-l-4 border-l-amber-500 bg-amber-50/20"
+                aria-live="polite"
+              >
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div className="flex items-center gap-3">
+                    <AlertTriangle size={24} className="text-amber-600 shrink-0" />
+                    <div>
+                      <h2 className="text-xl font-heading font-semibold text-charcoal">
+                        Out of Scope / Non-Ayurvedic Input Rejected
+                      </h2>
+                      <p className="text-xs text-slate mt-0.5">
+                        Statutory Guardrail Enforcement (Drugs & Cosmetics Act 1940 / AYUSH Framework)
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold px-3 py-1 rounded-full border bg-amber-100 text-amber-800 border-amber-300">
+                    OUT OF SCOPE
+                  </span>
+                </div>
+
+                <div className="p-4 rounded-lg bg-white border border-amber-200 text-sm text-charcoal mb-4 space-y-2">
+                  <p className="font-semibold text-amber-900">
+                    {result.patentabilityVerdict || 'Input rejected as outside AYUSH / botanical scope.'}
+                  </p>
+                  <p className="text-xs text-slate">
+                    IP-SHAKTI exclusively provides statutory classification, Rule 158-B compliance, and patentability evaluation for authentic Ayurvedic formulations, classical texts (First Schedule), phytopharmaceuticals, and Indian biological resources. Fast foods, Western culinary dishes, non-herbal commodities, or technological items cannot be evaluated under AYUSH drug frameworks.
+                  </p>
+                </div>
+
+                <dl className="divide-y divide-border-color">
+                  <ResultField label="Product Category" value={result.categoryDisplayName || 'Out of Scope / Non-Ayurvedic Input'} />
+                  <ResultField label="Governing Act / Regulation" value="Not Applicable" />
+                  <ResultField label="Licensing Procedure" value={result.licensingProcedure || 'Not eligible for AYUSH licensing or Rule 158-B pathways.'} />
+                  <ResultField label="Recommended Strategy" value={result.recommendedIprStrategy || 'Protect as standard food brand or trademark under Class 29/30/43 (Services/Dining).'} />
+                </dl>
+
+                {result.decisionTrace?.length > 0 && (
+                  <div className="mt-5 pt-4 border-t border-border-color">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-slate mb-2">Guardrail Decision Trace</h4>
+                    <ul className="text-xs text-slate space-y-1 list-disc list-inside">
+                      {result.decisionTrace.map((step, idx) => (
+                        <li key={idx}>{step}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </section>
+            ) : result ? (
               <section
                 id="classification-result"
                 className="card p-6 border-l-4 border-l-forest-green"
@@ -791,7 +842,7 @@ const ProductClassification = () => {
                   </p>
                 </div>
               </section>
-            )}
+            ) : null}
 
             {/* Disclaimer */}
             <p className="text-xs text-slate border-t border-border-color pt-5 leading-relaxed">
