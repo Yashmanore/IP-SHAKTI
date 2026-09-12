@@ -37,6 +37,9 @@ public class DocumentAnalysisService {
             Analyze the provided document (PDF/text/query) and extract all critical applicant credentials,
             technical specifications, patentability parameters, and statutory regulatory requirements into STRICT JSON.
 
+            STRICT ZERO-HALLUCINATION & CONTEXT MANDATE:
+            Do not give any speculative answer or hallucinate if you do not have explicit context from the document, database, or APIs. If context or data is not available for any specific field or key-value pair, you MUST return "NO DATA AVAILABLE" or null for that key-value pair. Never fabricate applicant details, botanical names, clinical trial phases, or patent claims without direct evidence.
+
             Return ONLY a valid JSON object matching this schema:
             {
               "applicantCredentials": {

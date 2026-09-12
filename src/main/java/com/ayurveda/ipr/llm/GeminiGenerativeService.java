@@ -141,12 +141,13 @@ public class GeminiGenerativeService {
         sb.append("1. Patents Act 1970 §3(p) Bar: Never claim crude herbal extracts or known traditional properties per se. Claims must strictly focus on novel excipient delivery kinetics (e.g. nano-emulsions, liposomes, phytosomes) or demonstrated synergy under §3(e) with Combination Index (CI) < 0.7.\n");
         sb.append("2. Cite only statutory provisions provided in the context (Patents Act 1970, Drugs & Cosmetics Rules 1945 Rule 158-B, Biological Diversity Act 2002).\n");
         sb.append("3. Under WIPO GRATK Treaty 2024 & Patents Act §10(4)(d)(ii), mandate explicit disclosure of Indian geographical origin.\n");
-        sb.append("4. Plain Language Summary must be generated in language code '").append(targetLang.getCode()).append("' (");
+        sb.append("4. ZERO-HALLUCINATION & CONTEXT MANDATE: Do NOT give any speculative answer or hallucinate if you do not have explicit context from the database, retrieved statutory texts, or APIs. If context or data is not available for any specific field or key-value pair, you MUST return 'NO DATA AVAILABLE' or null for that key-value pair.\n");
+        sb.append("5. Plain Language Summary must be generated in language code '").append(targetLang.getCode()).append("' (");
         if (targetLang == Language.MARATHI) sb.append("Pure Devanagari Marathi");
         else if (targetLang == Language.HINDI) sb.append("Pure Devanagari Hindi");
         else sb.append("English");
         sb.append(").\n");
-        sb.append("5. You MUST return ONLY valid JSON matching the exact schema below. Do not wrap in markdown quotes.\n\n");
+        sb.append("6. You MUST return ONLY valid JSON matching the exact schema below. Do not wrap in markdown quotes.\n\n");
 
         // 2. Evaluated Case Facts
         sb.append("=== INNOVATOR CASE PROFILE ===\n");
@@ -492,13 +493,14 @@ public class GeminiGenerativeService {
 
         sb.append("INSTRUCTIONS:\n");
         sb.append("1. Decide if this input is RELEVANT (isRelevant: true) or OUT OF SCOPE (isRelevant: false).\n");
-        sb.append("2. If the user combines an Ayurvedic word with science fiction or technology (e.g. 'Cyber-Chyawanprash' or 'Uranium Chyawanprash'), it is strictly OUT OF SCOPE (isRelevant: false).\n");
-        sb.append("3. Provide the explanation ('reason') and recommendation ('suggestedAction') in language '").append(targetLang.getCode()).append("' (");
+        sb.append("2. ZERO-HALLUCINATION & CONTEXT REQUIREMENT: Do not guess or fabricate facts if no context or verification data is available in the database or APIs for the specified product, plant, or entity. If context is missing for any key-value pair, state 'NO DATA AVAILABLE' rather than assuming validity.\n");
+        sb.append("3. If the user combines an Ayurvedic word with science fiction or technology (e.g. 'Cyber-Chyawanprash' or 'Uranium Chyawanprash'), it is strictly OUT OF SCOPE (isRelevant: false).\n");
+        sb.append("4. Provide the explanation ('reason') and recommendation ('suggestedAction') in language '").append(targetLang.getCode()).append("' (");
         if (targetLang == Language.MARATHI) sb.append("Pure Devanagari Marathi");
         else if (targetLang == Language.HINDI) sb.append("Pure Devanagari Hindi");
         else sb.append("English");
         sb.append(").\n");
-        sb.append("4. Return ONLY valid JSON matching this schema:\n");
+        sb.append("5. Return ONLY valid JSON matching this schema:\n");
         sb.append("{\n");
         sb.append("  \"isRelevant\": true,\n");
         sb.append("  \"confidence\": 0.98,\n");
