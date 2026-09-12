@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/api/(.*)",
+      "destination": "https://ip-shakti-backend.onrender.com/api/$1"
+    },
+    {
+      "source": "/ping",
+      "destination": "https://ip-shakti-backend.onrender.com/ping"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
